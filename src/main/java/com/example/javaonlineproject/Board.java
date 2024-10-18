@@ -71,20 +71,47 @@
         }
 
         private Boolean checkWin() {
-            /*
-            int count = 0;
-            for(int i = 0; i < 3; i++) {
-                for(int j = 0; j < 3; j++) {
-                    //Zacząłem robić ale idk czy będziemy to mieć eventually jutro skoncze
+            //Sprawdzanie wierszy
+            for (int i = 0; i < 3; i++) {
+                if (board[i][0].getText().equals(board[i][1].getText()) &&
+                        board[i][0].getText().equals(board[i][2].getText()) &&
+                        !board[i][0].getText().isEmpty()) {
+                    return true;
                 }
-            }*/
+            }
+            // Sprawdzanie kolumn
+            for (int i = 0; i < 3; i++) {
+                if (board[0][i].getText().equals(board[1][i].getText()) &&
+                        board[0][i].getText().equals(board[2][i].getText()) &&
+                        !board[0][i].getText().isEmpty()) {
+                    return true;
+                }
+            }
+            // Sprawdzanie przekątnych
+            if (board[0][0].getText().equals(board[1][1].getText()) &&
+                    board[0][0].getText().equals(board[2][2].getText()) &&
+                    !board[0][0].getText().isEmpty()) {
+                return true;
+            }
+            if (board[0][2].getText().equals(board[1][1].getText()) &&
+                    board[0][2].getText().equals(board[2][0].getText()) &&
+                    !board[0][2].getText().isEmpty()) {
+                return true;
+            }
             return false;
         }
 
         private Boolean checkDraw() {
-            // To tez
-            return false;
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    if (board[i][j].getText().isEmpty()) {
+                        return false;
+                    }
+                }
+            }
+            return !checkWin();
         }
+
 
         public GridPane getGridPane() {
             return grid;
