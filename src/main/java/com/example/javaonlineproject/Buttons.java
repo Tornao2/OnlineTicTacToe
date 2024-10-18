@@ -1,11 +1,15 @@
 package com.example.javaonlineproject;
 
 import javafx.scene.control.Button;
+import javafx.scene.control.TextInputDialog;
+
+import java.util.Optional;
 
 public class Buttons {
     private Button startGameButton;
     private Button exitGameButton;
     private Button restartGameButton;
+    private Network network;
     public Buttons() {
         startGameButton = new Button("Start");
         startGameButton.setMinSize(100, 30);
@@ -27,7 +31,17 @@ public class Buttons {
     }
 
     private void startGame() {
-        System.out.println("ALLEGRO");
+        TextInputDialog dialog = new TextInputDialog("Server/Client");
+        dialog.setTitle("Choose Network mode");
+        dialog.setHeaderText("Selcet if you want to start as server or client");
+        dialog.setContentText("Enter 'server' or 'client");
+
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(mode -> {
+            Boolean isServer = mode.equalsIgnoreCase("server");
+            network = new Network(isServer);
+            Board gameBoard = new Board(network);
+        });
     }
 
     public Button getStartGameButton() {
