@@ -20,7 +20,7 @@ public class Network {
                 socket = serverSocket.accept();
                 System.out.println("Client connected");
             } else {
-                socket = new Socket("localhost", 12345); // Replace "localhost" with the server IP address if needed
+                socket = new Socket("localhost", 12345);
                 System.out.println("Connected to server");
             }
             input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
