@@ -11,12 +11,15 @@ import javafx.stage.Stage;
 
 public class LoginScreen extends Application {
 
+    private Runnable onLoginSuccess; // Callback for login success
+
     @Override
     public void start(Stage primaryStage) {
         AnchorPane root = new AnchorPane();
         root.setPrefSize(401, 400);
         root.setStyle("-fx-background-color: #1A1A1A;");
 
+        // Logo
         ImageView logoImageView = new ImageView();
         Image logoImage = new Image(getClass().getResourceAsStream("/images/TictacToe.png"));
         logoImageView.setImage(logoImage);
@@ -26,105 +29,117 @@ public class LoginScreen extends Application {
         logoImageView.setLayoutY(14);
         logoImageView.setPreserveRatio(true);
 
-
-        // Create Username TextField
+        // Username and Password Fields
         TextField usernameField = new TextField();
         usernameField.setLayoutX(101);
         usernameField.setLayoutY(165);
         usernameField.setPrefHeight(26);
         usernameField.setPrefWidth(200);
         usernameField.setPromptText("Username");
-        usernameField.setStyle("-fx-background-color: #222222;");
         usernameField.setFont(new Font(16));
+        usernameField.setStyle("-fx-background-color: #222222;");
 
-        // Create Password
         PasswordField passwordField = new PasswordField();
         passwordField.setLayoutX(100);
         passwordField.setLayoutY(215);
         passwordField.setPrefHeight(26);
         passwordField.setPrefWidth(200);
         passwordField.setPromptText("Password");
-        passwordField.setStyle("-fx-background-color: #222222;");
         passwordField.setFont(new Font(16));
+        passwordField.setStyle("-fx-background-color: #222222;");
 
-        // Show Password TextField
-        TextField showPasswordField = new TextField();
-        showPasswordField.setLayoutX(100);
-        showPasswordField.setLayoutY(215);
-        showPasswordField.setPrefHeight(26);
-        showPasswordField.setPrefWidth(200);
-        showPasswordField.setStyle("-fx-background-color: #222222;");
-        showPasswordField.setFont(new Font(16));
-        showPasswordField.setManaged(false); // Initially hidden
-        showPasswordField.setVisible(false); // Initially hidden
-
-        // Show password
-        CheckBox showPasswordCheckBox = new CheckBox("Show Password");
-        showPasswordCheckBox.setLayoutX(100);
-        showPasswordCheckBox.setLayoutY(258);
-        showPasswordCheckBox.setTextFill(javafx.scene.paint.Color.WHITE);
-        showPasswordCheckBox.setFont(new Font(8));
-
-        // Widoczność hasłą
-        showPasswordCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal) {
-                showPasswordField.setText(passwordField.getText());
-                showPasswordField.setVisible(true);
-                showPasswordField.setManaged(true);
-                passwordField.setVisible(false);
-                passwordField.setManaged(false);
-            } else {
-                passwordField.setText(showPasswordField.getText());
-                passwordField.setVisible(true);
-                passwordField.setManaged(true);
-                showPasswordField.setVisible(false);
-                showPasswordField.setManaged(false);
-            }
-        });
-
-        // Create Login Button
+        // Login Button
         Button loginButton = new Button("Login");
         loginButton.setLayoutX(168);
         loginButton.setLayoutY(280);
         loginButton.setStyle("-fx-background-color: #FFFFFF;");
         loginButton.setFont(new Font("System Bold", 13));
 
-        // Handle Login Button Click
         loginButton.setOnAction(e -> {
             String username = usernameField.getText();
-            String password = passwordField.isVisible() ? passwordField.getText() : showPasswordField.getText();
+            String password = passwordField.getText();
             if (username.isEmpty() || password.isEmpty()) {
                 showAlert(Alert.AlertType.ERROR, "Login Error", "Username or password cannot be empty.");
             } else {
                 showAlert(Alert.AlertType.INFORMATION, "Login Success", "Login successful!");
+                System.out.println("Login successful, transitioning to menu.");
+                if (onLoginSuccess != null) {
+                    onLoginSuccess.run(); // Trigger the login success callback
+                } else {
+                    System.out.println("Login success callback is null"); // Debug line
+                }
             }
         });
 
-        // Create Create Account Button
-        Button createAccountButton = new Button("Create Account");
-        createAccountButton.setLayoutX(144);
-        createAccountButton.setLayoutY(348);
-        createAccountButton.setPrefHeight(27);
-        createAccountButton.setPrefWidth(114);
-        createAccountButton.setStyle("-fx-background-color: #FFFFFF;");
-        createAccountButton.setFont(new Font("System Bold", 13));
 
-        createAccountButton.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Create Account", "Create account clicked!"));
-
-        root.getChildren().addAll(logoImageView, usernameField, passwordField, showPasswordField, showPasswordCheckBox, loginButton, createAccountButton);
-
+        root.getChildren().addAll(logoImageView, usernameField, passwordField, loginButton);
         Scene scene = new Scene(root);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Login Screen");
         primaryStage.show();
     }
 
-    // Alerty
+    public void setOnLoginSuccess(Runnable onLoginSuccess) {
+        this.onLoginSuccess = onLoginSuccess; // Set the callback for login success
+    }
+
     private void showAlert(Alert.AlertType alertType, String title, String message) {
         Alert alert = new Alert(alertType);
         alert.setTitle(title);
         alert.setContentText(message);
         alert.showAndWait();
     }
-
 }
+
+
+/*<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="400.0" prefWidth="401.0" style="-fx-background-color: #1A1A1A;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.javaonlineproject.LoginScreen">
+    <children>
+        <ImageView fitHeight="182.0" fitWidth="265.0" layoutX="69.0" layoutY="14.0" pickOnBounds="true" preserveRatio="true">
+            <image>
+                <Image url="@../../../../../../../../OneDrive/Pulpit/ubuntu%20i%20javafxml/TictacToe.png" />
+            </image>
+        </ImageView>
+        <TextField fx:id="usernameField" layoutX="101.0" layoutY="165.0" prefHeight="26.0" prefWidth="200.0" promptText="Username" style="-fx-background-color: #222222;">
+            <font>
+                <Font size="16.0" />
+            </font>
+        </TextField>
+        <PasswordField fx:id="passwordField" layoutX="100.0" layoutY="215.0" prefHeight="26.0" prefWidth="200.0" promptText="Password" style="-fx-background-color: #222222;">
+            <font>
+                <Font size="16.0" />
+            </font>
+        </PasswordField>
+        <TextField fx:id="showPasswordField" layoutX="100.0" layoutY="215.0" prefHeight="26.0" prefWidth="200.0" style="-fx-background-color: #222222;">
+            <font>
+                <Font size="16.0" />
+            </font>
+        </TextField>
+        <CheckBox fx:id="showPasswordCheckBox" layoutX="100.0" layoutY="258.0" mnemonicParsing="false" text="Show Password" textFill="WHITE">
+            <font>
+                <Font size="8.0" />
+            </font>
+        </CheckBox>
+        <Button fx:id="loginButton" layoutX="168.0" layoutY="280.0" mnemonicParsing="false" style="-fx-background-color: #FFFFFF;" text="Login">
+            <font>
+                <Font name="System Bold" size="13.0" />
+            </font>
+        </Button>
+        <Button fx:id="createAccountButton" layoutX="144.0" layoutY="348.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="114.0" style="-fx-background-color: #FFFFFF;" text="Create Account">
+            <font>
+                <Font name="System Bold" size="13.0" />
+            </font>
+        </Button>
+    </children>
+</AnchorPane>
+*/

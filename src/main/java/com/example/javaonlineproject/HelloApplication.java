@@ -2,9 +2,7 @@ package com.example.javaonlineproject;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class HelloApplication extends Application {
@@ -16,30 +14,38 @@ public class HelloApplication extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        NetworkModeSelection modeSelection = new NetworkModeSelection();
-        modeSelection.show(primaryStage, isServer -> {
-            // Inicjalizacja gry przy wyborze
-            initializeGame(primaryStage, isServer);
-        });
+        showLoginScreen(primaryStage);
     }
 
-    private void initializeGame(Stage primaryStage, boolean isServer) {
+    private void showLoginScreen(Stage primaryStage) {
+        LoginScreen loginScreen = new LoginScreen();
+        loginScreen.setOnLoginSuccess(() -> showMenu(primaryStage)); // Set the callback for successful login
+        loginScreen.start(primaryStage); // Start the login screen
+    }
+
+    private void showMenu(Stage primaryStage) {
+        System.out.println("Loading Menu..."); // Debug line
+        Menu menu = new Menu();
+        menu.start(primaryStage);
+        menu.getStartButton().setOnAction(event -> showNetworkSelection(primaryStage));
+    }
+
+
+    private void showNetworkSelection(Stage primaryStage) {
+        NetworkModeSelection modeSelection = new NetworkModeSelection();
+        modeSelection.show(primaryStage, isServer -> initializeGame(primaryStage, isServer));
+    }
+
+    public void initializeGame(Stage primaryStage, boolean isServer) {
         StackPane root = new StackPane();
         msHandler = new MouseHandler();
         msHandler.setEvents(root);
 
-        Buttons buttons = new Buttons();
-        Button startButton = buttons.getStartGameButton();
-        Button resetButton = buttons.getRestartGameButton();
-        Button exitButton = buttons.getExitGameButton();
-
+        Buttons buttons =   new Buttons(new Menu());
         network = new Network(isServer);
         Board gameBoard = new Board(network);
 
-        VBox layout = new VBox(10);
-        layout.getChildren().addAll(startButton, resetButton, exitButton, gameBoard.getGridPane());
-
-        root.getChildren().add(layout);
+        root.getChildren().add(gameBoard.getGridPane());
 
         Scene scene = new Scene(root, screenW, screenH);
         primaryStage.setTitle("Tic-Tac-Toe Game");

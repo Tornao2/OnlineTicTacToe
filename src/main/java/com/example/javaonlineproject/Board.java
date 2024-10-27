@@ -1,13 +1,16 @@
 package com.example.javaonlineproject;
 
 import javafx.scene.control.Button;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
+import javafx.stage.Stage;
 
 public class Board {
     private Button[][] board;
     private char player;
     private GridPane grid;
     private Network network;
+    private AnchorPane root;
 
     public Board(Network network) {
         this.network = network;
@@ -15,9 +18,15 @@ public class Board {
         this.player = 'X';
         this.grid = new GridPane();
         initializeBoard();
+            }
+
+    public void start(Stage gameStage){
     }
 
     private void initializeBoard() {
+        root = new AnchorPane();
+        root.setPrefSize(800, 600);
+        root.setStyle("-fx-background-color: #000000");
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 3; column++) {
                 Button cell = new Button("");
@@ -113,6 +122,8 @@ public class Board {
     }
 
     public GridPane getGridPane() {
+        grid.setHgap(10);
+        grid.setVgap(10);
         return grid;
     }
 }

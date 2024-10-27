@@ -12,6 +12,8 @@ import javafx.stage.Stage;
 
 public class ServerClientChoose extends Application {
 
+    private boolean isServer; // To store whether the user chose server or client
+
     @Override
     public void start(Stage primaryStage) {
         AnchorPane root = new AnchorPane();
@@ -44,6 +46,18 @@ public class ServerClientChoose extends Application {
         startButton.setPrefSize(99, 59);
         startButton.setFont(new Font(24));
 
+        // Handle start button click event
+        startButton.setOnAction(event -> {
+            if (serverRadio.isSelected()) {
+                isServer = true;
+            } else if (clientRadio.isSelected()) {
+                isServer = false;
+            }
+
+            // Proceed to the next part of the application, passing the choice
+            proceedToGame(primaryStage, isServer);
+        });
+
         root.getChildren().addAll(instructionText, serverRadio, clientRadio, startButton);
 
         Scene scene = new Scene(root);
@@ -52,10 +66,21 @@ public class ServerClientChoose extends Application {
         primaryStage.show();
     }
 
+    // Method to proceed to the game based on the user's choice
+    private void proceedToGame(Stage primaryStage, boolean isServer) {
+        System.out.println("User chose to run as " + (isServer ? "Server" : "Client"));
+        // Here, you would launch the next stage of the application (e.g., initialize the game)
+        // You can pass this choice to the next screen or class (e.g., HelloApplication)
+        HelloApplication helloApp = new HelloApplication();
+        helloApp.initializeGame(primaryStage, isServer);
+    }
+
     public static void main(String[] args) {
         launch(args);
     }
 }
+
+
 /*
 <?xml version="1.0" encoding="UTF-8"?>
 
