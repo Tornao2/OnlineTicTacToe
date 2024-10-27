@@ -7,41 +7,43 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-import java.awt.*;
-
 public class Board {
     private Button[][] board;
-    private char player;
+    private char player1;
+    private char player2;
+    private char currentPlayer;
     private GridPane grid;
     private Network network;
     private AnchorPane root;
-    private int win = 0, draw = 0, lose = 0;
-    private Text text = new Text();
-    private Text text2 = new Text();
+    private int player1Wins = 0, draws = 0, player2Wins = 0;
+    private Text player1ScoreText = new Text();
+    private Text player2ScoreText = new Text();
 
     public Board(Network network) {
         this.network = network;
         this.board = new Button[3][3];
-        this.player = 'X';
+        this.player1 = 'X';
+        this.player2 = 'O';
+        this.currentPlayer = player1;  // Start with player1
         this.grid = new GridPane();
         initializeBoard();
         initializeScoreTexts();
-            }
+    }
 
-    public void start(Stage gameStage){}
+    public void start(Stage gameStage) {}
 
     private void initializeScoreTexts() {
-        text.setX(100);
-        text.setY(200);
-        text.setStyle("-fx-fill: white;");
-        text.setFont(Font.font(20));
+        player1ScoreText.setX(100);
+        player1ScoreText.setY(20);
+        player1ScoreText.setStyle("-fx-fill: white;");
+        player1ScoreText.setFont(Font.font(20));
 
-        text2.setX(700);
-        text2.setY(200);
-        text2.setStyle("-fx-fill: white;");
-        text2.setFont(Font.font(20));
+        player2ScoreText.setX(400);
+        player2ScoreText.setY(20);
+        player2ScoreText.setStyle("-fx-fill: white;");
+        player2ScoreText.setFont(Font.font(20));
 
-        root.getChildren().addAll(text, text2);
+        root.getChildren().addAll(player1ScoreText, player2ScoreText);
     }
 
     private void initializeBoard() {
@@ -51,6 +53,7 @@ public class Board {
         grid.setHgap(10);
         grid.setVgap(10);
         root.getChildren().add(grid);
+
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 3; column++) {
                 Button cell = new Button("");
@@ -74,18 +77,29 @@ public class Board {
 
     private void handleMove(int row, int column, Button cell) {
         if (cell.getText().isEmpty()) {
-            cell.setText(String.valueOf(player));
+            cell.setText(String.valueOf(currentPlayer));
             network.sendMessage(row + "," + column); // Send move over the network
-            textScores();
-            if (checkWin()) {
-                System.out.println(player + " wins!");
+
+            if (checkWin(currentPlayer)) {
+                System.out.println(currentPlayer + " wins!");
+                if (currentPlayer == player1) {
+                    player1Wins++;
+                } else {
+                    player2Wins++;
+                }
                 network.sendMessage("WIN");
+                updateScores();
+                resetBoard();
             } else if (checkDraw()) {
                 System.out.println("Draw");
+                draws++;
                 network.sendMessage("DRAW");
+                updateScores();
+                resetBoard();
             } else {
-                player = (player == 'X' ? 'O' : 'X'); // Switch player
-                receiveMove(); // Get opponent's move
+                // Switch current player
+                currentPlayer = (currentPlayer == player1) ? player2 : player1;
+                receiveMove();  // Wait for the opponent's move
             }
         }
     }
@@ -95,58 +109,70 @@ public class Board {
         if (move != null) {
             if (move.equals("WIN")) {
                 System.out.println("Opponent won!");
+                if (currentPlayer == player1) {
+                    player2Wins++;
+                } else {
+                    player1Wins++;
+                }
+                updateScores();
+                resetBoard();
             } else if (move.equals("DRAW")) {
                 System.out.println("It's a draw!");
+                draws++;
+                updateScores();
+                resetBoard();
             } else {
                 String[] parts = move.split(",");
                 int row = Integer.parseInt(parts[0]);
                 int column = Integer.parseInt(parts[1]);
                 if (board[row][column].getText().isEmpty()) {
-                    board[row][column].setText(String.valueOf(player));
-                    if (checkWin()) {
-                        System.out.println(player + " wins!");
-                        win += 1;
+                    board[row][column].setText(String.valueOf(currentPlayer));
+                    if (checkWin(currentPlayer)) {
+                        System.out.println(currentPlayer + " wins!");
+                        if (currentPlayer == player1) {
+                            player1Wins++;
+                        } else {
+                            player2Wins++;
+                        }
+                        updateScores();
+                        resetBoard();
                     } else if (checkDraw()) {
                         System.out.println("Draw");
-                        draw += 1;
+                        draws++;
+                        updateScores();
+                        resetBoard();
                     } else {
-                        player = (player == 'X' ? 'O' : 'X');
-                        lose += 1;
+                        currentPlayer = (currentPlayer == player1) ? player2 : player1;
                     }
                 }
             }
         }
     }
 
-    private Boolean checkWin() {
+    private boolean checkWin(char player) {
         for (int i = 0; i < 3; i++) {
-            if (board[i][0].getText().equals(board[i][1].getText()) &&
-                    board[i][0].getText().equals(board[i][2].getText()) &&
-                    !board[i][0].getText().isEmpty()) {
+            if (board[i][0].getText().equals(String.valueOf(player)) &&
+                    board[i][1].getText().equals(String.valueOf(player)) &&
+                    board[i][2].getText().equals(String.valueOf(player))) {
                 return true;
             }
         }
         for (int i = 0; i < 3; i++) {
-            if (board[0][i].getText().equals(board[1][i].getText()) &&
-                    board[0][i].getText().equals(board[2][i].getText()) &&
-                    !board[0][i].getText().isEmpty()) {
+            if (board[0][i].getText().equals(String.valueOf(player)) &&
+                    board[1][i].getText().equals(String.valueOf(player)) &&
+                    board[2][i].getText().equals(String.valueOf(player))) {
                 return true;
             }
         }
-        if (board[0][0].getText().equals(board[1][1].getText()) &&
-                board[0][0].getText().equals(board[2][2].getText()) &&
-                !board[0][0].getText().isEmpty()) {
-            return true;
-        }
-        if (board[0][2].getText().equals(board[1][1].getText()) &&
-                board[0][2].getText().equals(board[2][0].getText()) &&
-                !board[0][2].getText().isEmpty()) {
-            return true;
-        }
-        return false;
+        return board[0][0].getText().equals(String.valueOf(player)) &&
+                board[1][1].getText().equals(String.valueOf(player)) &&
+                board[2][2].getText().equals(String.valueOf(player)) ||
+                board[0][2].getText().equals(String.valueOf(player)) &&
+                        board[1][1].getText().equals(String.valueOf(player)) &&
+                        board[2][0].getText().equals(String.valueOf(player));
     }
 
-    private Boolean checkDraw() {
+    private boolean checkDraw() {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 if (board[i][j].getText().isEmpty()) {
@@ -154,29 +180,24 @@ public class Board {
                 }
             }
         }
-        return !checkWin();
+        return !checkWin(player1) && !checkWin(player2);
     }
 
-    public void textScores() {
-  /*      if (checkWin()) {
-            win += 1;
-        } else if (checkDraw()) {
-            draw += 1;
-        } else {
-            lose += 1;
+    private void updateScores() {
+        player1ScoreText.setText("Player 1 (X) Score: " + player1Wins + "-" + draws + "-" + player2Wins);
+        player2ScoreText.setText("Player 2 (O) Score: " + player2Wins + "-" + draws + "-" + player1Wins);
+    }
+
+    private void resetBoard() {
+        for (Button[] row : board) {
+            for (Button cell : row) {
+                cell.setText("");
+            }
         }
-*/
-        text.setText(player + " score\n" + win + "-" + draw + "-" + lose);
-        text2.setText("Enemy score\n" + lose + "-" + draw + "-" + win);
+        currentPlayer = player1;  // Reset to player1 for new game
     }
 
     public AnchorPane getRootPane() {
         return root;
     }
 }
-/*
-Do poprawy jest logika checkwin i checkdraw  najprawdobodobniej dodanie zmiennej player2  da rade, poza tym  poprawa wypisywania wyniku
-twojego i gracza
-Na 1 kamien jeszcze do zrobienia jeszcze mozliwosc powtórzenia meczu
-Poza tym wybieranie pól też i będzie git
- */
