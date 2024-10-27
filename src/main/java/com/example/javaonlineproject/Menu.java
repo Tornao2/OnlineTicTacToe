@@ -57,11 +57,10 @@ public class Menu extends Application  {
         System.out.println("Game started!");
 
         Network network = new Network(true);
-
         Board board = new Board(network);
 
         AnchorPane boardRoot = new AnchorPane();
-        boardRoot.getChildren().add(board.getGridPane());
+        boardRoot.getChildren().add(board.getRootPane());
 
         Scene boardScene = new Scene(boardRoot, 800, 600);
 

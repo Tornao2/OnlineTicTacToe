@@ -8,8 +8,8 @@ import javafx.stage.Stage;
 public class HelloApplication extends Application {
 
     private Network network;
-    public static final int screenW = 900;
-    public static final int screenH = 700;
+    public static final int screenW = 800;
+    public static final int screenH = 600;
     MouseHandler msHandler;
 
     @Override
@@ -45,7 +45,7 @@ public class HelloApplication extends Application {
         network = new Network(isServer);
         Board gameBoard = new Board(network);
 
-        root.getChildren().add(gameBoard.getGridPane());
+        root.getChildren().add(gameBoard.getRootPane());
 
         Scene scene = new Scene(root, screenW, screenH);
         primaryStage.setTitle("Tic-Tac-Toe Game");
