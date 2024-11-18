@@ -1,6 +1,5 @@
 package com.example.javaonlineproject;
 
-import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.RadioButton;
@@ -10,11 +9,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-public class ServerClientChoose extends Application {
+public class ServerClientChoose {
 
     private boolean isServer; // To store whether the user chose server or client
-
-    @Override
     public void start(Stage primaryStage) {
         AnchorPane root = new AnchorPane();
         root.setPrefSize(600, 400);
@@ -74,49 +71,4 @@ public class ServerClientChoose extends Application {
         HelloApplication helloApp = new HelloApplication();
         helloApp.initializeGame(primaryStage, isServer);
     }
-
-    public static void main(String[] args) {
-        launch(args);
-    }
 }
-
-
-/*
-<?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.RadioButton?>
-<?import javafx.scene.control.TitledPane?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.text.Font?>
-<?import javafx.scene.text.Text?>
-
-<TitledPane animated="false" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" text="untitled" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/23.0.1">
-  <content>
-    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
-         <children>
-            <Text layoutX="65.0" layoutY="67.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Select if you want to run as a server or client">
-               <font>
-                  <Font size="24.0" />
-               </font>
-            </Text>
-            <RadioButton layoutX="143.0" layoutY="136.0" mnemonicParsing="false" prefHeight="50.0" prefWidth="105.0" text="Server">
-               <font>
-                  <Font size="18.0" />
-               </font>
-            </RadioButton>
-            <RadioButton layoutX="348.0" layoutY="136.0" mnemonicParsing="false" prefHeight="50.0" prefWidth="105.0" text="Client">
-               <font>
-                  <Font size="18.0" />
-               </font>
-            </RadioButton>
-            <Button layoutX="249.0" layoutY="187.0" mnemonicParsing="false" prefHeight="59.0" prefWidth="99.0" text="Start">
-               <font>
-                  <Font size="24.0" />
-               </font>
-            </Button>
-         </children></AnchorPane>
-  </content>
-</TitledPane>
-
- */

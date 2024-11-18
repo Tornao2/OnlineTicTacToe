@@ -9,10 +9,8 @@ public class Network {
     private PrintWriter output;
     private boolean isServer;
     private ServerSocket serverSocket;
-
     public Network(boolean isServer) {
         this.isServer = isServer;
-
         try {
             if (isServer) {
                 serverSocket = new ServerSocket(12345);
@@ -29,11 +27,9 @@ public class Network {
             e.printStackTrace();
         }
     }
-
     public void sendMessage(String message) {
         output.println(message);
     }
-
     public String receiveMessage() {
         try {
             return input.readLine();
@@ -42,7 +38,6 @@ public class Network {
         }
         return null;
     }
-
     public void closeConnection() {
         try {
             if (input != null) input.close();

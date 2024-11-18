@@ -5,7 +5,6 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
-import javafx.stage.Stage;
 
 public class Board {
     private Button[][] board;
@@ -29,9 +28,6 @@ public class Board {
         initializeBoard();
         initializeScoreTexts();
     }
-
-    public void start(Stage gameStage) {}
-
     private void initializeScoreTexts() {
         player1ScoreText.setX(100);
         player1ScoreText.setY(20);
