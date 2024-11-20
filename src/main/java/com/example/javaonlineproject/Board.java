@@ -13,13 +13,13 @@ public class Board {
     private char player2;
     private char currentPlayer;
     private GridPane grid;
-    private Network network;
+    private Connection network;
     private AnchorPane root;
     private int player1Wins = 0, draws = 0, player2Wins = 0;
     private Text player1ScoreText = new Text();
     private Text player2ScoreText = new Text();
 
-    public Board(Network network) {
+    public Board(Connection network) {
         this.network = network;
         this.board = new Button[3][3];
         this.player1 = 'X';

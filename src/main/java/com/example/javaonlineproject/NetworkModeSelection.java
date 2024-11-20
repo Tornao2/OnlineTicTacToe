@@ -10,6 +10,7 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import static javafx.scene.paint.Color.WHITE;
@@ -18,9 +19,10 @@ public class NetworkModeSelection {
     private Runnable onSelectSuccess;
     private boolean isServer;
 
-    private Label createLabel(){
-        Label label = new Label("Choose Network Mode:");
-        label.setTextFill(WHITE);
+    private Text createText(String text){
+        Text label = new Text(text);
+        label.setFont(new Font(16));
+        label.setFill(WHITE);
         return label;
     }
     private RadioButton createRadio(String text) {
@@ -34,10 +36,10 @@ public class NetworkModeSelection {
         clientRadioButton.setToggleGroup(group);
         serverRadioButton.setSelected(true);
     }
-    private Button createStartButton (RadioButton serverRadioButton) {
+    private Button createStartButton (RadioButton serverRadioButton, Text waitingLabel) {
         Button startButton = new Button("Start");
         startButton.setFont(new Font(16));
-        startButton.setOnAction(_ -> startButtonFunc(serverRadioButton));
+        startButton.setOnAction(_ -> startButtonFunc(serverRadioButton, waitingLabel));
         return startButton;
     }
     private VBox createVBox() {
@@ -60,19 +62,25 @@ public class NetworkModeSelection {
     }
 
     public void start(Stage primaryStage) {
-        Label label = createLabel();
+        Text choiceText = createText("Choose Network Mode:");
+        Text waitingText = createText("");
         RadioButton serverRadioButton = createRadio("Server");
         RadioButton clientRadioButton = createRadio("Client");
         createToggleGroup(serverRadioButton, clientRadioButton);
-        Button startButton = createStartButton(serverRadioButton);
+        Button startButton = createStartButton(serverRadioButton, waitingText);
         VBox organizer = createVBox();
-        organizer.getChildren().addAll(label, serverRadioButton, clientRadioButton, startButton);
+        organizer.getChildren().addAll(choiceText, serverRadioButton, clientRadioButton, startButton, waitingText);
         BorderPane manager = createManager(organizer);
         manageScene(primaryStage, manager);
     }
 
-    public void startButtonFunc(RadioButton serverRadioButton) {
+    public void startButtonFunc(RadioButton serverRadioButton, Text waitingLabel) {
         isServer = serverRadioButton.isSelected();
+        if (isServer) {
+            waitingLabel.setText("No client was available");
+        } else {
+            waitingLabel.setText("No server was available");
+        }
         onSelectSuccess.run();
     }
     public void setOnStartSuccess(Runnable onSelectSuccess) {

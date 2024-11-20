@@ -5,33 +5,39 @@ import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
-public class HelloApplication extends Application {
+import java.io.IOException;
+
+public class TicTacToe extends Application {
     public static final int screenW = 800;
     public static final int screenH = 600;
     @Override
     public void start(Stage primaryStage) {
         LoginScreen loginScreen = new LoginScreen();
-        loginScreen.setOnLoginSuccess(() -> showMenu(primaryStage)); // Set the callback for successful login
+        loginScreen.setOnLoginSuccess(() -> sceneMenu(primaryStage)); // Set the callback for successful login
         loginScreen.start(primaryStage); // Start the login screen
     }
-    private void showMenu(Stage primaryStage) {
+    private void sceneMenu(Stage primaryStage) {
         System.out.println("Loading Menu..."); // Debugging
         Menu menu = new Menu();
-        menu.setOnStartSuccess(() -> showNetworkSelection(primaryStage));
+        menu.setOnStartSuccess(() -> sceneNetworkSelect(primaryStage));
         menu.start(primaryStage);
     }
-    private void showNetworkSelection(Stage primaryStage) {
+    private void sceneNetworkSelect(Stage primaryStage) {
         System.out.println("Loading Network Selection..."); // Debugging
         NetworkModeSelection modeSelection = new NetworkModeSelection();
-        modeSelection.setOnStartSuccess(() -> initializeGame(primaryStage, modeSelection.getIsServer()));
+        modeSelection.setOnStartSuccess(() -> sceneNetworkConnecting(primaryStage, modeSelection.getIsServer()));
         modeSelection.start(primaryStage);
     }
 
-    public void initializeGame(Stage primaryStage, boolean isServer) {
-        System.out.println(isServer);
-        Network network;
+    private void sceneNetworkConnecting(Stage primaryStage, boolean isServer) {
+        System.out.println("Connecting..."); // Debugging
+        Connection connection = new Connection(isServer);
+
+    }
+
+    public void sceneGame(Stage primaryStage, boolean isServer) {
         StackPane root = new StackPane();
-        network = new Network(isServer);
+        Connection network = new Connection(isServer);
         Board gameBoard = new Board(network);
         root.getChildren().add(gameBoard.getRootPane());
         Scene scene = new Scene(root, screenW, screenH);
