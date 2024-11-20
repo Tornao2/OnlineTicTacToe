@@ -4,7 +4,7 @@ import java.io.*;
 import java.net.*;
 
 public class Connection {
-    private boolean isServer;
+    private final boolean isServer;
     private BufferedReader input;
     private PrintWriter output;
     private Socket socket;
@@ -15,25 +15,37 @@ public class Connection {
         boolean connected = false;
         try {
             if (isServer) {
-                while (!connected) {
+                try {
                     serverSocket = new ServerSocket(12345);
-                    System.out.println("Server loading...");
+                    System.out.println("Server loading..."); // Debugging
+                    serverSocket.setSoTimeout(10000);
+                } catch (BindException e) {
+                    System.out.println("Server is already running on this port. Choose client mode.");
+                    return;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                try {
                     socket = serverSocket.accept();
-                    System.out.println("Client connected");
+                    System.out.println("Client connected"); // Debugging
+                } catch (SocketTimeoutException e) {
+                    System.out.println("No client connected within the timeout period."); // Debugging
+                    serverSocket.close();
+                    return;
                 }
             } else {
                 while (!connected) {
                     try {
                         triedConnecting++;
                         socket = new Socket("localhost", 12345);
-                        System.out.println("Connected to server");
+                        System.out.println("Connected to server"); // Debugging
                         connected = true;
                     } catch (IOException e) {
                         if(triedConnecting > 5) {
+                            System.out.println("Didn't connect to server"); // Debugging
                             return;
                         }
-                        System.out.println("Waiting for server...");
-                        Thread.sleep(1000); // Wait before retrying
+                        Thread.sleep(1000);
                     }
                 }
             }
@@ -49,7 +61,7 @@ public class Connection {
             if (output != null) output.close();
             if (socket != null) socket.close();
             if (isServer && serverSocket != null) serverSocket.close();
-            System.out.println("Connection closed");
+            System.out.println("Connection closed"); // Debugging
         } catch (IOException e) {
             e.printStackTrace();
         }

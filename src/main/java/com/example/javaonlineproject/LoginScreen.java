@@ -17,7 +17,7 @@ import java.util.Objects;
 import static javafx.scene.paint.Color.WHITE;
 
 public class LoginScreen  {
-    private Runnable onLoginSuccess; // Callback for login success
+    private Runnable onLoginSuccess;
 
     private ImageView createLogo() {
         ImageView logoImageView = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/images/TictacToe.png"))));
@@ -87,9 +87,9 @@ public class LoginScreen  {
         } else {
             System.out.println("Login successful, transitioning to menu."); // Debugging
             if (onLoginSuccess != null) {
-                onLoginSuccess.run(); // Trigger the login success callback
+                onLoginSuccess.run();
             } else {
-                System.out.println("Login success callback is null"); // Debugging
+                System.out.println("Login success callback is null");
             }
         }
     }
@@ -108,6 +108,6 @@ public class LoginScreen  {
     }
 
     public void setOnLoginSuccess(Runnable onLoginSuccess) {
-        this.onLoginSuccess = onLoginSuccess; // Set the callback for login success
+        this.onLoginSuccess = onLoginSuccess;
     }
 }

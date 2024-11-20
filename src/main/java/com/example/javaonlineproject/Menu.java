@@ -66,11 +66,10 @@ public class Menu  {
         System.out.println("Pressed stats"); // Debugging
     }
     private void quitButton() {
-        System.out.println("Exiting..."); // Debugging
         System.exit(0);
     }
 
     public void setOnStartSuccess(Runnable onLoginSuccess) {
-        this.onStartSuccess = onLoginSuccess; // Set the callback for login success
+        this.onStartSuccess = onLoginSuccess;
     }
 }

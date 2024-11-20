@@ -4,7 +4,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
@@ -44,7 +43,7 @@ public class NetworkModeSelection {
     }
     private VBox createVBox() {
         VBox organizer = new VBox(12);
-        organizer.setPrefSize(300, 150);
+        organizer.setPrefSize(340, 150);
         organizer.setPadding(new Insets(8, 8, 10, 8));
         organizer.setAlignment(Pos.BASELINE_CENTER);
         return organizer;
@@ -77,14 +76,14 @@ public class NetworkModeSelection {
     public void startButtonFunc(RadioButton serverRadioButton, Text waitingLabel) {
         isServer = serverRadioButton.isSelected();
         if (isServer) {
-            waitingLabel.setText("No client was available");
+            waitingLabel.setText("No client was available or server already exists");
         } else {
             waitingLabel.setText("No server was available");
         }
         onSelectSuccess.run();
     }
     public void setOnStartSuccess(Runnable onSelectSuccess) {
-        this.onSelectSuccess = onSelectSuccess; // Set the callback for login success
+        this.onSelectSuccess = onSelectSuccess;
     }
     public boolean getIsServer() {
         return this.isServer;
