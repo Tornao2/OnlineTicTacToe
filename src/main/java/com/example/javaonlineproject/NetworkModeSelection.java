@@ -55,7 +55,7 @@ public class NetworkModeSelection {
     }
     private void manageScene(Stage primaryStage, BorderPane manager) {
         Scene scene = new Scene(manager);
-        primaryStage.setTitle("Menu");
+        primaryStage.setTitle("ModeSelect");
         primaryStage.setScene(scene);
         primaryStage.show();
     }

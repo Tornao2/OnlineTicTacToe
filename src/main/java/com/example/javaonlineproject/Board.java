@@ -1,193 +1,200 @@
 package com.example.javaonlineproject;
 
 import javafx.application.Platform;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 
 public class Board {
-    private Button[][] board;
-    private char player1;
-    private char player2;
-    private char currentPlayer;
-    private GridPane grid;
-    private Connection network;
-    private AnchorPane root;
+    private final Button[][] board;
+    private String symbolUsed;
+    private Boolean moved;
     private int player1Wins = 0, draws = 0, player2Wins = 0;
-    private Text player1ScoreText = new Text();
-    private Text player2ScoreText = new Text();
+    private Connection connection;
+    Text player1ScoreText;
+    Text player2ScoreText;
+    Thread messageListenerThread = null;
 
-    public Board(Connection network) {
-        this.network = network;
+    public Board() {
         this.board = new Button[3][3];
-        this.player1 = 'X';
-        this.player2 = 'O';
-        this.currentPlayer = player1;  // Start with player1
-        this.grid = new GridPane();
-        initializeBoard();
-        initializeScoreTexts();
-        startListeningForMoves(); // Uruchamiamy wątek nasłuchujący
     }
-
-    private void initializeScoreTexts() {
-        player1ScoreText.setX(100);
-        player1ScoreText.setY(20);
+    private void initializePlayer1ScoreText() {
+        player1ScoreText = new Text();
         player1ScoreText.setStyle("-fx-fill: white;");
-        player1ScoreText.setFont(Font.font(20));
-
-        player2ScoreText.setX(400);
-        player2ScoreText.setY(20);
-        player2ScoreText.setStyle("-fx-fill: white;");
-        player2ScoreText.setFont(Font.font(20));
-
-        root.getChildren().addAll(player1ScoreText, player2ScoreText);
+        player1ScoreText.setFont(new Font(16));
     }
-
-    private void initializeBoard() {
-        root = new AnchorPane();
-        root.setPrefSize(800, 600);
-        root.setStyle("-fx-background-color: #1A1A1A;");
-        grid.setHgap(10);
-        grid.setVgap(10);
-        root.getChildren().add(grid);
-
+    private void initializePlayer2ScoreText(){
+        player2ScoreText = new Text();
+        player2ScoreText.setStyle("-fx-fill: white;");
+        player2ScoreText.setFont(new Font(16));
+    }
+    private GridPane initializeBoard() {
+        GridPane gridPane = new GridPane();
+        gridPane.setAlignment(Pos.BASELINE_CENTER);
+        gridPane.setHgap(6);
+        gridPane.setVgap(6);
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 3; column++) {
                 Button cell = new Button("");
-                cell.setMinSize(100, 100);
                 cell.setStyle("-fx-background-color: #FFFFFF;");
-                cell.prefHeight(300);
-                cell.prefWidth(200);
+                cell.setMinSize(150, 150);
                 final int r = row;
                 final int c = column;
-                cell.setOnAction(event -> handleMove(r, c, cell));
+                cell.setOnAction(_ -> handleMove(r, c, cell));
                 board[r][c] = cell;
-                grid.add(cell, column, row);
+                gridPane.add(cell, column, row);
             }
         }
+        return gridPane;
+    }
+    private Button createExitButton() {
+        Button exit = new Button("Exit");
+        exit.setFont(new Font(16));
+        exit.setOnAction(_ -> exit());
+        return exit;
+    }
+    private VBox createVBox() {
+        VBox organizer = new VBox(12);
+        organizer.setAlignment(Pos.CENTER);
+        organizer.setPadding(new Insets(8, 8, 10, 8));
+        return organizer;
+    }
+    private BorderPane createManager(VBox organizer){
+        BorderPane root = new BorderPane(organizer);
+        root.setStyle("-fx-background-color: #1A1A1A;");
+        return root;
+    }
+    private void manageScene(Stage primaryStage, BorderPane manager) {
+        Scene scene = new Scene(manager, 800, 600);
+        primaryStage.setTitle("Game");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
 
-        double gridWidth = 3 * 100 + 2 * 10;
-        double gridHeight = 3 * 100 + 2 * 10;
-        AnchorPane.setTopAnchor(grid, (root.getPrefHeight() - gridHeight) / 2);
-        AnchorPane.setLeftAnchor(grid, (root.getPrefWidth() - gridWidth) / 2);
+    public void start(Stage primaryStage, Connection connection) {
+        this.connection = connection;
+        if (connection.getIsServer()) {
+            symbolUsed = "X";
+            moved = false;
+        } else {
+            symbolUsed = "O";
+            moved = true;
+        }
+        initializePlayer1ScoreText();
+        initializePlayer2ScoreText();
+        GridPane gameGrid = initializeBoard();
+        Button exitButton = createExitButton();
+        VBox organizer = createVBox();
+        organizer.getChildren().addAll(player1ScoreText, player2ScoreText, gameGrid, exitButton);
+        BorderPane manager = createManager(organizer);
+        manageScene(primaryStage, manager);
+        Thread messageListenerThread = new Thread(new MessageListener());
+        messageListenerThread.start();
     }
 
     private void handleMove(int row, int column, Button cell) {
-        if (cell.getText().isEmpty()) {
-            cell.setText(String.valueOf(currentPlayer));
-            network.sendMessage(row + "," + column); // Send move over the network
-
-            if (checkWin(currentPlayer)) {
-                System.out.println(currentPlayer + " wins!");
-                if (currentPlayer == player1) {
-                    player1Wins++;
-                } else {
-                    player2Wins++;
-                }
-                network.sendMessage("WIN");
-                network.sendMessage("SCORES:" + player1Wins + ":" + draws + ":" + player2Wins); // Synchronizacja wyników
-                updateScores();
-                resetBoard();
-            } else if (checkDraw()) {
-                System.out.println("Draw");
-                draws++;
-                network.sendMessage("DRAW");
-                network.sendMessage("SCORES:" + player1Wins + ":" + draws + ":" + player2Wins); // Synchronizacja wyników
-                updateScores();
-                resetBoard();
-            } else {
-                // Switch current player
-                currentPlayer = (currentPlayer == player1) ? player2 : player1;
-            }
-        }
-    }
-
-    private void startListeningForMoves() {
-        Thread listenerThread = new Thread(() -> {
-            while (true) {
-                String move = network.receiveMessage();
-                if (move != null) {
-                    Platform.runLater(() -> processMove(move)); // Przetwarzamy ruch w wątku JavaFX
-                }
-            }
-        });
-        listenerThread.setDaemon(true);
-        listenerThread.start();
-    }
-
-    private void processMove(String move) {
-        if (move.startsWith("SCORES:")) {
-            String[] parts = move.split(":");
-            player1Wins = Integer.parseInt(parts[1]);
-            draws = Integer.parseInt(parts[2]);
-            player2Wins = Integer.parseInt(parts[3]);
-            updateScores(); // Aktualizacja wyników na podstawie otrzymanych danych
-        } else if (move.equals("WIN")) {
-            System.out.println("Opponent won!");
-            if (currentPlayer == player1) {
-                player2Wins++;
-            } else {
-                player1Wins++;
-            }
-            updateScores();
-            resetBoard();
-        } else if (move.equals("DRAW")) {
-            System.out.println("It's a draw!");
-            draws++;
-            updateScores();
-            resetBoard();
-        } else {
-            String[] parts = move.split(",");
-            int row = Integer.parseInt(parts[0]);
-            int column = Integer.parseInt(parts[1]);
-            if (board[row][column].getText().isEmpty()) {
-                board[row][column].setText(String.valueOf(currentPlayer));
-                if (checkWin(currentPlayer)) {
-                    System.out.println(currentPlayer + " wins!");
-                    if (currentPlayer == player1) {
+        if (!moved) {
+            if (cell.getText().isEmpty()) {
+                cell.setText(symbolUsed);
+                if (checkWin()) {
+                    System.out.println("You win!"); //Debugging
+                    if (connection.getIsServer()) {
                         player1Wins++;
                     } else {
                         player2Wins++;
                     }
+                    connection.sendMessage("WIN");
                     updateScores();
                     resetBoard();
                 } else if (checkDraw()) {
-                    System.out.println("Draw");
+                    System.out.println("Draw"); //Debugging
                     draws++;
+                    connection.sendMessage("DRAW");
                     updateScores();
                     resetBoard();
                 } else {
-                    currentPlayer = (currentPlayer == player1) ? player2 : player1;
+                    connection.sendMessage(row + "," + column);
+                    moved = true;
                 }
             }
         }
     }
-
-    private boolean checkWin(char player) {
-        for (int i = 0; i < 3; i++) {
-            if (board[i][0].getText().equals(String.valueOf(player)) &&
-                    board[i][1].getText().equals(String.valueOf(player)) &&
-                    board[i][2].getText().equals(String.valueOf(player))) {
-                return true;
+    class MessageListener implements Runnable {
+        @Override
+        public void run() {
+            while (!Thread.currentThread().isInterrupted()) {
+                String move = connection.receiveMessage();
+                switch (move) {
+                    case null:
+                        break;
+                    case "WIN":
+                        System.out.println("Opponent won!"); // Debugging
+                        if (connection.getIsServer()) {
+                            player2Wins++;
+                        } else {
+                            player1Wins++;
+                        }
+                        Platform.runLater(() -> {
+                            updateScores();
+                            resetBoard();
+                        });
+                        break;
+                    case "DRAW":
+                        System.out.println("It's a draw!"); // Debugging
+                        draws++;
+                        Platform.runLater(() -> {
+                            updateScores();
+                            resetBoard();
+                        });
+                        break;
+                    case "CLOSING":
+                        exit();
+                        break;
+                    default:
+                        String[] parts = move.split(",");
+                        int row = Integer.parseInt(parts[0]);
+                        int column = Integer.parseInt(parts[1]);
+                        Platform.runLater(() -> {
+                            if (connection.getIsServer()) {
+                                board[row][column].setText("O");
+                            } else {
+                                board[row][column].setText("X");
+                            }
+                        });
+                        moved = false;
+                }
             }
         }
-        for (int i = 0; i < 3; i++) {
-            if (board[0][i].getText().equals(String.valueOf(player)) &&
-                    board[1][i].getText().equals(String.valueOf(player)) &&
-                    board[2][i].getText().equals(String.valueOf(player))) {
-                return true;
-            }
-        }
-        return board[0][0].getText().equals(String.valueOf(player)) &&
-                board[1][1].getText().equals(String.valueOf(player)) &&
-                board[2][2].getText().equals(String.valueOf(player)) ||
-                board[0][2].getText().equals(String.valueOf(player)) &&
-                        board[1][1].getText().equals(String.valueOf(player)) &&
-                        board[2][0].getText().equals(String.valueOf(player));
     }
-
+    private boolean checkWin() {
+        for (int i = 0; i < 3; i++) {
+            if (board[i][0].getText().equals(symbolUsed) &&
+                    board[i][1].getText().equals(symbolUsed) &&
+                    board[i][2].getText().equals(symbolUsed)) {
+                return true;
+            }
+        }
+        for (int i = 0; i < 3; i++) {
+            if (board[0][i].getText().equals(symbolUsed) &&
+                    board[1][i].getText().equals(symbolUsed) &&
+                    board[2][i].getText().equals(symbolUsed)) {
+                return true;
+            }
+        }
+        return board[0][0].getText().equals(symbolUsed) &&
+                board[1][1].getText().equals(symbolUsed) &&
+                board[2][2].getText().equals(symbolUsed) ||
+                board[0][2].getText().equals(symbolUsed) &&
+                        board[1][1].getText().equals(symbolUsed) &&
+                        board[2][0].getText().equals(symbolUsed);
+    }
     private boolean checkDraw() {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
@@ -196,24 +203,30 @@ public class Board {
                 }
             }
         }
-        return !checkWin(player1) && !checkWin(player2);
+        return !checkWin();
     }
-
     private void updateScores() {
         player1ScoreText.setText("Player 1 (X) Score: " + player1Wins + "-" + draws + "-" + player2Wins);
         player2ScoreText.setText("Player 2 (O) Score: " + player2Wins + "-" + draws + "-" + player1Wins);
     }
-
     private void resetBoard() {
         for (Button[] row : board) {
             for (Button cell : row) {
                 cell.setText("");
             }
         }
-        currentPlayer = player1;  // Reset to player1 for new game
+        moved = !connection.getIsServer();
     }
-
-    public AnchorPane getRootPane() {
-        return root;
+    private void exit() {
+        if (messageListenerThread != null) {
+            messageListenerThread.interrupt();
+            try {
+                messageListenerThread.join();
+            } catch (InterruptedException e) {
+                System.out.println("Error while waiting for thread to finish: " + e.getMessage());
+            }
+        }
+        connection.closeConnection();
+        System.exit(0);
     }
 }

@@ -4,13 +4,17 @@ import java.io.*;
 import java.net.*;
 
 public class Connection {
+    private Runnable onConnectionSuccess;
     private final boolean isServer;
     private BufferedReader input;
     private PrintWriter output;
     private Socket socket;
     private ServerSocket serverSocket;
+
     public Connection(boolean isServer) {
         this.isServer = isServer;
+    }
+    public void start(){
         int triedConnecting = 0;
         boolean connected = false;
         try {
@@ -18,7 +22,7 @@ public class Connection {
                 try {
                     serverSocket = new ServerSocket(12345);
                     System.out.println("Server loading..."); // Debugging
-                    serverSocket.setSoTimeout(10000);
+                    serverSocket.setSoTimeout(5000);
                 } catch (BindException e) {
                     System.out.println("Server is already running on this port. Choose client mode.");
                     return;
@@ -51,21 +55,26 @@ public class Connection {
             }
             input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             output = new PrintWriter(socket.getOutputStream(), true);
+            onConnectionSuccess.run();
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }
     public void closeConnection() {
+        if (!socket.isClosed()) {
+            output.println("CLOSING");
+        }
         try {
             if (input != null) input.close();
             if (output != null) output.close();
             if (socket != null) socket.close();
-            if (isServer && serverSocket != null) serverSocket.close();
+            if (serverSocket != null) serverSocket.close();
             System.out.println("Connection closed"); // Debugging
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
     public void sendMessage(String message) {
         output.println(message);
     }
@@ -76,5 +85,12 @@ public class Connection {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public void setOnConnectionSuccess(Runnable onConnectionSuccess) {
+        this.onConnectionSuccess = onConnectionSuccess;
+    }
+    public boolean getIsServer() {
+        return this.isServer;
     }
 }

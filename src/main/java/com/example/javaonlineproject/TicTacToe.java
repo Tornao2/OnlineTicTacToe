@@ -1,13 +1,9 @@
 package com.example.javaonlineproject;
 
 import javafx.application.Application;
-import javafx.scene.Scene;
-import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 public class TicTacToe extends Application {
-    public static final int screenW = 800;
-    public static final int screenH = 600;
     @Override
     public void start(Stage primaryStage) {
         LoginScreen loginScreen = new LoginScreen();
@@ -29,16 +25,12 @@ public class TicTacToe extends Application {
 
     private void sceneNetworkConnecting(Stage primaryStage, boolean isServer) {
         Connection connection = new Connection(isServer);
+        connection.setOnConnectionSuccess(() -> sceneGame(primaryStage, connection));
+        connection.start();
     }
 
-    public void sceneGame(Stage primaryStage, boolean isServer) {
-        StackPane root = new StackPane();
-        Connection network = new Connection(isServer);
-        Board gameBoard = new Board(network);
-        root.getChildren().add(gameBoard.getRootPane());
-        Scene scene = new Scene(root, screenW, screenH);
-        primaryStage.setTitle("Tic-Tac-Toe Game");
-        primaryStage.setScene(scene);
-        primaryStage.show();
+    public void sceneGame(Stage primaryStage, Connection connection) {
+        Board board = new Board();
+        board.start(primaryStage, connection);
     }
 }
