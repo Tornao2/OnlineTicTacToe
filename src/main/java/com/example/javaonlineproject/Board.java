@@ -1,5 +1,6 @@
 package com.example.javaonlineproject;
 
+import javafx.application.Platform;
 import javafx.scene.control.Button;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
@@ -27,7 +28,9 @@ public class Board {
         this.grid = new GridPane();
         initializeBoard();
         initializeScoreTexts();
+        startListeningForMoves(); // Uruchamiamy wątek nasłuchujący
     }
+
     private void initializeScoreTexts() {
         player1ScoreText.setX(100);
         player1ScoreText.setY(20);
@@ -93,53 +96,61 @@ public class Board {
                 updateScores();
                 resetBoard();
             } else {
-                // Switch current player
                 currentPlayer = (currentPlayer == player1) ? player2 : player1;
-                receiveMove();  // Wait for the opponent's move
             }
         }
     }
 
-    private void receiveMove() {
-        String move = network.receiveMessage();
-        if (move != null) {
-            if (move.equals("WIN")) {
-                System.out.println("Opponent won!");
-                if (currentPlayer == player1) {
-                    player2Wins++;
-                } else {
-                    player1Wins++;
+    private void startListeningForMoves() {
+        Thread listenerThread = new Thread(() -> {
+            while (true) {
+                String move = network.receiveMessage();
+                if (move != null) {
+                    Platform.runLater(() -> processMove(move)); // Przetwarzamy ruch w wątku JavaFX
                 }
-                updateScores();
-                resetBoard();
-            } else if (move.equals("DRAW")) {
-                System.out.println("It's a draw!");
-                draws++;
-                updateScores();
-                resetBoard();
+            }
+        });
+        listenerThread.setDaemon(true);
+        listenerThread.start();
+    }
+
+    private void processMove(String move) {
+        if (move.equals("WIN")) {
+            System.out.println("Opponent won!");
+            if (currentPlayer == player1) {
+                player2Wins++;
             } else {
-                String[] parts = move.split(",");
-                int row = Integer.parseInt(parts[0]);
-                int column = Integer.parseInt(parts[1]);
-                if (board[row][column].getText().isEmpty()) {
-                    board[row][column].setText(String.valueOf(currentPlayer));
-                    if (checkWin(currentPlayer)) {
-                        System.out.println(currentPlayer + " wins!");
-                        if (currentPlayer == player1) {
-                            player1Wins++;
-                        } else {
-                            player2Wins++;
-                        }
-                        updateScores();
-                        resetBoard();
-                    } else if (checkDraw()) {
-                        System.out.println("Draw");
-                        draws++;
-                        updateScores();
-                        resetBoard();
+                player1Wins++;
+            }
+            updateScores();
+            resetBoard();
+        } else if (move.equals("DRAW")) {
+            System.out.println("It's a draw!");
+            draws++;
+            updateScores();
+            resetBoard();
+        } else {
+            String[] parts = move.split(",");
+            int row = Integer.parseInt(parts[0]);
+            int column = Integer.parseInt(parts[1]);
+            if (board[row][column].getText().isEmpty()) {
+                board[row][column].setText(String.valueOf(currentPlayer));
+                if (checkWin(currentPlayer)) {
+                    System.out.println(currentPlayer + " wins!");
+                    if (currentPlayer == player1) {
+                        player1Wins++;
                     } else {
-                        currentPlayer = (currentPlayer == player1) ? player2 : player1;
+                        player2Wins++;
                     }
+                    updateScores();
+                    resetBoard();
+                } else if (checkDraw()) {
+                    System.out.println("Draw");
+                    draws++;
+                    updateScores();
+                    resetBoard();
+                } else {
+                    currentPlayer = (currentPlayer == player1) ? player2 : player1;
                 }
             }
         }
