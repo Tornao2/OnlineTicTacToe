@@ -87,15 +87,18 @@ public class Board {
                     player2Wins++;
                 }
                 network.sendMessage("WIN");
+                network.sendMessage("SCORES:" + player1Wins + ":" + draws + ":" + player2Wins); // Synchronizacja wyników
                 updateScores();
                 resetBoard();
             } else if (checkDraw()) {
                 System.out.println("Draw");
                 draws++;
                 network.sendMessage("DRAW");
+                network.sendMessage("SCORES:" + player1Wins + ":" + draws + ":" + player2Wins); // Synchronizacja wyników
                 updateScores();
                 resetBoard();
             } else {
+                // Switch current player
                 currentPlayer = (currentPlayer == player1) ? player2 : player1;
             }
         }
@@ -115,7 +118,13 @@ public class Board {
     }
 
     private void processMove(String move) {
-        if (move.equals("WIN")) {
+        if (move.startsWith("SCORES:")) {
+            String[] parts = move.split(":");
+            player1Wins = Integer.parseInt(parts[1]);
+            draws = Integer.parseInt(parts[2]);
+            player2Wins = Integer.parseInt(parts[3]);
+            updateScores(); // Aktualizacja wyników na podstawie otrzymanych danych
+        } else if (move.equals("WIN")) {
             System.out.println("Opponent won!");
             if (currentPlayer == player1) {
                 player2Wins++;
