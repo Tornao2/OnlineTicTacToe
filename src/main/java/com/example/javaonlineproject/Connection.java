@@ -21,19 +21,15 @@ public class Connection {
             if (isServer) {
                 try {
                     serverSocket = new ServerSocket(12345);
-                    System.out.println("Server loading..."); // Debugging
                     serverSocket.setSoTimeout(5000);
                 } catch (BindException e) {
-                    System.out.println("Server is already running on this port. Choose client mode.");
                     return;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 try {
                     socket = serverSocket.accept();
-                    System.out.println("Client connected"); // Debugging
                 } catch (SocketTimeoutException e) {
-                    System.out.println("No client connected within the timeout period."); // Debugging
                     serverSocket.close();
                     return;
                 }
@@ -42,11 +38,9 @@ public class Connection {
                     try {
                         triedConnecting++;
                         socket = new Socket("localhost", 12345);
-                        System.out.println("Connected to server"); // Debugging
                         connected = true;
                     } catch (IOException e) {
                         if(triedConnecting > 5) {
-                            System.out.println("Didn't connect to server"); // Debugging
                             return;
                         }
                         Thread.sleep(1000);
@@ -69,7 +63,6 @@ public class Connection {
             if (output != null) output.close();
             if (socket != null) socket.close();
             if (serverSocket != null) serverSocket.close();
-            System.out.println("Connection closed"); // Debugging
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -81,10 +74,12 @@ public class Connection {
     public String receiveMessage() {
         try {
             return input.readLine();
+        } catch (SocketException e) {
+            return null;
         } catch (IOException e) {
             e.printStackTrace();
+            return null;
         }
-        return null;
     }
 
     public void setOnConnectionSuccess(Runnable onConnectionSuccess) {

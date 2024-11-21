@@ -1,5 +1,6 @@
 package com.example.javaonlineproject;
 
+import javafx.animation.PauseTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -11,6 +12,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import static javafx.scene.paint.Color.WHITE;
 
@@ -76,9 +78,17 @@ public class NetworkModeSelection {
     public void startButtonFunc(RadioButton serverRadioButton, Text waitingLabel) {
         isServer = serverRadioButton.isSelected();
         if (isServer) {
+            waitingLabel.setVisible(true);
             waitingLabel.setText("No client was available or server already exists");
+            PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
+            visiblePause.setOnFinished(_ -> waitingLabel.setVisible(false));
+            visiblePause.play();
         } else {
+            waitingLabel.setVisible(true);
             waitingLabel.setText("No server was available");
+            PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
+            visiblePause.setOnFinished(_ -> waitingLabel.setVisible(false));
+            visiblePause.play();
         }
         onSelectSuccess.run();
     }

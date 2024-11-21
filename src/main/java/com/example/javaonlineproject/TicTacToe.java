@@ -11,13 +11,11 @@ public class TicTacToe extends Application {
         loginScreen.start(primaryStage);
     }
     private void sceneMenu(Stage primaryStage) {
-        System.out.println("Loading Menu..."); // Debugging
         Menu menu = new Menu();
         menu.setOnStartSuccess(() -> sceneNetworkSelect(primaryStage));
         menu.start(primaryStage);
     }
     private void sceneNetworkSelect(Stage primaryStage) {
-        System.out.println("Loading Network Selection..."); // Debugging
         NetworkModeSelection modeSelection = new NetworkModeSelection();
         modeSelection.setOnStartSuccess(() -> sceneNetworkConnecting(primaryStage, modeSelection.getIsServer()));
         modeSelection.start(primaryStage);

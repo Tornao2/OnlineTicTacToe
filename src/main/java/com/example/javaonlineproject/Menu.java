@@ -63,7 +63,7 @@ public class Menu  {
         onStartSuccess.run();
     }
     public static void statsButton() {
-        System.out.println("Pressed stats"); // Debugging
+
     }
     private void quitButton() {
         System.exit(0);

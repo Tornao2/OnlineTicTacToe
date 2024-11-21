@@ -85,11 +85,8 @@ public class LoginScreen  {
             visiblePause.setOnFinished(_ -> text.setVisible(false));
             visiblePause.play();
         } else {
-            System.out.println("Login successful, transitioning to menu."); // Debugging
             if (onLoginSuccess != null) {
                 onLoginSuccess.run();
-            } else {
-                System.out.println("Login success callback is null");
             }
         }
     }
