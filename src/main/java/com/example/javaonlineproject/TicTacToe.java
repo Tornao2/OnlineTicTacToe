@@ -7,14 +7,23 @@ public class TicTacToe extends Application {
     @Override
     public void start(Stage primaryStage) {
         LoginScreen loginScreen = new LoginScreen();
-        loginScreen.setOnLoginSuccess(() -> sceneMenu(primaryStage));
+        loginScreen.setOnLoginPlayer(() -> sceneMenu(primaryStage));
+        loginScreen.setOnLoginServer(() -> serverLogic(primaryStage));
         loginScreen.start(primaryStage);
     }
+
+    private void serverLogic(Stage primaryStage) {
+        ServerLogic server = new ServerLogic();
+        server.start(primaryStage);
+    }
+
     private void sceneMenu(Stage primaryStage) {
         Menu menu = new Menu();
-        menu.setOnStartSuccess(() -> sceneNetworkSelect(primaryStage));
+        menu.setOnStartSuccess(null);
         menu.start(primaryStage);
     }
+
+    /*
     private void sceneNetworkSelect(Stage primaryStage) {
         NetworkModeSelection modeSelection = new NetworkModeSelection();
         modeSelection.setOnStartSuccess(() -> sceneNetworkConnecting(primaryStage, modeSelection.getIsServer()));
@@ -31,4 +40,5 @@ public class TicTacToe extends Application {
         Board board = new Board();
         board.start(primaryStage, connection);
     }
+    */
 }

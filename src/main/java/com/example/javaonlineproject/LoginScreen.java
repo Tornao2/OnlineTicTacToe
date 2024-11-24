@@ -12,12 +12,20 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.Socket;
 import java.util.Objects;
 
 import static javafx.scene.paint.Color.WHITE;
 
-public class LoginScreen  {
-    private Runnable onLoginSuccess;
+public class LoginScreen {
+    private Runnable playerLogin;
+    private Runnable serverLogin;
+    private final String serverName = "Server";
+    private final String serverPassword = "Server";
 
     private ImageView createLogo() {
         ImageView logoImageView = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/images/TictacToe.png"))));
@@ -40,7 +48,7 @@ public class LoginScreen  {
         return passwordField;
     }
     private Text createErrorText() {
-        Text text = new Text("Username or password cannot be empty.");
+        Text text = new Text("");
         text.setFill(WHITE);
         text.setTabSize(16);
         text.setFont(new Font(16));
@@ -50,12 +58,12 @@ public class LoginScreen  {
     private Button createLoginButton(TextField usernameField, TextField passwordField, Text text) {
         Button loginButton = new Button("Login");
         loginButton.setFont(new Font(16.0));
-        loginButton.setOnAction(_ ->changeScene(usernameField, passwordField, text));
+        loginButton.setOnAction(_ -> changeScene(usernameField, passwordField, text));
         return loginButton;
     }
     private VBox createVBox() {
         VBox organizer = new VBox(12);
-        organizer.setPrefSize(300, 180);
+        organizer.setMinSize(300, 210);
         organizer.setPadding(new Insets(10, 8, 10, 8));
         organizer.setAlignment(Pos.BASELINE_CENTER);
         return organizer;
@@ -72,23 +80,9 @@ public class LoginScreen  {
         primaryStage.show();
         root.requestFocus();
     }
-    private void centerElements(ImageView image, Text text, BorderPane root){
-        image.setX((root.getWidth() - image.getLayoutBounds().getWidth())/2);
-        text.setX((root.getWidth() - text.getLayoutBounds().getWidth())/2);
-    }
-    private void changeScene(TextField usernameField, TextField passwordField, Text text) {
-        String username = usernameField.getText();
-        String password = passwordField.getText();
-        if (username.isEmpty() || password.isEmpty()) {
-            text.setVisible(true);
-            PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
-            visiblePause.setOnFinished(_ -> text.setVisible(false));
-            visiblePause.play();
-        } else {
-            if (onLoginSuccess != null) {
-                onLoginSuccess.run();
-            }
-        }
+    private void centerElements(ImageView image, Text text, BorderPane root) {
+        image.setX((root.getWidth() - image.getLayoutBounds().getWidth()) / 2);
+        text.setX((root.getWidth() - text.getLayoutBounds().getWidth()) / 2);
     }
 
     public void start(Stage primaryStage) {
@@ -104,7 +98,56 @@ public class LoginScreen  {
         centerElements(logoImageView, errorText, Manager);
     }
 
-    public void setOnLoginSuccess(Runnable onLoginSuccess) {
-        this.onLoginSuccess = onLoginSuccess;
+
+    private void changeScene(TextField usernameField, TextField passwordField, Text text) {
+        String username = usernameField.getText();
+        String password = passwordField.getText();
+        Socket socket = null;
+        try {
+            socket = new Socket("localhost", 12345);
+        } catch (IOException _) {
+
+        }
+        if (username.equals(serverName) && password.equals(serverPassword)) {
+            if (socket != null) {
+                text.setText("Server already exists!");
+            } else {
+                serverLogin.run();
+                return;
+            }
+        } else if (username.isEmpty() || password.isEmpty())
+            text.setText("Username or password cannot be empty.");
+        else if (socket == null)
+            text.setText("Server isn't currently running");
+        else {
+            BufferedReader input;
+            String answer;
+            try {
+                input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            PlayerSender playerSender = new PlayerSender(socket);
+            playerSender.sendMessage("LOGIN" + ',' + username + ',' + password);
+            try {
+                answer = input.readLine();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            if (answer.equals("ALLOWED")) {
+                playerLogin.run();
+            }
+            return;
+        }
+        text.setVisible(true);
+        PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
+        visiblePause.setOnFinished(_ -> text.setVisible(false));
+        visiblePause.play();
+    }
+    public void setOnLoginPlayer(Runnable onLogin) {
+        this.playerLogin = onLogin;
+    }
+    public void setOnLoginServer(Runnable onLogin) {
+        this.serverLogin = onLogin;
     }
 }

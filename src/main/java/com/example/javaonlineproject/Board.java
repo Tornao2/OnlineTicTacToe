@@ -1,4 +1,4 @@
-package com.example.javaonlineproject;
+/*package com.example.javaonlineproject;
 
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -22,7 +22,6 @@ public class Board {
     private boolean otherSideRematch = false;
     private boolean finishedMatch = false;
     private int player1Wins = 0, draws = 0, player2Wins = 0;
-    private Connection connection;
     private Text scoreText;
 
     public Board() {
@@ -89,7 +88,7 @@ public class Board {
         primaryStage.show();
     }
 
-    public void start(Stage primaryStage, Connection connection) {
+    public void start(Stage primaryStage, PlayerNetwork connection) {
         this.connection = connection;
         if (connection.getIsServer()) {
             symbolUsed = new String[]{"X", "O"};
@@ -278,3 +277,4 @@ public class Board {
         }
     }
 }
+*/
