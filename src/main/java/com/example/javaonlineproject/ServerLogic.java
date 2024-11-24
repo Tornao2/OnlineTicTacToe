@@ -69,7 +69,7 @@ public class ServerLogic {
                     String loginAttempt;
                     while ((loginAttempt = receiveMessage(input) ) == null) {
                         Thread.sleep(200);
-                    };
+                    }
                     String[]data = loginAttempt.split(",");
                     userReaders.put(data[1], input);
                     userWriters.put(data[1], output);
