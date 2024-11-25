@@ -3,21 +3,19 @@ package com.example.javaonlineproject;
 import java.io.*;
 import java.net.*;
 
-public class PlayerListener implements Runnable{
-    private final BufferedReader input;
-    private Socket socket;
+public class Listener{
+    private BufferedReader input;
 
-    PlayerListener(Socket socket) {
+    public void setInput(Socket socket) {
         try {
             input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-    public void closeConnection() {
+    public void closeInput() {
         try {
             if (input != null) input.close();
-            if (socket != null) socket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -25,25 +23,13 @@ public class PlayerListener implements Runnable{
     public String receiveMessage() {
         try {
             return input.readLine();
-        } catch (SocketException e) {
+        } catch (SocketException _) {
+            return "SOCKETERROR";
+        } catch (SocketTimeoutException _) {
             return null;
         } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
-    }
-
-    @Override
-    public void run() {
-        while (!Thread.currentThread().isInterrupted()) {
-            String message = receiveMessage();
-            switch (message) {
-
-            }
-        }
-        closeConnection();
-    }
-    public Socket getSocket() {
-        return socket;
     }
 }

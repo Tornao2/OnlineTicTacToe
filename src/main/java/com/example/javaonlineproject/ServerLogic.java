@@ -8,25 +8,23 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 public class ServerLogic {
     Thread connectingThread;
+    ArrayList <Thread> listenerThreads = new ArrayList<>();
     ServerSocket serverSocket;
-    HashMap<String, BufferedReader> userReaders = new HashMap<>();
-    HashMap<String, PrintWriter> userWriters = new HashMap<>();
-    HashMap<String, Socket> userSockets = new HashMap<>();
+    LinkedHashMap<String, UserInfo> userMap = new LinkedHashMap <>();
+    ArrayList <UserInfo> waitingToPlay = new ArrayList<>();
 
     private Button createExitButton() {
         Button loginButton = new Button("Exit");
         loginButton.setFont(new Font(20));
-        loginButton.setOnAction(_ -> stop());
+        loginButton.setOnAction(_ -> stopAll());
         return loginButton;
     }
     private VBox createVBox() {
@@ -44,7 +42,6 @@ public class ServerLogic {
         primaryStage.show();
         organizer.requestFocus();
     }
-
     public void start(Stage primaryStage) {
         try {
             serverSocket = new ServerSocket(12345);
@@ -59,59 +56,88 @@ public class ServerLogic {
     }
 
     private void logic() {
-        Runnable connectionListener = () -> {
-            while (Thread.currentThread().isInterrupted()) {
-                try {
-                    Socket connection;
-                    connection = serverSocket.accept();
-                    BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                    PrintWriter output = new PrintWriter(connection.getOutputStream(), true);
-                    String loginAttempt;
-                    while ((loginAttempt = receiveMessage(input) ) == null) {
-                        Thread.sleep(200);
-                    }
-                    String[]data = loginAttempt.split(",");
-                    userReaders.put(data[1], input);
-                    userWriters.put(data[1], output);
-                    userSockets.put(data[1], connection);
-                    sendMessage("ALLOWED", output);
-                } catch (InterruptedException e) {
-                    return;
+        Runnable mainListener = () -> {
+            UserInfo userServed = userMap.lastEntry().getValue();
+            while (!Thread.currentThread().isInterrupted()) {
+                String move = userServed.getUserInput().receiveMessage();
+                if (move == null) {
+                    continue;
                 }
-                catch (IOException _) {
-
+                switch (move){
+                    case "GETENEMY":
+                        String enemyList = makeEnemyList(userServed);
+                        waitingToPlay.add(userServed);
+                        userServed.getUserOutput().sendMessage(enemyList);
+                        sendListToEveryoneBesides(userServed);
+                        break;
+                    case "REMOVE":
+                        waitingToPlay.remove(userServed);
+                        sendListToEveryoneBesides(userServed);
+                        break;
+                    case "SOCKETERROR":
+                        stopThisUser(userServed);
+                        return;
+                    default:
+                        break;
                 }
             }
         };
+        Runnable connectionListener = () -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                UserInfo temp = new UserInfo();
+                Socket connection;
+                try {
+                    connection = serverSocket.accept();
+                } catch (IOException _) {
+                    return;
+                }
+                temp.setUsersocket(connection);
+                temp.setUserinput(connection);
+                temp.setUseroutput(connection);
+                String loginAttempt;
+                loginAttempt = temp.getUserInput().receiveMessage();
+                String[]data = loginAttempt.split(",");
+                //Tutaj można dodać sprawdzanie hasła i loginu z data[1] i data[2]
+                temp.setUsername(data[1]);
+                temp.getUserOutput().sendMessage("ALLOWED");
+                userMap.put(temp.getUsername(), temp);
+                Thread listener = new Thread(mainListener);
+                listener.setDaemon(true);
+                listenerThreads.add(listener);
+                listener.start();
+            }
+        };
         connectingThread = new Thread(connectionListener);
+        connectingThread.setDaemon(true);
         connectingThread.start();
     }
 
-    private void stop() {
+    private void sendListToEveryoneBesides(UserInfo userServed) {
+        for (UserInfo users: waitingToPlay) {
+            String enemyList = makeEnemyList(users);
+            if (!users.getUsername().equals(userServed.getUsername())) {
+                users.getUserOutput().sendMessage(enemyList);
+            }
+        }
+    }
+    private String makeEnemyList(UserInfo userServed) {
+        String temp = "ENEMIES";
+        for (UserInfo users: waitingToPlay) {
+            if (!users.getUsername().equals(userServed.getUsername())) {
+                temp = temp.concat("," + users.getUsername());
+            }
+        }
+        return temp;
+    }
+    private void stopAll() {
         connectingThread.interrupt();
-        for (BufferedReader reader : userReaders.values()) {
-            try {
-                if (reader != null) reader.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        for (Thread thread: listenerThreads)
+            thread.interrupt();
+        for (UserInfo reader : userMap.values()) {
+            reader.closeConnection();
         }
-        userReaders.clear();
-        for (PrintWriter writer : userWriters.values()) {
-            if (writer != null) {
-                writer.println("CLOSING");
-                writer.close();
-            }
-        }
-        userWriters.clear();
-        for (Socket socket : userSockets.values()) {
-            try {
-                if (socket != null && !socket.isClosed()) socket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        userSockets.clear();
+        userMap.clear();
+        listenerThreads.clear();
         if (serverSocket != null && !serverSocket.isClosed()) {
             try {
                 serverSocket.close();
@@ -121,15 +147,8 @@ public class ServerLogic {
         }
         System.exit(0);
     }
-
-    public void sendMessage(String message, PrintWriter output) {
-        output.println(message);
-    }
-    public String receiveMessage(BufferedReader input) {
-        try {
-            return input.readLine();
-        } catch (IOException _) {
-            return null;
-        }
+    private void stopThisUser(UserInfo userServed) {
+        userServed.closeConnection();
+        userMap.remove(userServed.getUsername());
     }
 }

@@ -7,11 +7,21 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
+
+import static javafx.scene.paint.Color.WHITE;
 
 public class Menu  {
     private Runnable onStartSuccess;
+    private UserInfo user;
 
+    private Text createWelcomeText() {
+        Text text = new Text("Welcome " + user.getUsername() + "!");
+        text.setFill(WHITE);
+        text.setFont(new Font(16));
+        return text;
+    }
     private Button createStartButton() {
         Button startButton = new Button("Start");
         startButton.setFont(new Font(16.0));
@@ -32,7 +42,7 @@ public class Menu  {
     }
     private VBox createVBox() {
         VBox organizer = new VBox(12);
-        organizer.setPrefSize(300, 180);
+        organizer.setPrefSize(280, 210);
         organizer.setPadding(new Insets(8, 8, 10, 8));
         organizer.setAlignment(Pos.BASELINE_CENTER);
         return organizer;
@@ -49,12 +59,14 @@ public class Menu  {
         primaryStage.show();
     }
 
-    public void start(Stage primaryStage) {
+    public void start(Stage primaryStage, UserInfo user) {
+        this.user = user;
+        Text welcomeText = createWelcomeText();
         Button startButton = createStartButton();
         Button statsButton = createStatsButton();
         Button quitButton = createQuitButton();
         VBox organizer = createVBox();
-        organizer.getChildren().addAll(startButton, statsButton, quitButton);
+        organizer.getChildren().addAll(welcomeText, startButton, statsButton, quitButton);
         BorderPane manager = createManager(organizer);
         manageScene(primaryStage, manager);
     }
@@ -62,10 +74,14 @@ public class Menu  {
     private void ChangeScene() {
         onStartSuccess.run();
     }
-    public static void statsButton() {
-
+    public void statsButton() {
+        //Do implementacji
+        //Przy wykonaniu stwórz wiadomość do serwera o aktualizacje danych
+        //Trzeba zaimplementować aby serwer w pliku zapisywał dane wszystkich graczy
+        //I wyświetl w jakim formacie potrzeba
     }
     private void quitButton() {
+        user.closeConnection();
         System.exit(0);
     }
 

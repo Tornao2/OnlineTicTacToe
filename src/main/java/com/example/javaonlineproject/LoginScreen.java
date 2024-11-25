@@ -13,9 +13,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.Objects;
 
@@ -26,6 +24,7 @@ public class LoginScreen {
     private Runnable serverLogin;
     private final String serverName = "Server";
     private final String serverPassword = "Server";
+    UserInfo user = new UserInfo();
 
     private ImageView createLogo() {
         ImageView logoImageView = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/images/TictacToe.png"))));
@@ -50,7 +49,6 @@ public class LoginScreen {
     private Text createErrorText() {
         Text text = new Text("");
         text.setFill(WHITE);
-        text.setTabSize(16);
         text.setFont(new Font(16));
         text.setVisible(false);
         return text;
@@ -84,7 +82,6 @@ public class LoginScreen {
         image.setX((root.getWidth() - image.getLayoutBounds().getWidth()) / 2);
         text.setX((root.getWidth() - text.getLayoutBounds().getWidth()) / 2);
     }
-
     public void start(Stage primaryStage) {
         ImageView logoImageView = createLogo();
         TextField usernameField = createLoginField();
@@ -98,56 +95,51 @@ public class LoginScreen {
         centerElements(logoImageView, errorText, Manager);
     }
 
-
     private void changeScene(TextField usernameField, TextField passwordField, Text text) {
-        String username = usernameField.getText();
+        user.setUsername(usernameField.getText());
         String password = passwordField.getText();
-        Socket socket = null;
         try {
-            socket = new Socket("localhost", 12345);
+            user.setUsersocket(new Socket("localhost", 12345));
         } catch (IOException _) {
 
         }
-        if (username.equals(serverName) && password.equals(serverPassword)) {
-            if (socket != null) {
+        if (user.getUsername().equals(serverName) && password.equals(serverPassword)) {
+            if (user.getUserSocket() != null) {
                 text.setText("Server already exists!");
             } else {
                 serverLogin.run();
                 return;
             }
-        } else if (username.isEmpty() || password.isEmpty())
+        } else if (user.getUsername().isEmpty() || password.isEmpty())
             text.setText("Username or password cannot be empty.");
-        else if (socket == null)
+        else if (user.getUserSocket() == null)
             text.setText("Server isn't currently running");
         else {
-            BufferedReader input;
-            String answer;
-            try {
-                input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            PlayerSender playerSender = new PlayerSender(socket);
-            playerSender.sendMessage("LOGIN" + ',' + username + ',' + password);
-            try {
-                answer = input.readLine();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            user.setUserinput(user.getUserSocket());
+            user.setUseroutput(user.getUserSocket());
+            user.getUserOutput().sendMessage("LOGIN" + ',' + user.getUsername() + ',' + password);
+            String answer = user.getUserInput().receiveMessage();
             if (answer.equals("ALLOWED")) {
                 playerLogin.run();
+                return;
+            } else {
+                //Obecnie server nie sprawdza
+                text.setText("Account doesn't exist");
             }
-            return;
         }
         text.setVisible(true);
         PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
         visiblePause.setOnFinished(_ -> text.setVisible(false));
         visiblePause.play();
     }
+
     public void setOnLoginPlayer(Runnable onLogin) {
         this.playerLogin = onLogin;
     }
     public void setOnLoginServer(Runnable onLogin) {
         this.serverLogin = onLogin;
+    }
+    public UserInfo getUser() {
+        return user;
     }
 }

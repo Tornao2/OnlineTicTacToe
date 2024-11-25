@@ -7,7 +7,7 @@ public class TicTacToe extends Application {
     @Override
     public void start(Stage primaryStage) {
         LoginScreen loginScreen = new LoginScreen();
-        loginScreen.setOnLoginPlayer(() -> sceneMenu(primaryStage));
+        loginScreen.setOnLoginPlayer(() -> sceneMenu(primaryStage, loginScreen.getUser()));
         loginScreen.setOnLoginServer(() -> serverLogic(primaryStage));
         loginScreen.start(primaryStage);
     }
@@ -17,24 +17,19 @@ public class TicTacToe extends Application {
         server.start(primaryStage);
     }
 
-    private void sceneMenu(Stage primaryStage) {
+    private void sceneMenu(Stage primaryStage, UserInfo user) {
         Menu menu = new Menu();
-        menu.setOnStartSuccess(null);
-        menu.start(primaryStage);
+        menu.setOnStartSuccess(() -> enemyList(primaryStage, user));
+        menu.start(primaryStage, user);
+    }
+
+    private void enemyList(Stage primaryStage, UserInfo user) {
+        WaitList enemySelection = new WaitList();
+        enemySelection.setOnBack(() -> sceneMenu(primaryStage, user));
+        enemySelection.start(primaryStage, user);
     }
 
     /*
-    private void sceneNetworkSelect(Stage primaryStage) {
-        NetworkModeSelection modeSelection = new NetworkModeSelection();
-        modeSelection.setOnStartSuccess(() -> sceneNetworkConnecting(primaryStage, modeSelection.getIsServer()));
-        modeSelection.start(primaryStage);
-    }
-
-    private void sceneNetworkConnecting(Stage primaryStage, boolean isServer) {
-        Connection connection = new Connection(isServer);
-        connection.setOnConnectionSuccess(() -> sceneGame(primaryStage, connection));
-        connection.start();
-    }
 
     public void sceneGame(Stage primaryStage, Connection connection) {
         Board board = new Board();
@@ -42,3 +37,5 @@ public class TicTacToe extends Application {
     }
     */
 }
+
+//Przydałoby się ustandaryzować wygląd
