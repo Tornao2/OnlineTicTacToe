@@ -1,6 +1,7 @@
 package com.example.javaonlineproject;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -17,7 +18,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public class ServerLogic {
+public class ServerLogic extends Application {
     Thread connectingThread;
     ArrayList <Thread> listenerThreads = new ArrayList<>();
     ServerSocket serverSocket;
@@ -25,6 +26,7 @@ public class ServerLogic {
     ArrayList <UserInfo> waitingToPlay = new ArrayList<>();
     private static final String FILEPATH = "LoginData.json";
     private ObjectMapper objectMapper = new ObjectMapper();
+
     private Button createExitButton() {
         Button loginButton = new Button("Exit");
         loginButton.setFont(new Font(20));
@@ -81,6 +83,10 @@ public class ServerLogic {
                     case "SOCKETERROR":
                         stopThisUser(userServed);
                         return;
+                    case "INVITE":
+                        String enemyNick = userServed.getUserInput().receiveMessage();
+                        sendToThisUser(enemyNick, userServed.getUsername());
+                        break;
                     default:
                         break;
                 }
@@ -174,12 +180,11 @@ public class ServerLogic {
         objectMapper.writeValue(new File(FILEPATH), users);
     }
 
-
-
     private void sendListToEveryoneBesides(UserInfo userServed) {
         for (UserInfo users: waitingToPlay) {
             String enemyList = makeEnemyList(users);
             if (!users.getUsername().equals(userServed.getUsername())) {
+                users.getUserOutput().sendMessage("REFRESH");
                 users.getUserOutput().sendMessage(enemyList);
             }
         }
@@ -214,5 +219,10 @@ public class ServerLogic {
     private void stopThisUser(UserInfo userServed) {
         userServed.closeConnection();
         userMap.remove(userServed.getUsername());
+    }
+    private void sendToThisUser(String nickname, String inviter){
+        UserInfo searchedUser = userMap.get(nickname);
+        searchedUser.getUserOutput().sendMessage("INVITED");
+        searchedUser.getUserOutput().sendMessage(inviter);
     }
 }

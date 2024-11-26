@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Client2" type="Application" factoryName="Application" singleton="false">
+    <option name="MAIN_CLASS_NAME" value="com.example.javaonlineproject.TicTacToe" />
+    <module name="JavaOnlineProject" />
+    <method v="2" />
+  </configuration>
+</component>

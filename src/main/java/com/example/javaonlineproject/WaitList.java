@@ -105,10 +105,23 @@ public class WaitList {
     private void listeningForRefresh() {
         Runnable listener = () -> {
             while (!Thread.currentThread().isInterrupted()) {
-                populateEnemyList();
-                Platform.runLater(WaitList.this::refreshList);
+                String move = user.getUserInput().receiveMessage();
+                if (move != null) {
+                    switch (move) {
+                        case "REFRESH":
+                            populateEnemyList();
+                            Platform.runLater(WaitList.this::refreshList);
+                            break;
+                        case "INVITED":
+                            String enemyNick = user.getUserInput().receiveMessage();
+                            System.out.printf("My nick: %s, enemy nick: %s\n", user.getUsername(), enemyNick);
+                            break;
+                        default:
+                            break;
+                    }
+                }
                 try {
-                    Thread.sleep(3000);
+                    Thread.sleep(2000);
                 } catch (InterruptedException _) {
                     return;
                 }
@@ -120,7 +133,11 @@ public class WaitList {
     }
 
     public void playButtonFunc() {
-        listeningThread.interrupt();
+        String enemyName = String.valueOf(iteractiveList.getSelectionModel().getSelectedItem());
+        if (!enemyName.equals("null")) {
+            user.getUserOutput().sendMessage("INVITE");
+            user.getUserOutput().sendMessage(enemyName);
+        }
     }
     public void backButtonFunc(){
         listeningThread.interrupt();

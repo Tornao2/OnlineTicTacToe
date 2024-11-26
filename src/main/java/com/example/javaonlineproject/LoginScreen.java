@@ -1,5 +1,5 @@
 package com.example.javaonlineproject;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import javafx.animation.PauseTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -16,16 +16,12 @@ import javafx.util.Duration;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.List;
 import java.util.Objects;
 
 import static javafx.scene.paint.Color.WHITE;
 
 public class LoginScreen {
     private Runnable playerLogin;
-    private Runnable serverLogin;
-    private final String serverName = "Server";
-    private final String serverPassword = "Server";
     UserInfo user = new UserInfo();
 
     private ImageView createLogo() {
@@ -101,61 +97,35 @@ public class LoginScreen {
     private void changeScene(TextField usernameField, PasswordField passwordField, Text text) {
         user.setUsername(usernameField.getText());
         String password = passwordField.getText();
-        try {
-            user.setUserSocket(new Socket("localhost", 12345));
-        } catch (IOException _) {
-        }
+        if (user.getUsername().isEmpty() || password.isEmpty())
+            text.setText("Username or password cannot be empty.");
+        else {
+            try {
+                user.setUserSocket(new Socket("localhost", 12345));
+            } catch (IOException _) {
 
-        //wysylanie danych do serwera
-        user.getUserOutput().sendMessage("LOGIN" + "," + user.getUsername() + "," + password);
-        String response = user.getUserInput().receiveMessage();
-
-        if (response.equals("ALLOWED")) {
-            playerLogin.run();
-        } else {
-            text.setText("Incorrect login or password");
+            }
+            if (user.getUserSocket() == null) text.setText("Server isn't currently running");
+            else {
+                //wysylanie danych do serwera
+                user.setUserinput(user.getUserSocket());
+                user.setUseroutput(user.getUserSocket());
+                user.getUserOutput().sendMessage("LOGIN" + "," + user.getUsername() + "," + password);
+                String response = user.getUserInput().receiveMessage();
+                if (response.equals("ALLOWED")) {
+                    playerLogin.run();
+                } else {
+                    text.setText("Incorrect login or password");
+                }
+            }
         }
         text.setVisible(true);
         PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
         visiblePause.setOnFinished(_ -> text.setVisible(false));
         visiblePause.play();
     }
-
-        /* if (user.getUsername().equals(serverName) && password.equals(serverPassword)) {
-            if (user.getUserSocket() != null) {
-                text.setText("Server already exists!");
-            } else {
-                serverLogin.run();
-                return;
-            }
-        } else if (user.getUsername().isEmpty() || password.isEmpty())
-            text.setText("Username or password cannot be empty.");
-        else if (user.getUserSocket() == null)
-            text.setText("Server isn't currently running");
-        else {
-            user.setUserinput(user.getUserSocket());
-            user.setUseroutput(user.getUserSocket());
-            user.getUserOutput().sendMessage("LOGIN" + ',' + user.getUsername() + ',' + password);
-            String answer = user.getUserInput().receiveMessage();
-            if (answer.equals("ALLOWED")) {
-                playerLogin.run();
-                return;
-            } else {
-                //Obecnie server nie sprawdza
-                text.setText("Account doesn't exist");
-            }
-        }
-        text.setVisible(true);
-        PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
-        visiblePause.setOnFinished(_ -> text.setVisible(false));
-        visiblePause.play();
-    }*/
-
     public void setOnLoginPlayer(Runnable onLogin) {
         this.playerLogin = onLogin;
-    }
-    public void setOnLoginServer(Runnable onLogin) {
-        this.serverLogin = onLogin;
     }
     public UserInfo getUser() {
         return user;

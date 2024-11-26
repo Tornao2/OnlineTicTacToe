@@ -8,13 +8,7 @@ public class TicTacToe extends Application {
     public void start(Stage primaryStage) {
         LoginScreen loginScreen = new LoginScreen();
         loginScreen.setOnLoginPlayer(() -> sceneMenu(primaryStage, loginScreen.getUser()));
-        loginScreen.setOnLoginServer(() -> serverLogic(primaryStage));
         loginScreen.start(primaryStage);
-    }
-
-    private void serverLogic(Stage primaryStage) {
-        ServerLogic server = new ServerLogic();
-        server.start(primaryStage);
     }
 
     private void sceneMenu(Stage primaryStage, UserInfo user) {
@@ -28,7 +22,6 @@ public class TicTacToe extends Application {
         enemySelection.setOnBack(() -> sceneMenu(primaryStage, user));
         enemySelection.start(primaryStage, user);
     }
-
     /*
 
     public void sceneGame(Stage primaryStage, Connection connection) {
@@ -37,5 +30,3 @@ public class TicTacToe extends Application {
     }
     */
 }
-
-//Przydałoby się ustandaryzować wygląd
