@@ -1,5 +1,6 @@
 package com.example.javaonlineproject;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -8,11 +9,13 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 public class ServerLogic {
     Thread connectingThread;
@@ -20,7 +23,8 @@ public class ServerLogic {
     ServerSocket serverSocket;
     LinkedHashMap<String, UserInfo> userMap = new LinkedHashMap <>();
     ArrayList <UserInfo> waitingToPlay = new ArrayList<>();
-
+    private static final String FILEPATH = "LoginData.json";
+    private ObjectMapper objectMapper = new ObjectMapper();
     private Button createExitButton() {
         Button loginButton = new Button("Exit");
         loginButton.setFont(new Font(20));
@@ -91,26 +95,86 @@ public class ServerLogic {
                 } catch (IOException _) {
                     return;
                 }
-                temp.setUsersocket(connection);
+                temp.setUserSocket(connection);
                 temp.setUserinput(connection);
                 temp.setUseroutput(connection);
                 String loginAttempt;
                 loginAttempt = temp.getUserInput().receiveMessage();
                 String[]data = loginAttempt.split(",");
                 //Tutaj można dodać sprawdzanie hasła i loginu z data[1] i data[2]
+                if(isLoginValid(data[1], data[2])){
+                    //Uzytkownik istnieje
+                    temp.setUsername(data[1]);
+                    temp.getUserOutput().sendMessage("ALLOWED0");
+                    userMap.put(temp.getUsername(), temp);
+                    Thread listener = new Thread(mainListener);
+                    listener.setDaemon(true);
+                    listenerThreads.add(listener);
+                    listener.start();
+                }
+                else{
+                    //Uzytkownik nie istnieje
+                    registerNewUser(data[1], data[2]);
+                    temp.setUsername(data[1]);
+                    temp.getUserOutput().sendMessage("ALLOWED");
+                    userMap.put(temp.getUsername(), temp);
+                    Thread listener = new Thread(mainListener);
+                    listener.setDaemon(true);
+                    listenerThreads.add(listener);
+                    listener.start();
+                }/*
                 temp.setUsername(data[1]);
                 temp.getUserOutput().sendMessage("ALLOWED");
                 userMap.put(temp.getUsername(), temp);
                 Thread listener = new Thread(mainListener);
                 listener.setDaemon(true);
                 listenerThreads.add(listener);
-                listener.start();
+                listener.start();*/
             }
         };
         connectingThread = new Thread(connectionListener);
         connectingThread.setDaemon(true);
         connectingThread.start();
     }
+
+    private boolean isLoginValid(String username, String password) {
+        try {
+            List<LoginData> users = loadUsersFromFile();
+            for (LoginData user : users) {
+                if (user.getLogin().equals(username) && user.getPassword().equals(password)) {
+                    return true;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+
+    private List<LoginData> loadUsersFromFile() throws IOException {
+        File file = new File(FILEPATH);
+        if(!file.exists()){
+            return new ArrayList<>();
+        }
+        return objectMapper.readValue(file, objectMapper.getTypeFactory().constructCollectionType(List.class, LoginData.class));
+    }
+
+    private void registerNewUser(String username, String password) {
+        try {
+            List<LoginData> users = loadUsersFromFile();
+            users.add(new LoginData(username, password));
+            saveUsersToFile(users);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void saveUsersToFile(List<LoginData> users) throws IOException {
+        objectMapper.writeValue(new File(FILEPATH), users);
+    }
+
+
 
     private void sendListToEveryoneBesides(UserInfo userServed) {
         for (UserInfo users: waitingToPlay) {

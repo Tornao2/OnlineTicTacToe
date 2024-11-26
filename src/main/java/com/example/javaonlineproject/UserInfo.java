@@ -19,7 +19,7 @@ public class UserInfo {
     public Socket getUserSocket() {
         return userSocket;
     }
-    public void setUsersocket(Socket usersocket) {
+    public void setUserSocket(Socket usersocket) {
         this.userSocket = usersocket;
         try {
             userSocket.setSoTimeout(1000);
