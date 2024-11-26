@@ -1,4 +1,5 @@
 package com.example.javaonlineproject;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.animation.PauseTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -13,8 +14,9 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
+import java.util.List;
 import java.util.Objects;
 
 import static javafx.scene.paint.Color.WHITE;
@@ -25,6 +27,8 @@ public class LoginScreen {
     private final String serverName = "Server";
     private final String serverPassword = "Server";
     UserInfo user = new UserInfo();
+    private static final String FILEPATH = "LoginData.json";
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     private ImageView createLogo() {
         ImageView logoImageView = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/images/TictacToe.png"))));
@@ -101,9 +105,31 @@ public class LoginScreen {
         try {
             user.setUsersocket(new Socket("localhost", 12345));
         } catch (IOException _) {
-
         }
-        if (user.getUsername().equals(serverName) && password.equals(serverPassword)) {
+        if (isLoginExist(user.getUsername())) {
+            user.setUserinput(user.getUserSocket());
+            user.setUseroutput(user.getUserSocket());
+            user.getUserOutput().sendMessage("LOGIN" + ',' + user.getUsername() + ',' + password);
+            String anwser = user.getUserInput().receiveMessage();
+            if (anwser.equals("ALLOWED"))
+                playerLogin.run();
+            else
+                text.setText("Incorrect password");
+        } else {
+            if (user.getUsername().isEmpty() || password.isEmpty())
+                text.setText("Username or Password cannot be empty");
+            else {
+                registerNewUser(user.getUsername(), password);
+                text.setText("Login SUKCESFULI");
+                playerLogin.run();
+            }
+        }
+        text.setVisible(true);
+        PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
+        visiblePause.setOnFinished(_ -> text.setVisible(false));
+        visiblePause.play();
+    }
+        /* if (user.getUsername().equals(serverName) && password.equals(serverPassword)) {
             if (user.getUserSocket() != null) {
                 text.setText("Server already exists!");
             } else {
@@ -131,7 +157,42 @@ public class LoginScreen {
         PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
         visiblePause.setOnFinished(_ -> text.setVisible(false));
         visiblePause.play();
+    }*/
+
+    private boolean isLoginExist(String login) {
+        try {
+            List<LoginData> users = loadUsersFromFile();
+            for(LoginData user : users){
+                if(user.getLogin().equals(login))
+                    return true;
+            }
+        }catch(IOException e){
+            e.printStackTrace();
+        }
+        return false;
     }
+
+    private void registerNewUser(String login, String password) {
+        try {
+            List<LoginData> users = loadUsersFromFile();
+            users.add(new LoginData(login, password));
+            saveUserToFile(users);
+        }catch(IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    private List<LoginData> loadUsersFromFile() throws IOException {
+        File file = new File(FILEPATH);
+        if(!file.exists())
+            System.out.println("File dosen't exist");
+        return objectMapper.readValue(file, objectMapper.getTypeFactory().constructCollectionType(List.class, LoginData.class));
+    }
+
+    private void saveUserToFile(List<LoginData> users) throws IOException {
+        objectMapper.writeValue(new File(FILEPATH), users);
+    }
+
 
     public void setOnLoginPlayer(Runnable onLogin) {
         this.playerLogin = onLogin;
