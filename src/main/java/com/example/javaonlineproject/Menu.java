@@ -13,6 +13,7 @@ import javafx.stage.Stage;
 import static javafx.scene.paint.Color.WHITE;
 
 public class Menu  {
+    private Thread probeChecker;
     private Runnable onStartSuccess;
     private UserInfo user;
 
@@ -69,18 +70,53 @@ public class Menu  {
         organizer.getChildren().addAll(welcomeText, startButton, statsButton, quitButton);
         BorderPane manager = createManager(organizer);
         manageScene(primaryStage, manager);
+        probeLogic();
     }
 
+    private void probeLogic() {
+        Runnable probeListener = () -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                String probeCheck = user.getUserInput().receiveMessage();
+                if (probeCheck == null){
+                    continue;
+                }
+                 if (probeCheck.equals("PROBED")){
+                    user.getUserOutput().sendMessage("PROBED");
+                 }
+            }
+        };
+        probeChecker = new Thread(probeListener);
+        probeChecker.setDaemon(true);
+        probeChecker.start();
+    }
     private void ChangeScene() {
+        probeChecker.interrupt();
+        try {
+            probeChecker.join();
+        } catch(InterruptedException _) {
+
+        }
         onStartSuccess.run();
     }
-    public void statsButton() {
+    private void statsButton() {
+        probeChecker.interrupt();
+        try {
+            probeChecker.join();
+        } catch(InterruptedException _) {
+
+        }
         //Do implementacji
         //Przy wykonaniu stwórz wiadomość do serwera o aktualizacje danych
         //Trzeba zaimplementować aby serwer w pliku zapisywał dane wszystkich graczy
         //I wyświetl w jakim formacie potrzeba
     }
     private void quitButton() {
+        probeChecker.interrupt();
+        try {
+            probeChecker.join();
+        } catch(InterruptedException _) {
+
+        }
         user.closeConnection();
         System.exit(0);
     }

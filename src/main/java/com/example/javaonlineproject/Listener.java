@@ -17,7 +17,7 @@ public class Listener{
         try {
             if (input != null) input.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("closeInput");
         }
     }
     public String receiveMessage() {
@@ -28,7 +28,7 @@ public class Listener{
         } catch (SocketTimeoutException _) {
             return null;
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("receiveMessage");
             return null;
         }
     }

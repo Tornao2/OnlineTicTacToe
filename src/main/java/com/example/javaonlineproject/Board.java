@@ -1,4 +1,4 @@
-/*package com.example.javaonlineproject;
+package com.example.javaonlineproject;
 
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -15,22 +15,47 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import static javafx.scene.paint.Color.WHITE;
+
 public class Board {
+    private Thread messageListener;
+    private Runnable onResign;
+    private Text statusText = new Text();
+    private Text scoreText = new Text();
     private final Button[][] board;
     private String[] symbolUsed;
     private Boolean moved;
+    private Boolean quiting;
     private boolean otherSideRematch = false;
     private boolean finishedMatch = false;
-    private int player1Wins = 0, draws = 0, player2Wins = 0;
-    private Text scoreText;
+    private int thisSessionW = 0;
+    private int thisSessionD = 0;
+    private int thisSessionL = 0;
+    private UserInfo user;
+    private String enemyName;
+    private Boolean ignoreReads = false;
 
     public Board() {
         this.board = new Button[3][3];
+        quiting = false;
     }
-    private void initializeScoreText() {
-        scoreText = new Text();
-        scoreText.setStyle("-fx-fill: white;");
-        scoreText.setFont(new Font(24));
+    private void createScoreText() {
+        user.getUserOutput().sendMessage("NAME");
+        enemyName = user.getUserInput().receiveMessage();
+        scoreText = new Text("You 0-0-0 " + enemyName);
+        scoreText.setFill(WHITE);
+        scoreText.setFont(new Font(32));
+    }
+    private void refreshScoreText() {
+        scoreText.setText("You " + thisSessionW + "-" + thisSessionD + "-" + thisSessionL + " " + enemyName);
+    }
+    private void initStatusText() {
+        if (moved)
+            statusText = new Text("Enemy's turn!");
+        else
+            statusText = new Text("Your turn!");
+        statusText.setFill(WHITE);
+        statusText.setFont(new Font(32));
     }
     private GridPane initializeBoard() {
         GridPane gridPane = new GridPane();
@@ -52,11 +77,11 @@ public class Board {
         }
         return gridPane;
     }
-    private Button createExitButton() {
-        Button exit = new Button("Exit");
-        exit.setFont(new Font(16));
-        exit.setOnAction(_ -> exit());
-        return exit;
+    private Button createResignButton() {
+        Button resign = new Button("Resign");
+        resign.setFont(new Font(16));
+        resign.setOnAction(_ -> resign());
+        return resign;
     }
     private Button createRematchButton() {
         Button rematch = new Button("Rematch");
@@ -82,114 +107,126 @@ public class Board {
         return root;
     }
     private void manageScene(Stage primaryStage, BorderPane manager) {
-        Scene scene = new Scene(manager, 800, 600);
+        Scene scene = new Scene(manager, 1024, 768);
         primaryStage.setTitle("Game");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
+    private void setSymbols() {
+        String text = user.getUserInput().receiveMessage();
+        ignoreReads = false;
+        symbolUsed = text.split(",");
+        moved = !symbolUsed[0].equals("X");
+        if (moved)
+            statusText.setText("Enemy's turn!");
+        else
+            statusText.setText("Your turn!");
 
-    public void start(Stage primaryStage, PlayerNetwork connection) {
-        this.connection = connection;
-        if (connection.getIsServer()) {
-            symbolUsed = new String[]{"X", "O"};
-            moved = false;
-        } else {
-            symbolUsed = new String[]{"O", "X"};
-            moved = true;
-        }
-        initializeScoreText();
+    }
+    public void start(Stage primaryStage, UserInfo user) {
+        this.user = user;
+        setSymbols();
+        initStatusText();
         GridPane gameGrid = initializeBoard();
-        Button exitButton = createExitButton();
+        createScoreText();
+        Button resignButton = createResignButton();
         Button rematchButton= createRematchButton();
         VBox organizer = createVBox();
         HBox buttons = createHBox();
-        buttons.getChildren().addAll(rematchButton, exitButton);
-        organizer.getChildren().addAll(scoreText, gameGrid, buttons);
+        buttons.getChildren().addAll(rematchButton, resignButton);
+        organizer.getChildren().addAll(statusText, scoreText, gameGrid, buttons);
         BorderPane manager = createManager(organizer);
         manageScene(primaryStage, manager);
-        Thread messageListenerThread = new Thread(new MessageListener());
-        messageListenerThread.setDaemon(true);
-        messageListenerThread.start();
+        listeningLogic();
     }
 
     private void handleMove(int row, int column, Button cell) {
-        if (!moved) {
-            if (cell.getText().isEmpty()) {
+        if (!moved && !finishedMatch) {
                 cell.setText(symbolUsed[0]);
+                user.getUserOutput().sendMessage("MOVE");
+                user.getUserOutput().sendMessage(String.valueOf(row));
+                user.getUserOutput().sendMessage(String.valueOf(column));
                 if (checkWin()) {
-                    if (connection.getIsServer()) {
-                        player1Wins++;
-                    } else {
-                        player2Wins++;
-                    }
-                    connection.sendMessage(row + "," + column);
-                    connection.sendMessage("WIN");
-                    updateScores();
+                    thisSessionW++;
+                    refreshScoreText();
+                    user.getUserOutput().sendMessage("WIN");
+                    statusText.setText("You won!");
                     finishedMatch = true;
-                    moved = true;
                 } else if (checkDraw()) {
-                    draws++;
-                    connection.sendMessage(row + "," + column);
-                    connection.sendMessage("DRAW");
-                    updateScores();
+                    thisSessionD++;
+                    refreshScoreText();
+                    user.getUserOutput().sendMessage("DRAW");
+                    statusText.setText("You tied!");
                     finishedMatch = true;
-                    moved = true;
                 } else {
-                    connection.sendMessage(row + "," + column);
                     moved = true;
+                    statusText.setText("Enemy's turn!");
                 }
-            }
         }
     }
-    class MessageListener implements Runnable {
-        @Override
-        public void run() {
-                while (!Thread.currentThread().isInterrupted()) {
-                    String move = connection.receiveMessage();
-                    if (move == null) {
-                        exit();
-                        return;
-                    }
-                    switch (move) {
-                        case "WIN":
-                            if (connection.getIsServer()) {
-                                player2Wins++;
-                            } else {
-                                player1Wins++;
-                            }
-                            Platform.runLater(Board.this::updateScores);
-                            moved = true;
-                            finishedMatch = true;
-                            break;
-                        case "DRAW":
-                            draws++;
-                            Platform.runLater(Board.this::updateScores);
-                            moved = true;
-                            finishedMatch = true;
-                            break;
-                        case "CLOSING":
-                            exit();
-                            break;
-                        case "REMATCH":
-                            otherSideRematch = true;
-                            break;
-                        case "ACCEPT":
-                            otherSideRematch = false;
-                            finishedMatch = false;
-                            Platform.runLater(Board.this::resetBoard);
-                            break;
-                        default:
-                            String[] parts = move.split(",");
-                            int row = Integer.parseInt(parts[0]);
-                            int column = Integer.parseInt(parts[1]);
-                            Platform.runLater(() -> {
-                                board[row][column].setText(symbolUsed[1]);
-                                checkWin();
-                            });
-                            moved = false;
-                    }
+    private void listeningLogic() {
+        Runnable mainListener = () -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                String move = null;
+                if (!ignoreReads) {
+                    move = user.getUserInput().receiveMessage();
                 }
-        }
+                if (move == null || quiting) {
+                    continue;
+                }
+                switch (move) {
+                    case "LOST":
+                        thisSessionL++;
+                        Platform.runLater(Board.this::refreshScoreText);
+                        finishedMatch = true;
+                        statusText.setText("You lost!");
+                        break;
+                    case "DRAW":
+                        thisSessionD++;
+                        Platform.runLater(Board.this::refreshScoreText);
+                        finishedMatch = true;
+                        statusText.setText("You tied!");
+                        break;
+                    case "ENEMYRESIGNED":
+                        thisSessionW++;
+                        Platform.runLater(Board.this::refreshScoreText);
+                        finishedMatch = true;
+                        moved = true;
+                        Platform.runLater(Board.this::quit);
+                        break;
+                    case "REMATCH":
+                        statusText.setText("Enemy wants a rematch!");
+                        otherSideRematch = true;
+                        break;
+                    case "ACCEPT":
+                        Platform.runLater(Board.this::resetBoard);
+                        otherSideRematch = false;
+                        finishedMatch = false;
+                        ignoreReads = true;
+                        break;
+                    case "MOVE":
+                        String row = user.getUserInput().receiveMessage();
+                        String col = user.getUserInput().receiveMessage();
+                        int rowInt = Integer.parseInt(row);
+                        int colInt = Integer.parseInt(col);
+                        Platform.runLater(() -> {
+                            board[rowInt][colInt].setText(symbolUsed[1]);
+                            if (!checkWin())
+                                checkDraw();
+                        });
+                        moved = false;
+                        statusText.setText("Your turn!");
+                    case "PROBE":
+                        user.getUserOutput().sendMessage("PROBE");
+                        break;
+                    default:
+                        break;
+                }
+            }
+        };
+        messageListener = new Thread(mainListener);
+        messageListener.setDaemon(true);
+        messageListener.start();
     }
     private boolean checkWin() {
         String color = "-fx-background-color: #1e990e";
@@ -242,14 +279,13 @@ public class Board {
                 }
             }
         }
-        return !checkWin();
-    }
-    private void updateScores() {
-        scoreText.setVisible(true);
-        scoreText.setText("Player 1 (X):  " + player1Wins + "-" + draws + "-" + player2Wins + "  Player 2 (O)");
-        PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
-        visiblePause.setOnFinished(_ -> scoreText.setVisible(false));
-        visiblePause.play();
+        String color = "-fx-background-color: #a29390 ";
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                board[i][j].setStyle(color);
+            }
+        }
+        return true;
     }
     private void resetBoard() {
         for (Button[] row : board) {
@@ -258,23 +294,50 @@ public class Board {
                 cell.setStyle("-fx-background-color: #FFFFFF;");
             }
         }
-        moved = !connection.getIsServer();
-    }
-    private void exit() {
-        connection.closeConnection();
-        System.exit(0);
+        setSymbols();
     }
     private void rematch() {
-        if (finishedMatch) {
+        if (finishedMatch && !quiting) {
             if (!otherSideRematch) {
-                connection.sendMessage("REMATCH");
+                user.getUserOutput().sendMessage("REMATCH");
+                statusText.setText("You want a rematch!");
             } else {
-                connection.sendMessage("ACCEPT");
-                otherSideRematch = false;
-                finishedMatch = false;
-                resetBoard();
+                user.getUserOutput().sendMessage("ACCEPT");
             }
         }
     }
+
+    private void resign() {
+        if (!quiting) {
+            messageListener.interrupt();
+            try {
+                messageListener.join();
+            } catch (InterruptedException _) {
+
+            }
+            thisSessionL++;
+            refreshScoreText();
+            user.getUserOutput().sendMessage("RESIGNED");
+            onResign.run();
+            quiting = true;
+        }
+    }
+    private void quit() {
+        messageListener.interrupt();
+        try {
+            messageListener.join();
+        } catch (InterruptedException _) {
+
+        }
+        quiting = true;
+        PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
+        visiblePause.setOnFinished(_ -> onResign.run());
+        visiblePause.play();
+        statusText.setText("Enemy has resigned! Quiting the match in 3 seconds");
+        finishedMatch = true;
+        moved = true;
+    }
+    public void setOnResign(Runnable onResign){
+        this.onResign = onResign;
+    }
 }
-*/

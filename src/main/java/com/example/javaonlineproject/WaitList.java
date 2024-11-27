@@ -48,10 +48,10 @@ public class WaitList {
                     }
         }
     }
-    private Button createPlayButton() {
+    private Button createInviteButton() {
         Button loginButton = new Button("Invite");
         loginButton.setFont(new Font(16.0));
-        loginButton.setOnAction(_ -> playButtonFunc());
+        loginButton.setOnAction(_ -> inviteButtonFunc());
         return loginButton;
     }
     private Button createBackButton() {
@@ -84,15 +84,12 @@ public class WaitList {
         primaryStage.setScene(scene);
         primaryStage.show();
     }
-
     public void start(Stage primaryStage, UserInfo user) {
         this.user = user;
         user.getUserOutput().sendMessage("GETENEMY");
-        populateEnemyList();
         Text choiceText = createText();
-        refreshList();
         iteractiveList.setMinSize(200, 200);
-        Button invite = createPlayButton();
+        Button invite = createInviteButton();
         Button back = createBackButton();
         HBox buttons = createHBox();
         buttons.getChildren().addAll(invite, back);
@@ -100,6 +97,8 @@ public class WaitList {
         organizer.getChildren().addAll(choiceText, iteractiveList, buttons);
         BorderPane manager = createManager(organizer);
         manageScene(primaryStage, manager);
+        populateEnemyList();
+        refreshList();
         listeningForRefresh();
     }
     private void listeningForRefresh() {
@@ -114,16 +113,23 @@ public class WaitList {
                             break;
                         case "INVITED":
                             String enemyNick = user.getUserInput().receiveMessage();
-                            System.out.printf("My nick: %s, enemy nick: %s\n", user.getUsername(), enemyNick);
+                            for(int i = 0; i < enemyList.length; i++) {
+                                if (enemyList[i].equals(enemyNick)) {
+                                    enemyList[i] = enemyList[i].concat(" - INVITED YOU TO A MATCH");
+                                    break;
+                                }
+                            }
+                            Platform.runLater(WaitList.this::refreshList);
+                            break;
+                        case "MATCH":
+                            Platform.runLater(WaitList.this::proceedToGame);
+                            return;
+                        case "PROBE":
+                            user.getUserOutput().sendMessage("PROBE");
                             break;
                         default:
                             break;
                     }
-                }
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException _) {
-                    return;
                 }
             }
         };
@@ -132,17 +138,44 @@ public class WaitList {
         listeningThread.start();
     }
 
-    public void playButtonFunc() {
-        String enemyName = String.valueOf(iteractiveList.getSelectionModel().getSelectedItem());
-        if (!enemyName.equals("null")) {
+    private void inviteButtonFunc() {
+        String enemySignature = String.valueOf(iteractiveList.getSelectionModel().getSelectedItem());
+        if (enemySignature.equals("null"))
+            return;
+        String[] enemyInfo = enemySignature.split(" ", 2);
+        if (enemyInfo.length == 1) {
             user.getUserOutput().sendMessage("INVITE");
-            user.getUserOutput().sendMessage(enemyName);
+            user.getUserOutput().sendMessage(enemyInfo[0]);
+            for(int i = 0; i < enemyList.length; i++) {
+                if (enemyList[i].equals(enemyInfo[0])) {
+                    enemyList[i] = enemyList[i].concat(" - INVITED THEM TO A MATCH");
+                    refreshList();
+                    break;
+                }
+            }
+        } else if (!enemyInfo[1].equals("- INVITED THEM TO A MATCH")){
+            user.getUserOutput().sendMessage("PLAY");
+            user.getUserOutput().sendMessage(enemyInfo[0]);
         }
     }
-    public void backButtonFunc(){
+    private void backButtonFunc(){
         listeningThread.interrupt();
+        try {
+            listeningThread.join();
+        } catch (InterruptedException _) {
+
+        }
         user.getUserOutput().sendMessage("REMOVE");
         onBack.run();
+    }
+    private void proceedToGame() {
+        listeningThread.interrupt();
+        try {
+            listeningThread.join();
+        } catch (InterruptedException _) {
+
+        }
+        onPlay.run();
     }
     public void setOnPlay(Runnable onPlay) {
         this.onPlay = onPlay;

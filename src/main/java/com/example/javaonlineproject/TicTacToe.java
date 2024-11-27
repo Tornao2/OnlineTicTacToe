@@ -20,13 +20,13 @@ public class TicTacToe extends Application {
     private void enemyList(Stage primaryStage, UserInfo user) {
         WaitList enemySelection = new WaitList();
         enemySelection.setOnBack(() -> sceneMenu(primaryStage, user));
+        enemySelection.setOnPlay(() -> playMatch(primaryStage, user));
         enemySelection.start(primaryStage, user);
     }
-    /*
 
-    public void sceneGame(Stage primaryStage, Connection connection) {
+    private void playMatch(Stage primaryStage, UserInfo user) {
         Board board = new Board();
-        board.start(primaryStage, connection);
+        board.setOnResign(() -> sceneMenu(primaryStage, user));
+        board.start(primaryStage, user);
     }
-    */
 }

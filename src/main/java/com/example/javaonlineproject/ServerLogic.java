@@ -14,18 +14,17 @@ import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 
 public class ServerLogic extends Application {
-    Thread connectingThread;
-    ArrayList <Thread> listenerThreads = new ArrayList<>();
-    ServerSocket serverSocket;
-    LinkedHashMap<String, UserInfo> userMap = new LinkedHashMap <>();
-    ArrayList <UserInfo> waitingToPlay = new ArrayList<>();
+    private Thread connectingThread;
+    private final ArrayList <Thread> listenerThreads = new ArrayList<>();
+    private ServerSocket serverSocket;
+    private final LinkedHashMap<String, UserInfo> userMap = new LinkedHashMap <>();
+    private final ArrayList <UserInfo> waitingToPlay = new ArrayList<>();
+    private final HashMap<UserInfo, UserInfo> playersInProgress = new HashMap<>();
     private static final String FILEPATH = "LoginData.json";
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private Button createExitButton() {
         Button loginButton = new Button("Exit");
@@ -63,13 +62,28 @@ public class ServerLogic extends Application {
 
     private void logic() {
         Runnable mainListener = () -> {
+            int disconnectCheck = 0;
+            long startTime = System.currentTimeMillis();
             UserInfo userServed = userMap.lastEntry().getValue();
             while (!Thread.currentThread().isInterrupted()) {
+                long elapsedTime = System.currentTimeMillis() - startTime;
+                if (elapsedTime >= 5000) {
+                    userServed.getUserOutput().sendMessage("PROBED");
+                    disconnectCheck++;
+                    startTime = System.currentTimeMillis();
+                }
+                if (disconnectCheck >= 4) {
+                    stopThisUser(userServed);
+                    return;
+                }
                 String move = userServed.getUserInput().receiveMessage();
                 if (move == null) {
                     continue;
                 }
                 switch (move){
+                    case "PROBED":
+                        disconnectCheck = 0;
+                        break;
                     case "GETENEMY":
                         String enemyList = makeEnemyList(userServed);
                         waitingToPlay.add(userServed);
@@ -85,7 +99,57 @@ public class ServerLogic extends Application {
                         return;
                     case "INVITE":
                         String enemyNick = userServed.getUserInput().receiveMessage();
-                        sendToThisUser(enemyNick, userServed.getUsername());
+                        UserInfo searchedUser = userMap.get(enemyNick);
+                        searchedUser.getUserOutput().sendMessage("INVITED");
+                        searchedUser.getUserOutput().sendMessage(userServed.getUsername());
+                        break;
+                    case "PLAY":
+                        String firstNick = userServed.getUserInput().receiveMessage();
+                        String secondNick = userServed.getUsername();
+                        UserInfo firstUser = userMap.get(firstNick);
+                        firstUser.getUserOutput().sendMessage("MATCH");
+                        UserInfo secondUser = userMap.get(secondNick);
+                        secondUser.getUserOutput().sendMessage("MATCH");
+                        waitingToPlay.remove(firstUser);
+                        waitingToPlay.remove(secondUser);
+                        sendListToEveryoneBesides(firstUser);
+                        firstUser.getUserOutput().sendMessage("X,0");
+                        secondUser.getUserOutput().sendMessage("0,X");
+                        playersInProgress.put(firstUser, secondUser);
+                        playersInProgress.put(secondUser, firstUser);
+                        break;
+                    case "WIN":
+                        //+1 lose dla tego co przegrał + 1 win dla drugiego zapisać do pliku
+                        playersInProgress.get(userServed).getUserOutput().sendMessage("LOST");
+                        break;
+                    case "DRAW":
+                        //+1 draw dla obu zapisać w pliku
+                        playersInProgress.get(userServed).getUserOutput().sendMessage("DRAW");
+                        break;
+                    case "MOVE":
+                        String row = userServed.getUserInput().receiveMessage();
+                        String col = userServed.getUserInput().receiveMessage();
+                        playersInProgress.get(userServed).getUserOutput().sendMessage("MOVE");
+                        playersInProgress.get(userServed).getUserOutput().sendMessage(row);
+                        playersInProgress.get(userServed).getUserOutput().sendMessage(col);
+                        break;
+                    case "RESIGNED":
+                        //+1 lose dla tego co zrezygnował + 1 win dla drugiego zapisać do pliku
+                        playersInProgress.get(userServed).getUserOutput().sendMessage("ENEMYRESIGNED");
+                        playersInProgress.remove(playersInProgress.get(userServed));
+                        playersInProgress.remove(userServed);
+                        break;
+                    case "REMATCH":
+                        playersInProgress.get(userServed).getUserOutput().sendMessage("REMATCH");
+                        break;
+                    case "ACCEPT":
+                        playersInProgress.get(userServed).getUserOutput().sendMessage("ACCEPT");
+                        userServed.getUserOutput().sendMessage("ACCEPT");
+                        userServed.getUserOutput().sendMessage("X,0");
+                        playersInProgress.get(userServed).getUserOutput().sendMessage("0,X");
+                        break;
+                    case "NAME":
+                        userServed.getUserOutput().sendMessage(playersInProgress.get((userServed)).getUsername());
                         break;
                     default:
                         break;
@@ -102,8 +166,8 @@ public class ServerLogic extends Application {
                     return;
                 }
                 temp.setUserSocket(connection);
-                temp.setUserinput(connection);
-                temp.setUseroutput(connection);
+                temp.setUserInput(connection);
+                temp.setUserOutput(connection);
                 String loginAttempt;
                 loginAttempt = temp.getUserInput().receiveMessage();
                 String[]data = loginAttempt.split(",");
@@ -152,12 +216,10 @@ public class ServerLogic extends Application {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("isLoginValid exception");
         }
         return false;
     }
-
-
     private List<LoginData> loadUsersFromFile() throws IOException {
         File file = new File(FILEPATH);
         if(!file.exists()){
@@ -165,17 +227,15 @@ public class ServerLogic extends Application {
         }
         return objectMapper.readValue(file, objectMapper.getTypeFactory().constructCollectionType(List.class, LoginData.class));
     }
-
     private void registerNewUser(String username, String password) {
         try {
             List<LoginData> users = loadUsersFromFile();
             users.add(new LoginData(username, password));
             saveUsersToFile(users);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("registerNewUser exception");
         }
     }
-
     private void saveUsersToFile(List<LoginData> users) throws IOException {
         objectMapper.writeValue(new File(FILEPATH), users);
     }
@@ -211,7 +271,7 @@ public class ServerLogic extends Application {
             try {
                 serverSocket.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                System.err.println("stopAll exception");
             }
         }
         System.exit(0);
@@ -219,10 +279,5 @@ public class ServerLogic extends Application {
     private void stopThisUser(UserInfo userServed) {
         userServed.closeConnection();
         userMap.remove(userServed.getUsername());
-    }
-    private void sendToThisUser(String nickname, String inviter){
-        UserInfo searchedUser = userMap.get(nickname);
-        searchedUser.getUserOutput().sendMessage("INVITED");
-        searchedUser.getUserOutput().sendMessage(inviter);
     }
 }

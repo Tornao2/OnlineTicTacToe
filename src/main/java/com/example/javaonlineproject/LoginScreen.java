@@ -22,7 +22,7 @@ import static javafx.scene.paint.Color.WHITE;
 
 public class LoginScreen {
     private Runnable playerLogin;
-    UserInfo user = new UserInfo();
+    private final UserInfo user = new UserInfo();
 
     private ImageView createLogo() {
         ImageView logoImageView = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/images/TictacToe.png"))));
@@ -108,8 +108,8 @@ public class LoginScreen {
             if (user.getUserSocket() == null) text.setText("Server isn't currently running");
             else {
                 //wysylanie danych do serwera
-                user.setUserinput(user.getUserSocket());
-                user.setUseroutput(user.getUserSocket());
+                user.setUserInput(user.getUserSocket());
+                user.setUserOutput(user.getUserSocket());
                 user.getUserOutput().sendMessage("LOGIN" + "," + user.getUsername() + "," + password);
                 String response = user.getUserInput().receiveMessage();
                 if (response.equals("ALLOWED")) {
