@@ -137,6 +137,11 @@ public class ServerLogic extends Application {
                         playersInProgress.remove(playersInProgress.get(userServed));
                         playersInProgress.remove(userServed);
                         break;
+                    case "QUIT":
+                        playersInProgress.get(userServed).getUserOutput().sendMessage("ENEMYQUIT");
+                        playersInProgress.remove(playersInProgress.get(userServed));
+                        playersInProgress.remove(userServed);
+                        break;
                     case "REMATCH":
                         playersInProgress.get(userServed).getUserOutput().sendMessage("REMATCH");
                         break;

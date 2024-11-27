@@ -82,7 +82,7 @@ public class WaitList {
     }
     private void manageScene(Stage primaryStage, BorderPane manager) {
         Scene scene = new Scene(manager);
-        primaryStage.setTitle("ModeSelect");
+        primaryStage.setTitle("Enemy select");
         primaryStage.setScene(scene);
         primaryStage.show();
     }

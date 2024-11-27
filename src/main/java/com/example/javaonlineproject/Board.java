@@ -200,6 +200,11 @@ public class Board {
                         moved = true;
                         Platform.runLater(Board.this::quit);
                         break;
+                    case "ENEMYQUIT":
+                        finishedMatch = true;
+                        moved = true;
+                        Platform.runLater(Board.this::quit);
+                        break;
                     case "REMATCH":
                         statusText.setText("Enemy wants a rematch!");
                         otherSideRematch = true;
@@ -322,9 +327,13 @@ public class Board {
             } catch (InterruptedException _) {
 
             }
-            thisSessionL++;
-            refreshScoreText();
-            user.getUserOutput().sendMessage("RESIGNED");
+            if (!finishedMatch) {
+                thisSessionL++;
+                refreshScoreText();
+                user.getUserOutput().sendMessage("RESIGNED");
+            } else {
+                user.getUserOutput().sendMessage("QUIT");
+            }
             onResign.run();
             quiting = true;
         }
