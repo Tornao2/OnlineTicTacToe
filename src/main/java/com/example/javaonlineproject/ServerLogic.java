@@ -80,7 +80,8 @@ public class ServerLogic extends Application {
                 if (move == null) {
                     continue;
                 }
-                switch (move){
+                String[] moveSplit = move.split(",");
+                switch (moveSplit[0]){
                     case "PROBED":
                         disconnectCheck = 0;
                         break;
@@ -98,13 +99,12 @@ public class ServerLogic extends Application {
                         stopThisUser(userServed);
                         return;
                     case "INVITE":
-                        String enemyNick = userServed.getUserInput().receiveMessage();
+                        String enemyNick = moveSplit[1];
                         UserInfo searchedUser = userMap.get(enemyNick);
-                        searchedUser.getUserOutput().sendMessage("INVITED");
-                        searchedUser.getUserOutput().sendMessage(userServed.getUsername());
+                        searchedUser.getUserOutput().sendMessage("INVITED," + userServed.getUsername());
                         break;
                     case "PLAY":
-                        String firstNick = userServed.getUserInput().receiveMessage();
+                        String firstNick = moveSplit[1];
                         String secondNick = userServed.getUsername();
                         UserInfo firstUser = userMap.get(firstNick);
                         firstUser.getUserOutput().sendMessage("MATCH");
@@ -127,11 +127,9 @@ public class ServerLogic extends Application {
                         playersInProgress.get(userServed).getUserOutput().sendMessage("DRAW");
                         break;
                     case "MOVE":
-                        String row = userServed.getUserInput().receiveMessage();
-                        String col = userServed.getUserInput().receiveMessage();
-                        playersInProgress.get(userServed).getUserOutput().sendMessage("MOVE");
-                        playersInProgress.get(userServed).getUserOutput().sendMessage(row);
-                        playersInProgress.get(userServed).getUserOutput().sendMessage(col);
+                        String row = moveSplit[1];
+                        String col = moveSplit[2];
+                        playersInProgress.get(userServed).getUserOutput().sendMessage("MOVE," + row + "," + col);
                         break;
                     case "RESIGNED":
                         //+1 lose dla tego co zrezygnował + 1 win dla drugiego zapisać do pliku

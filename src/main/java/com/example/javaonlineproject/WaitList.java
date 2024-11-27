@@ -27,7 +27,9 @@ public class WaitList {
 
     private void populateEnemyList() {
         String list;
-        list = user.getUserInput().receiveMessage();
+        do {
+            list = user.getUserInput().receiveMessage();
+        } while (list != null && list.equals("PROBED"));
         if (list == null){
             return;
         }
@@ -105,14 +107,17 @@ public class WaitList {
         Runnable listener = () -> {
             while (!Thread.currentThread().isInterrupted()) {
                 String move = user.getUserInput().receiveMessage();
-                if (move != null) {
-                    switch (move) {
+                if (move == null){
+                    continue;
+                }
+                String[] moveSplit = move.split(",");
+                    switch (moveSplit[0]) {
                         case "REFRESH":
                             populateEnemyList();
                             Platform.runLater(WaitList.this::refreshList);
                             break;
                         case "INVITED":
-                            String enemyNick = user.getUserInput().receiveMessage();
+                            String enemyNick = moveSplit[1];
                             for(int i = 0; i < enemyList.length; i++) {
                                 if (enemyList[i].equals(enemyNick)) {
                                     enemyList[i] = enemyList[i].concat(" - INVITED YOU TO A MATCH");
@@ -131,7 +136,6 @@ public class WaitList {
                             break;
                     }
                 }
-            }
         };
         listeningThread = new Thread(listener);
         listeningThread.setDaemon(true);
@@ -144,8 +148,7 @@ public class WaitList {
             return;
         String[] enemyInfo = enemySignature.split(" ", 2);
         if (enemyInfo.length == 1) {
-            user.getUserOutput().sendMessage("INVITE");
-            user.getUserOutput().sendMessage(enemyInfo[0]);
+            user.getUserOutput().sendMessage("INVITE," + enemyInfo[0]);
             for(int i = 0; i < enemyList.length; i++) {
                 if (enemyList[i].equals(enemyInfo[0])) {
                     enemyList[i] = enemyList[i].concat(" - INVITED THEM TO A MATCH");
@@ -154,8 +157,7 @@ public class WaitList {
                 }
             }
         } else if (!enemyInfo[1].equals("- INVITED THEM TO A MATCH")){
-            user.getUserOutput().sendMessage("PLAY");
-            user.getUserOutput().sendMessage(enemyInfo[0]);
+            user.getUserOutput().sendMessage("PLAY," + enemyInfo[0]);
         }
     }
     private void backButtonFunc(){

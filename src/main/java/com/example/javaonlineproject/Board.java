@@ -41,7 +41,9 @@ public class Board {
     }
     private void createScoreText() {
         user.getUserOutput().sendMessage("NAME");
-        enemyName = user.getUserInput().receiveMessage();
+        do {
+            enemyName = user.getUserInput().receiveMessage();
+        } while(enemyName.equals("PROBED"));
         scoreText = new Text("You 0-0-0 " + enemyName);
         scoreText.setFill(WHITE);
         scoreText.setFont(new Font(32));
@@ -113,7 +115,10 @@ public class Board {
         primaryStage.show();
     }
     private void setSymbols() {
-        String text = user.getUserInput().receiveMessage();
+        String text;
+        do {
+            text = user.getUserInput().receiveMessage();
+        } while (text.equals("PROBED"));
         ignoreReads = false;
         symbolUsed = text.split(",");
         moved = !symbolUsed[0].equals("X");
@@ -142,25 +147,25 @@ public class Board {
 
     private void handleMove(int row, int column, Button cell) {
         if (!moved && !finishedMatch) {
-                cell.setText(symbolUsed[0]);
-                user.getUserOutput().sendMessage("MOVE");
-                user.getUserOutput().sendMessage(String.valueOf(row));
-                user.getUserOutput().sendMessage(String.valueOf(column));
-                if (checkWin()) {
-                    thisSessionW++;
-                    refreshScoreText();
-                    user.getUserOutput().sendMessage("WIN");
-                    statusText.setText("You won!");
-                    finishedMatch = true;
-                } else if (checkDraw()) {
-                    thisSessionD++;
-                    refreshScoreText();
-                    user.getUserOutput().sendMessage("DRAW");
-                    statusText.setText("You tied!");
-                    finishedMatch = true;
-                } else {
-                    moved = true;
-                    statusText.setText("Enemy's turn!");
+                if (cell.getText().isEmpty()) {
+                    cell.setText(symbolUsed[0]);
+                    user.getUserOutput().sendMessage("MOVE,"+ row +","+column);
+                    if (checkWin()) {
+                        thisSessionW++;
+                        refreshScoreText();
+                        user.getUserOutput().sendMessage("WIN");
+                        statusText.setText("You won!");
+                        finishedMatch = true;
+                    } else if (checkDraw()) {
+                        thisSessionD++;
+                        refreshScoreText();
+                        user.getUserOutput().sendMessage("DRAW");
+                        statusText.setText("You tied!");
+                        finishedMatch = true;
+                    } else {
+                        moved = true;
+                        statusText.setText("Enemy's turn!");
+                    }
                 }
         }
     }
@@ -174,7 +179,8 @@ public class Board {
                 if (move == null || quiting) {
                     continue;
                 }
-                switch (move) {
+                String[] moveSplit = move.split(",");
+                switch (moveSplit[0]) {
                     case "LOST":
                         thisSessionL++;
                         Platform.runLater(Board.this::refreshScoreText);
@@ -199,14 +205,14 @@ public class Board {
                         otherSideRematch = true;
                         break;
                     case "ACCEPT":
-                        Platform.runLater(Board.this::resetBoard);
                         otherSideRematch = false;
                         finishedMatch = false;
                         ignoreReads = true;
+                        Platform.runLater(Board.this::resetBoard);
                         break;
                     case "MOVE":
-                        String row = user.getUserInput().receiveMessage();
-                        String col = user.getUserInput().receiveMessage();
+                        String row = moveSplit[1];
+                        String col = moveSplit[2];
                         int rowInt = Integer.parseInt(row);
                         int colInt = Integer.parseInt(col);
                         Platform.runLater(() -> {
@@ -216,8 +222,9 @@ public class Board {
                         });
                         moved = false;
                         statusText.setText("Your turn!");
-                    case "PROBE":
-                        user.getUserOutput().sendMessage("PROBE");
+                        break;
+                    case "PROBED":
+                        user.getUserOutput().sendMessage("PROBED");
                         break;
                     default:
                         break;
