@@ -48,6 +48,7 @@ public class UserInfo {
             } catch (IOException _) {
                 return;
             }
+        userSocket = null;
         userInput.closeInput();
         userOutput.closeOutput();
     }

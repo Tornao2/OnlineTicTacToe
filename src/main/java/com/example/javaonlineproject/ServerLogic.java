@@ -164,63 +164,38 @@ public class ServerLogic extends Application {
                 String loginAttempt;
                 loginAttempt = temp.getUserInput().receiveMessage();
                 String[]data = loginAttempt.split(",");
-                //Tutaj można dodać sprawdzanie hasła i loginu z data[1] i data[2]
-                File file = new File(FILEPATH);
-                System.out.println("File path: " + file.getAbsolutePath());
-                if (!file.exists()) {System.out.println("File dont exist");} //Debuging
-
-                //Dodawanie nowego gracza
-                if("SIGNUP".equals(data[0])){
+                if (userMap.containsKey(data[1])) {
+                    temp.getUserOutput().sendMessage("ALREADYLOGGEDIN");
+                    continue;
+                }
+                if(data[0].equals("SIGNUP")){
                     if(isUsernameCorrect(data[1])){
-                        temp.getUserOutput().sendMessage("USERNAME_TAKEN");
+                        temp.getUserOutput().sendMessage("USERNAMETAKEN");
                         continue;
                     }
                     registerNewUser(data[1], data[2]);
-                    temp.setUsername(data[1]);
-                    temp.getUserOutput().sendMessage("ALLOWED");
-                    userMap.put(data[1], temp);
-                    Thread listener = new Thread(mainListener);
-                    listener.setDaemon(true);
-                    listenerThreads.add(listener);
-                    listener.start();
-                }
-
-                if (userMap.containsKey(data[1])) {
-                    temp.getUserOutput().sendMessage("ALREADY_LOGGED_IN");
-                    continue;
-                }
-
-                if (isUsernameCorrect(data[1])) {
-                    if(checkPassword(data[1], data[2])) {
-                        temp.setUsername(data[1]);
-                        temp.getUserOutput().sendMessage("ALLOWED");
-                        userMap.put(temp.getUsername(), temp);
-                        Thread listener = new Thread(mainListener);
-                        listener.setDaemon(true);
-                        listenerThreads.add(listener);
-                        listener.start();
-                    }
-                    else{
-                        temp.getUserOutput().sendMessage("Wrong password!");
-                    }
-                }
-                else {
-                    registerNewUser(data[1], data[2]);
-                    temp.setUsername(data[1]);
-                    temp.getUserOutput().sendMessage("ALLOWED");
-                    userMap.put(temp.getUsername(), temp);
-                    Thread listener = new Thread(mainListener);
-                    listener.setDaemon(true);
-                    listenerThreads.add(listener);
-                    listener.start();
-                }
+                    handleLogin(data[1], temp, mainListener);
+                } else if (isUsernameCorrect(data[1])) {
+                    if(checkPassword(data[1], data[2]))
+                        handleLogin(data[1],temp, mainListener);
+                    else temp.getUserOutput().sendMessage("WRONGPASSWORD");
+                } else
+                    temp.getUserOutput().sendMessage("NOLOGIN");
             }
         };
         connectingThread = new Thread(connectionListener);
         connectingThread.setDaemon(true);
         connectingThread.start();
     }
-
+    private void handleLogin(String username, UserInfo temp, Runnable mainListener) {
+        temp.setUsername(username);
+        temp.getUserOutput().sendMessage("ALLOWED");
+        userMap.put(username, temp);
+        Thread listener = new Thread(mainListener);
+        listener.setDaemon(true);
+        listenerThreads.add(listener);
+        listener.start();
+    }
     private boolean isUsernameCorrect(String username){
         List<LoginData> users = loadUsersFromFile();
         if (users != null)
@@ -239,7 +214,7 @@ public class ServerLogic extends Application {
     }
     private List<LoginData> loadUsersFromFile() {
         File file = new File(FILEPATH);
-        if(!file.exists()) return new ArrayList<>();
+        if(!file.exists() || file.length() == 0) return new ArrayList<>();
         try {
             return objectMapper.readValue(file, objectMapper.getTypeFactory().constructCollectionType(List.class, LoginData.class));
         } catch (IOException _) {

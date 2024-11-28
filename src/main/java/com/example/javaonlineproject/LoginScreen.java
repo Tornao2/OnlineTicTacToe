@@ -54,13 +54,13 @@ public class LoginScreen {
     private Button createSignInButton(TextField usernameField, PasswordField passwordField, Text text) {
         Button signInButton = new Button("Sign in");
         signInButton.setFont(new Font(16.0));
-        signInButton.setOnAction(_ -> changeScene(usernameField, passwordField, text));
+        signInButton.setOnAction(_ -> buttonsFunc(usernameField, passwordField, text, true));
         return signInButton;
     }
     private Button createSignUpButton(TextField usernameField, PasswordField passwordField, Text text){
         Button signUpButton = new Button("Sign up");
         signUpButton.setFont(new Font(16.0));
-        signUpButton.setOnAction(_ -> handleSignUp(usernameField, passwordField, text));
+        signUpButton.setOnAction(_ -> buttonsFunc(usernameField, passwordField, text, false));
         return signUpButton;
     }
     private VBox createVBox() {
@@ -99,40 +99,11 @@ public class LoginScreen {
         manageScene(Manager, primaryStage);
         centerElements(logoImageView, errorText, Manager);
     }
-    private void handleSignUp(TextField usernameField, PasswordField passwordField, Text text){
-        user.setUsername(usernameField.getText());
-        String password = passwordField.getText();
-        if (user.getUsername().isEmpty() || password.isEmpty())
-            text.setText("Username or password cannot be empty.");
-        else if(user.getUsername().matches(".*[^a-zA-Z0-9].*") || password.matches(".*[^a-zA-Z0-9].*"))
-            text.setText("You can't use space");
-        else{
-            try {
-                user.setUserSocket(new Socket("localhost", 12345));
-            } catch (IOException _) {}
-            if (user.getUserSocket() == null) text.setText("Server isn't currently running");
-            else {
-                user.setUserInput(user.getUserSocket());
-                user.setUserOutput(user.getUserSocket());
-                user.getUserOutput().sendMessage("SIGNUP" + "," + user.getUsername() + "," + password);
-                String response = user.getUserInput().receiveMessage();
-                if (response.equals("ALLOWED")) {
-                    text.setText("Account create succesfully!");
-                    playerLogin.run();
-                }
-                else if (response.equals("USERNAME_TAKEN")) text.setText("Username already taken!");
-            }
-        }
-        text.setVisible(true);
-        PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
-        visiblePause.setOnFinished(_ -> text.setVisible(false));
-        visiblePause.play();
-    }
-    private void changeScene(TextField usernameField, PasswordField passwordField, Text text) {
+    private void buttonsFunc(TextField usernameField, PasswordField passwordField, Text text, boolean isSignIn) {
         user.setUsername(usernameField.getText());
         String password = passwordField.getText();
         if (user.getUsername().isEmpty() || password.isEmpty()) text.setText("Username or password cannot be empty.");
-        else if(user.getUsername().contains(" ") || password.contains(" ")) text.setText("You can't use space");
+        else if(user.getUsername().matches(".*[^a-zA-Z0-9].*") || password.matches(".*[^a-zA-Z0-9].*")) text.setText("Use letters or digits");
         else {
             try {
                 user.setUserSocket(new Socket("localhost", 12345));
@@ -141,11 +112,23 @@ public class LoginScreen {
             else {
                 user.setUserInput(user.getUserSocket());
                 user.setUserOutput(user.getUserSocket());
-                user.getUserOutput().sendMessage("LOGIN" + "," + user.getUsername() + "," + password);
+                if (isSignIn) user.getUserOutput().sendMessage("LOGIN," + user.getUsername() + "," + password);
+                else user.getUserOutput().sendMessage("SIGNUP," + user.getUsername() + "," + password);
                 String response = user.getUserInput().receiveMessage();
-                if (response.equals("ALLOWED")) playerLogin.run();
-                else if(response.equals("ALREADY_LOGGED_IN")) text.setText("You are already logged in");
-                else text.setText("Incorrect username or password");
+                switch (response) {
+                    case "ALLOWED":
+                        playerLogin.run();
+                        return;
+                    case "ALREADYLOGGEDIN":
+                        text.setText("You are already logged in");
+                        break;
+                    case "USERNAMETAKEN":
+                        text.setText("Username already taken!");
+                        break;
+                    default:
+                        text.setText("Incorrect username or password");
+                }
+                user.closeConnection();
             }
         }
         text.setVisible(true);
