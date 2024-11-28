@@ -61,31 +61,13 @@ public class ServerLogic extends Application {
     }
 
     private void logic() {
-
         Runnable mainListener = () -> {
-            int disconnectCheck = 0;
-            long startTime = System.currentTimeMillis();
             UserInfo userServed = userMap.lastEntry().getValue();
             while (!Thread.currentThread().isInterrupted()) {
-                long elapsedTime = System.currentTimeMillis() - startTime;
-                if (elapsedTime >= 5000) {
-                    userServed.getUserOutput().sendMessage("PROBED");
-                    disconnectCheck++;
-                    startTime = System.currentTimeMillis();
-                }
-                if (disconnectCheck >= 4) {
-                    stopThisUser(userServed);
-                    return;
-                }
                 String move = userServed.getUserInput().receiveMessage();
-                if (move == null) {
-                    continue;
-                }
+                if (move == null) continue;
                 String[] moveSplit = move.split(",");
                 switch (moveSplit[0]){
-                    case "PROBED":
-                        disconnectCheck = 0;
-                        break;
                     case "GETENEMY":
                         String enemyList = makeEnemyList(userServed);
                         waitingToPlay.add(userServed);
@@ -97,6 +79,17 @@ public class ServerLogic extends Application {
                         sendListToEveryoneBesides(userServed);
                         break;
                     case "SOCKETERROR":
+                        for(UserInfo user: waitingToPlay)
+                            if (user == userServed) {
+                                waitingToPlay.remove(userServed);
+                                sendListToEveryoneBesides(userServed);
+                                break;
+                            }
+                        if (playersInProgress.containsKey(userServed)) {
+                            playersInProgress.get(userServed).getUserOutput().sendMessage("ENEMYRESIGNED");
+                            playersInProgress.remove(playersInProgress.get(userServed));
+                            playersInProgress.remove(userServed);
+                        }
                         stopThisUser(userServed);
                         return;
                     case "INVITE":
@@ -108,14 +101,12 @@ public class ServerLogic extends Application {
                         String firstNick = moveSplit[1];
                         String secondNick = userServed.getUsername();
                         UserInfo firstUser = userMap.get(firstNick);
-                        firstUser.getUserOutput().sendMessage("MATCH");
+                        firstUser.getUserOutput().sendMessage("MATCH,X,O");
                         UserInfo secondUser = userMap.get(secondNick);
-                        secondUser.getUserOutput().sendMessage("MATCH");
+                        secondUser.getUserOutput().sendMessage("MATCH,O,X");
                         waitingToPlay.remove(firstUser);
                         waitingToPlay.remove(secondUser);
-                        sendListToEveryoneBesides(firstUser);
-                        firstUser.getUserOutput().sendMessage("X,0");
-                        secondUser.getUserOutput().sendMessage("0,X");
+                        sendListToEveryoneBesides(null);
                         playersInProgress.put(firstUser, secondUser);
                         playersInProgress.put(secondUser, firstUser);
                         break;
@@ -147,10 +138,8 @@ public class ServerLogic extends Application {
                         playersInProgress.get(userServed).getUserOutput().sendMessage("REMATCH");
                         break;
                     case "ACCEPT":
-                        playersInProgress.get(userServed).getUserOutput().sendMessage("ACCEPT");
-                        userServed.getUserOutput().sendMessage("ACCEPT");
-                        userServed.getUserOutput().sendMessage("X,0");
-                        playersInProgress.get(userServed).getUserOutput().sendMessage("0,X");
+                        playersInProgress.get(userServed).getUserOutput().sendMessage("ACCEPT,O,X");
+                        userServed.getUserOutput().sendMessage("ACCEPT,X,O");
                         break;
                     case "NAME":
                         userServed.getUserOutput().sendMessage(playersInProgress.get((userServed)).getUsername());
@@ -175,14 +164,7 @@ public class ServerLogic extends Application {
                 String loginAttempt;
                 loginAttempt = temp.getUserInput().receiveMessage();
                 String[]data = loginAttempt.split(",");
-                //Tutaj można dodać sprawdzanie hasła i loginu z data[1] i data[2]
-                File file = new File(FILEPATH);
-                System.out.println("File path: " + file.getAbsolutePath());
-                if (!file.exists()) {
-                    System.out.println("File dont exist");
-                } //Debuging
-
-                if (isUsernameCorrect(data[1])) {
+                if (isUsernameCorrect(data[1]))
                     if(checkPassword(data[1], data[2])) {
                         temp.setUsername(data[1]);
                         temp.getUserOutput().sendMessage("ALLOWED");
@@ -192,10 +174,7 @@ public class ServerLogic extends Application {
                         listenerThreads.add(listener);
                         listener.start();
                     }
-                    else{
-                        temp.getUserOutput().sendMessage("Wrong password!");
-                    }
-                }
+                    else temp.getUserOutput().sendMessage("WRONGPASSWORD");
                 else {
                     registerNewUser(data[1], data[2]);
                     temp.setUsername(data[1]);
@@ -212,94 +191,73 @@ public class ServerLogic extends Application {
         connectingThread.setDaemon(true);
         connectingThread.start();
     }
+
     private boolean isUsernameCorrect(String username){
-        try{
-            List<LoginData> users = loadUsersFromFile();
-            for(LoginData user : users){
-                System.out.println("User: " + user.getLogin());//debuging
-            }
-            for (LoginData user : users) {
-                if (user.getLogin().equals(username)) {
+        List<LoginData> users = loadUsersFromFile();
+        if (users != null)
+            for (LoginData user : users)
+                if (user.getLogin().equals(username))
                     return true;
-                }
-            }
-        }catch(IOException e){
-            System.err.println("isUsernameCorrect exception: " + e.getMessage());
-            e.printStackTrace();
-        }
         return false;
     }
-
     private boolean checkPassword(String username, String password){
-        try {
-            List<LoginData> users = loadUsersFromFile();
-            for (LoginData user: users) {
-                System.out.println(", Password: " + user.getPassword()); // debug
-                if (user.getLogin().equals(username) && user.getPassword().equals(password)) {
+        List<LoginData> users = loadUsersFromFile();
+        if (users != null)
+            for (LoginData user: users)
+                if (user.getLogin().equals(username) && user.getPassword().equals(password))
                     return true;
-                }
-            }
-        } catch (IOException e) {
-            System.err.println("checkPassword exception: " + e.getMessage());
-            e.printStackTrace();
-        }
         return false;
     }
-
-    private List<LoginData> loadUsersFromFile() throws IOException {
+    private List<LoginData> loadUsersFromFile() {
         File file = new File(FILEPATH);
-        if(!file.exists()){
-            return new ArrayList<>();
+        if(!file.exists()) return new ArrayList<>();
+        try {
+            return objectMapper.readValue(file, objectMapper.getTypeFactory().constructCollectionType(List.class, LoginData.class));
+        } catch (IOException _) {
+            System.err.println("loadUsersFromFile");
+            return null;
         }
-        return objectMapper.readValue(file, objectMapper.getTypeFactory().constructCollectionType(List.class, LoginData.class));
     }
     private void registerNewUser(String username, String password) {
-        try {
-            List<LoginData> users = loadUsersFromFile();
+        List<LoginData> users = loadUsersFromFile();
+        if (users != null) {
             users.add(new LoginData(username, password));
             saveUsersToFile(users);
-        } catch (IOException e) {
-            System.err.println("registerNewUser exception");
         }
     }
-    private void saveUsersToFile(List<LoginData> users) throws IOException {
-        objectMapper.writeValue(new File(FILEPATH), users);
+    private void saveUsersToFile(List<LoginData> users){
+        try {
+            objectMapper.writeValue(new File(FILEPATH), users);
+        } catch (IOException _) {
+            System.err.println("saveUsersToFile");
+        }
     }
 
     private void sendListToEveryoneBesides(UserInfo userServed) {
         for (UserInfo users: waitingToPlay) {
             String enemyList = makeEnemyList(users);
-            if (!users.getUsername().equals(userServed.getUsername())) {
-                users.getUserOutput().sendMessage("REFRESH");
-                users.getUserOutput().sendMessage(enemyList);
-            }
+            if (!users.getUsername().equals(userServed.getUsername()))  users.getUserOutput().sendMessage("REFRESH"+ enemyList);
         }
     }
     private String makeEnemyList(UserInfo userServed) {
-        String temp = "ENEMIES";
-        for (UserInfo users: waitingToPlay) {
-            if (!users.getUsername().equals(userServed.getUsername())) {
+        String temp = "";
+        for (UserInfo users: waitingToPlay)
+            if (!users.getUsername().equals(userServed.getUsername()))
                 temp = temp.concat("," + users.getUsername());
-            }
-        }
         return temp;
     }
     private void stopAll() {
         connectingThread.interrupt();
-        for (Thread thread: listenerThreads)
-            thread.interrupt();
-        for (UserInfo reader : userMap.values()) {
-            reader.closeConnection();
-        }
+        for (Thread thread: listenerThreads) thread.interrupt();
+        for (UserInfo reader : userMap.values()) reader.closeConnection();
         userMap.clear();
         listenerThreads.clear();
-        if (serverSocket != null && !serverSocket.isClosed()) {
+        if (serverSocket != null && !serverSocket.isClosed())
             try {
                 serverSocket.close();
-            } catch (IOException e) {
+            } catch (IOException _) {
                 System.err.println("stopAll exception");
             }
-        }
         System.exit(0);
     }
     private void stopThisUser(UserInfo userServed) {

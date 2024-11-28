@@ -8,41 +8,19 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-import static javafx.scene.paint.Color.WHITE;
-
-public class Menu  {
-    private Thread disconnectThread;
-    private Runnable onStartSuccess;
+public class Stats {
+    private Runnable onBack;
     private Runnable onDisconnect;
-    private Runnable onStats;
     private UserInfo user;
+    private Thread disconnectThread;
 
-    private Text createWelcomeText() {
-        Text text = new Text("Welcome " + user.getUsername() + "!");
-        text.setFill(WHITE);
-        text.setFont(new Font(16));
-        return text;
-    }
-    private Button createStartButton() {
-        Button startButton = new Button("Start");
-        startButton.setFont(new Font(16.0));
-        startButton.setOnAction(_ -> ChangeScene());
-        return startButton;
-    }
-    private Button createStatsButton() {
-        Button statsButton = new Button("Stats");
-        statsButton.setFont(new Font(16.0));
-        statsButton.setOnAction(_ -> statsButton());
-        return statsButton;
-    }
-    private Button createQuitButton() {
-        Button quitButton = new Button("Quit");
-        quitButton.setFont(new Font(16.0));
-        quitButton.setOnAction(_ -> quitButton());
-        return quitButton;
+    private Button createBackButton() {
+        Button backButton = new Button("Back");
+        backButton.setFont(new Font(16.0));
+        backButton.setOnAction(_ -> backButton());
+        return backButton;
     }
     private VBox createVBox() {
         VBox organizer = new VBox(12);
@@ -58,19 +36,16 @@ public class Menu  {
     }
     private void manageScene(Stage primaryStage, BorderPane manager) {
         Scene scene = new Scene(manager);
-        primaryStage.setTitle("Menu");
+        primaryStage.setTitle("Stats");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
-    public void start(Stage primaryStage, UserInfo user) {
+    public void start(Stage primaryStage, UserInfo user){
         this.user = user;
-        Text welcomeText = createWelcomeText();
-        Button startButton = createStartButton();
-        Button statsButton = createStatsButton();
-        Button quitButton = createQuitButton();
+        Button backButton = createBackButton();
         VBox organizer = createVBox();
-        organizer.getChildren().addAll(welcomeText, startButton, statsButton, quitButton);
+        organizer.getChildren().add(backButton);
         BorderPane manager = createManager(organizer);
         manageScene(primaryStage, manager);
         checkForDisconnect();
@@ -81,7 +56,7 @@ public class Menu  {
                 String move = user.getUserInput().receiveMessage();
                 if (move == null) continue;
                 else if (move.equals("SOCKETERROR")) {
-                    Platform.runLater(Menu.this::disconnect);
+                    Platform.runLater(Stats.this::disconnect);
                     return;
                 }
             }
@@ -90,27 +65,12 @@ public class Menu  {
         disconnectThread.setDaemon(true);
         disconnectThread.start();
     }
-    private void ChangeScene() {
+    private void backButton() {
         disconnectThread.interrupt();
         try {
             disconnectThread.join();
         } catch (InterruptedException _) {}
-        onStartSuccess.run();
-    }
-    private void statsButton() {
-        disconnectThread.interrupt();
-        try {
-            disconnectThread.join();
-        } catch (InterruptedException _) {}
-        onStats.run();
-    }
-    private void quitButton() {
-        disconnectThread.interrupt();
-        try {
-            disconnectThread.join();
-        } catch (InterruptedException _) {}
-        user.closeConnection();
-        System.exit(0);
+        onBack.run();
     }
     private void disconnect() {
         disconnectThread.interrupt();
@@ -120,13 +80,10 @@ public class Menu  {
         user.closeConnection();
         onDisconnect.run();
     }
-    public void setOnStartSuccess(Runnable onLoginSuccess) {
-        this.onStartSuccess = onLoginSuccess;
+    public void setOnBack(Runnable onBack) {
+        this.onBack = onBack;
     }
     public void setOnDisconnect(Runnable onDisconnect) {
         this.onDisconnect = onDisconnect;
-    }
-    public void setOnStats(Runnable onStats) {
-        this.onStats = onStats;
     }
 }

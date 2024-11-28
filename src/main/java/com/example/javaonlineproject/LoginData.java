@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class LoginData {
-
     @JsonCreator
     public LoginData(@JsonProperty("login") String login, @JsonProperty("password") String password) {
         this.login = login;

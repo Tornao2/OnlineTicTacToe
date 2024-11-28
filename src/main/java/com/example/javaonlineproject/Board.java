@@ -20,12 +20,13 @@ import static javafx.scene.paint.Color.WHITE;
 public class Board {
     private Thread messageListener;
     private Runnable onResign;
+    private Runnable onDisconnect;
     private Text statusText = new Text();
     private Text scoreText = new Text();
-    private final Button[][] board;
+    private final Button[][] board = new Button[3][3];
     private String[] symbolUsed;
     private Boolean moved;
-    private Boolean quiting;
+    private Boolean quiting = false;
     private boolean otherSideRematch = false;
     private boolean finishedMatch = false;
     private int thisSessionW = 0;
@@ -33,17 +34,10 @@ public class Board {
     private int thisSessionL = 0;
     private UserInfo user;
     private String enemyName;
-    private Boolean ignoreReads = false;
 
-    public Board() {
-        this.board = new Button[3][3];
-        quiting = false;
-    }
     private void createScoreText() {
         user.getUserOutput().sendMessage("NAME");
-        do {
-            enemyName = user.getUserInput().receiveMessage();
-        } while(enemyName.equals("PROBED"));
+        enemyName = user.getUserInput().receiveMessage();
         scoreText = new Text("You 0-0-0 " + enemyName);
         scoreText.setFill(WHITE);
         scoreText.setFont(new Font(32));
@@ -114,13 +108,7 @@ public class Board {
         primaryStage.setScene(scene);
         primaryStage.show();
     }
-    private void setSymbols() {
-        String text;
-        do {
-            text = user.getUserInput().receiveMessage();
-        } while (text.equals("PROBED"));
-        ignoreReads = false;
-        symbolUsed = text.split(",");
+    private void setTurns() {
         moved = !symbolUsed[0].equals("X");
         if (moved)
             statusText.setText("Enemy's turn!");
@@ -128,9 +116,10 @@ public class Board {
             statusText.setText("Your turn!");
 
     }
-    public void start(Stage primaryStage, UserInfo user) {
+    public void start(Stage primaryStage, UserInfo user, String[] usedSymbols) {
         this.user = user;
-        setSymbols();
+        this.symbolUsed = usedSymbols;
+        setTurns();
         initStatusText();
         GridPane gameGrid = initializeBoard();
         createScoreText();
@@ -146,41 +135,37 @@ public class Board {
     }
 
     private void handleMove(int row, int column, Button cell) {
-        if (!moved && !finishedMatch) {
-                if (cell.getText().isEmpty()) {
-                    cell.setText(symbolUsed[0]);
-                    user.getUserOutput().sendMessage("MOVE,"+ row +","+column);
-                    if (checkWin()) {
-                        thisSessionW++;
-                        refreshScoreText();
-                        user.getUserOutput().sendMessage("WIN");
-                        statusText.setText("You won!");
-                        finishedMatch = true;
-                    } else if (checkDraw()) {
-                        thisSessionD++;
-                        refreshScoreText();
-                        user.getUserOutput().sendMessage("DRAW");
-                        statusText.setText("You tied!");
-                        finishedMatch = true;
-                    } else {
-                        moved = true;
-                        statusText.setText("Enemy's turn!");
-                    }
-                }
+        if (!moved && !finishedMatch && cell.getText().isEmpty()) {
+            cell.setText(symbolUsed[0]);
+            user.getUserOutput().sendMessage("MOVE," + row + "," + column);
+            if (checkWin()) {
+                thisSessionW++;
+                refreshScoreText();
+                user.getUserOutput().sendMessage("WIN");
+                statusText.setText("You won!");
+                finishedMatch = true;
+            } else if (checkDraw()) {
+                thisSessionD++;
+                refreshScoreText();
+                user.getUserOutput().sendMessage("DRAW");
+                statusText.setText("You tied!");
+                finishedMatch = true;
+            } else {
+                moved = true;
+                statusText.setText("Enemy's turn!");
+            }
         }
     }
     private void listeningLogic() {
         Runnable mainListener = () -> {
             while (!Thread.currentThread().isInterrupted()) {
-                String move = null;
-                if (!ignoreReads) {
-                    move = user.getUserInput().receiveMessage();
-                }
-                if (move == null || quiting) {
-                    continue;
-                }
+                String move = user.getUserInput().receiveMessage();
+                if (move == null || quiting) continue;
                 String[] moveSplit = move.split(",");
                 switch (moveSplit[0]) {
+                    case "SOCKETERROR":
+                        Platform.runLater(Board.this::disconnect);
+                        return;
                     case "LOST":
                         thisSessionL++;
                         Platform.runLater(Board.this::refreshScoreText);
@@ -212,8 +197,11 @@ public class Board {
                     case "ACCEPT":
                         otherSideRematch = false;
                         finishedMatch = false;
-                        ignoreReads = true;
-                        Platform.runLater(Board.this::resetBoard);
+                        Platform.runLater(() -> {
+                            symbolUsed[0] = moveSplit[1];
+                            symbolUsed[1] = moveSplit[2];
+                            resetBoard();
+                        });
                         break;
                     case "MOVE":
                         String row = moveSplit[1];
@@ -222,14 +210,10 @@ public class Board {
                         int colInt = Integer.parseInt(col);
                         Platform.runLater(() -> {
                             board[rowInt][colInt].setText(symbolUsed[1]);
-                            if (!checkWin())
-                                checkDraw();
+                            if (!checkWin()) checkDraw();
                         });
                         moved = false;
                         statusText.setText("Your turn!");
-                        break;
-                    case "PROBED":
-                        user.getUserOutput().sendMessage("PROBED");
                         break;
                     default:
                         break;
@@ -284,38 +268,30 @@ public class Board {
         return false;
     }
     private boolean checkDraw() {
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                if (board[i][j].getText().isEmpty()) {
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++)
+                if (board[i][j].getText().isEmpty())
                     return false;
-                }
-            }
-        }
         String color = "-fx-background-color: #a29390 ";
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++)
                 board[i][j].setStyle(color);
-            }
-        }
         return true;
     }
     private void resetBoard() {
-        for (Button[] row : board) {
+        for (Button[] row : board)
             for (Button cell : row) {
                 cell.setText("");
                 cell.setStyle("-fx-background-color: #FFFFFF;");
             }
-        }
-        setSymbols();
+        setTurns();
     }
     private void rematch() {
         if (finishedMatch && !quiting) {
             if (!otherSideRematch) {
                 user.getUserOutput().sendMessage("REMATCH");
                 statusText.setText("You want a rematch!");
-            } else {
-                user.getUserOutput().sendMessage("ACCEPT");
-            }
+            } else  user.getUserOutput().sendMessage("ACCEPT");
         }
     }
 
@@ -324,16 +300,12 @@ public class Board {
             messageListener.interrupt();
             try {
                 messageListener.join();
-            } catch (InterruptedException _) {
-
-            }
+            } catch (InterruptedException _) {}
             if (!finishedMatch) {
                 thisSessionL++;
                 refreshScoreText();
                 user.getUserOutput().sendMessage("RESIGNED");
-            } else {
-                user.getUserOutput().sendMessage("QUIT");
-            }
+            } else user.getUserOutput().sendMessage("QUIT");
             onResign.run();
             quiting = true;
         }
@@ -342,9 +314,7 @@ public class Board {
         messageListener.interrupt();
         try {
             messageListener.join();
-        } catch (InterruptedException _) {
-
-        }
+        } catch (InterruptedException _) {}
         quiting = true;
         PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
         visiblePause.setOnFinished(_ -> onResign.run());
@@ -353,7 +323,18 @@ public class Board {
         finishedMatch = true;
         moved = true;
     }
+    private void disconnect() {
+        messageListener.interrupt();
+        try {
+            messageListener.join();
+        } catch (InterruptedException _) {}
+        user.closeConnection();
+        onDisconnect.run();
+    }
     public void setOnResign(Runnable onResign){
         this.onResign = onResign;
+    }
+    public void setOnDisconnect(Runnable onDisconnect) {
+        this.onDisconnect = onDisconnect;
     }
 }

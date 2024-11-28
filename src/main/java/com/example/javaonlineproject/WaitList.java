@@ -20,21 +20,20 @@ import static javafx.scene.paint.Color.WHITE;
 public class WaitList {
     private Runnable onPlay;
     private Runnable onBack;
+    private Runnable onDisconnect;
     private UserInfo user;
     private String[] enemyList;
     private Thread listeningThread;
     private final ListView <String> iteractiveList = new ListView<>();
+    private final String[] usedSymbols = new String[2];
 
-    private void populateEnemyList() {
-        String list;
-        do {
-            list = user.getUserInput().receiveMessage();
-        } while (list != null && list.equals("PROBED"));
-        if (list == null){
-            return;
-        }
-        String[]data = list.split(",");
-        enemyList = Arrays.copyOfRange(data, 1, data.length);
+    private void initEnemyList() {
+        user.getUserOutput().sendMessage("GETENEMY");
+        String[] list = user.getUserInput().receiveMessage().split(",");
+        populateEnemyList(list);
+    }
+    private void populateEnemyList(String[] readList) {
+        enemyList = Arrays.copyOfRange(readList, 1, readList.length);
     }
     private Text createText(){
         Text label = new Text("Choose your oponent:");
@@ -45,9 +44,8 @@ public class WaitList {
     private void refreshList() {
         if (enemyList != null) {
             iteractiveList.getItems().clear();
-                for (String username : enemyList) {
-                    iteractiveList.getItems().add(username);
-                    }
+            for (String username : enemyList)
+                iteractiveList.getItems().add(username);
         }
     }
     private Button createInviteButton() {
@@ -88,7 +86,7 @@ public class WaitList {
     }
     public void start(Stage primaryStage, UserInfo user) {
         this.user = user;
-        user.getUserOutput().sendMessage("GETENEMY");
+        initEnemyList();
         Text choiceText = createText();
         iteractiveList.setMinSize(200, 200);
         Button invite = createInviteButton();
@@ -99,7 +97,6 @@ public class WaitList {
         organizer.getChildren().addAll(choiceText, iteractiveList, buttons);
         BorderPane manager = createManager(organizer);
         manageScene(primaryStage, manager);
-        populateEnemyList();
         refreshList();
         listeningForRefresh();
     }
@@ -107,31 +104,30 @@ public class WaitList {
         Runnable listener = () -> {
             while (!Thread.currentThread().isInterrupted()) {
                 String move = user.getUserInput().receiveMessage();
-                if (move == null){
-                    continue;
-                }
+                if (move == null) continue;
                 String[] moveSplit = move.split(",");
                     switch (moveSplit[0]) {
+                        case "SOCKETERROR":
+                            Platform.runLater(WaitList.this::disconnect);
+                            return;
                         case "REFRESH":
-                            populateEnemyList();
+                            populateEnemyList(moveSplit);
                             Platform.runLater(WaitList.this::refreshList);
                             break;
                         case "INVITED":
                             String enemyNick = moveSplit[1];
-                            for(int i = 0; i < enemyList.length; i++) {
+                            for(int i = 0; i < enemyList.length; i++)
                                 if (enemyList[i].equals(enemyNick)) {
                                     enemyList[i] = enemyList[i].concat(" - INVITED YOU TO A MATCH");
                                     break;
                                 }
-                            }
                             Platform.runLater(WaitList.this::refreshList);
                             break;
                         case "MATCH":
+                            usedSymbols[0] = moveSplit[1];
+                            usedSymbols[1] = moveSplit[2];
                             Platform.runLater(WaitList.this::proceedToGame);
                             return;
-                        case "PROBE":
-                            user.getUserOutput().sendMessage("PROBE");
-                            break;
                         default:
                             break;
                     }
@@ -144,21 +140,17 @@ public class WaitList {
 
     private void inviteButtonFunc() {
         String enemySignature = String.valueOf(iteractiveList.getSelectionModel().getSelectedItem());
-        if (enemySignature.equals("null"))
-            return;
+        if (enemySignature.equals("null")) return;
         String[] enemyInfo = enemySignature.split(" ", 2);
         if (enemyInfo.length == 1) {
             user.getUserOutput().sendMessage("INVITE," + enemyInfo[0]);
-            for(int i = 0; i < enemyList.length; i++) {
+            for(int i = 0; i < enemyList.length; i++)
                 if (enemyList[i].equals(enemyInfo[0])) {
                     enemyList[i] = enemyList[i].concat(" - INVITED THEM TO A MATCH");
                     refreshList();
                     break;
                 }
-            }
-        } else if (!enemyInfo[1].equals("- INVITED THEM TO A MATCH")){
-            user.getUserOutput().sendMessage("PLAY," + enemyInfo[0]);
-        }
+        } else if (!enemyInfo[1].equals("- INVITED THEM TO A MATCH")) user.getUserOutput().sendMessage("PLAY," + enemyInfo[0]);
     }
     private void backButtonFunc(){
         listeningThread.interrupt();
@@ -179,10 +171,24 @@ public class WaitList {
         }
         onPlay.run();
     }
+    private void disconnect() {
+        listeningThread.interrupt();
+        try {
+            listeningThread.join();
+        } catch (InterruptedException _) {}
+        user.closeConnection();
+        onDisconnect.run();
+    }
     public void setOnPlay(Runnable onPlay) {
         this.onPlay = onPlay;
     }
     public void setOnBack(Runnable onBack) {
         this.onBack = onBack;
+    }
+    public void setOnDisconnect(Runnable onDisconnect) {
+        this.onDisconnect = onDisconnect;
+    }
+    public String[] getSymbols() {
+        return usedSymbols;
     }
 }

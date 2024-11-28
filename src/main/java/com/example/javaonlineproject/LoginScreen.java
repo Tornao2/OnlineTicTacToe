@@ -97,28 +97,20 @@ public class LoginScreen {
     private void changeScene(TextField usernameField, PasswordField passwordField, Text text) {
         user.setUsername(usernameField.getText());
         String password = passwordField.getText();
-        if (user.getUsername().isEmpty() || password.isEmpty())
-            text.setText("Username or password cannot be empty.");
-        else if(user.getUsername().contains(" ") || password.contains(" "))
-            text.setText("You can't use space");
+        if (user.getUsername().isEmpty() || password.isEmpty()) text.setText("Username or password cannot be empty.");
+        else if(user.getUsername().contains(" ") || password.contains(" ")) text.setText("You can't use space");
         else {
             try {
                 user.setUserSocket(new Socket("localhost", 12345));
-            } catch (IOException _) {
-
-            }
+            } catch (IOException _) {}
             if (user.getUserSocket() == null) text.setText("Server isn't currently running");
             else {
-                //wysylanie danych do serwera
                 user.setUserInput(user.getUserSocket());
                 user.setUserOutput(user.getUserSocket());
                 user.getUserOutput().sendMessage("LOGIN" + "," + user.getUsername() + "," + password);
                 String response = user.getUserInput().receiveMessage();
-                if (response.equals("ALLOWED")) {
-                    playerLogin.run();
-                } else {
-                    text.setText("Incorrect login or password");
-                }
+                if (response.equals("ALLOWED")) playerLogin.run();
+                else text.setText("Incorrect login or password");
             }
         }
         text.setVisible(true);

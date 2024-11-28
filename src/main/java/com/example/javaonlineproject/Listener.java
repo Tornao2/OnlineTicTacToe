@@ -9,14 +9,14 @@ public class Listener{
     public void setInput(Socket socket) {
         try {
             input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (IOException _) {
+            System.err.println("setInput");
         }
     }
     public void closeInput() {
         try {
             if (input != null) input.close();
-        } catch (IOException e) {
+        } catch (IOException _) {
             System.err.println("closeInput");
         }
     }
@@ -27,7 +27,7 @@ public class Listener{
             return "SOCKETERROR";
         } catch (SocketTimeoutException _) {
             return null;
-        } catch (IOException e) {
+        } catch (IOException _) {
             System.err.println("receiveMessage");
             return null;
         }

@@ -23,14 +23,10 @@ public class UserInfo {
         this.userSocket = usersocket;
         try {
             userSocket.setSoTimeout(250);
-        } catch (SocketException e) {
-            throw new RuntimeException(e);
+        } catch (SocketException _) {
+            System.err.println("setUserSocket");
         }
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (userSocket != null && userSocket.isClosed()) {
-                closeConnection();
-            }
-        }));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> { if (userSocket != null && userSocket.isClosed()) closeConnection();}));
     }
     public void setUserOutput(Socket socket) {
         userOutput.setOutput(socket);
@@ -46,13 +42,12 @@ public class UserInfo {
     }
 
     public void closeConnection() {
-        if (userSocket != null) {
+        if (userSocket != null)
             try {
                 userSocket.close();
             } catch (IOException _) {
                 return;
             }
-        }
         userInput.closeInput();
         userOutput.closeOutput();
     }

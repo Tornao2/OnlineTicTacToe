@@ -8,8 +8,8 @@ public class Sender{
     public void setOutput(Socket socket){
         try {
             output = new PrintWriter(socket.getOutputStream(), true);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (IOException _) {
+            System.err.println("setOutput");
         }
     }
     public void sendMessage(String message) {
