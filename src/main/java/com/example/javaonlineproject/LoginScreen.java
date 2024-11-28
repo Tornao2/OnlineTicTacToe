@@ -30,7 +30,7 @@ public class LoginScreen {
         logoImageView.setPreserveRatio(true);
         return logoImageView;
     }
-    private TextField createLoginField() {
+    private TextField createUsernameField() {
         TextField usernameField = new TextField();
         usernameField.setPromptText("Username");
         usernameField.setFont(new Font(16));
@@ -51,13 +51,18 @@ public class LoginScreen {
         text.setVisible(false);
         return text;
     }
-    private Button createLoginButton(TextField usernameField, PasswordField passwordField, Text text) {
-        Button loginButton = new Button("Login");
-        loginButton.setFont(new Font(16.0));
-        loginButton.setOnAction(_ -> changeScene(usernameField, passwordField, text));
-        return loginButton;
+    private Button createSignInButton(TextField usernameField, PasswordField passwordField, Text text) {
+        Button signInButton = new Button("Sign in");
+        signInButton.setFont(new Font(16.0));
+        signInButton.setOnAction(_ -> changeScene(usernameField, passwordField, text));
+        return signInButton;
     }
-
+    private Button createSignUpButton(TextField usernameField, PasswordField passwordField, Text text){
+        Button signUpButton = new Button("Sign up");
+        signUpButton.setFont(new Font(16.0));
+        signUpButton.setOnAction(_ -> handleSignUp(usernameField, passwordField, text));
+        return signUpButton;
+    }
     private VBox createVBox() {
         VBox organizer = new VBox(12);
         organizer.setMinSize(300, 210);
@@ -83,17 +88,46 @@ public class LoginScreen {
     }
     public void start(Stage primaryStage) {
         ImageView logoImageView = createLogo();
-        TextField usernameField = createLoginField();
+        TextField usernameField = createUsernameField();
         PasswordField passwordField = createPassField();
         Text errorText = createErrorText();
-        Button loginButton = createLoginButton(usernameField, passwordField, errorText);
+        Button signInButton = createSignInButton(usernameField, passwordField, errorText);
+        Button signUpButton = createSignUpButton(usernameField, passwordField, errorText);
         VBox organizer = createVBox();
-        organizer.getChildren().addAll(logoImageView, usernameField, passwordField, loginButton, errorText);
+        organizer.getChildren().addAll(logoImageView, usernameField, passwordField, signInButton, signUpButton, errorText);
         BorderPane Manager = createManager(organizer);
         manageScene(Manager, primaryStage);
         centerElements(logoImageView, errorText, Manager);
     }
-
+    private void handleSignUp(TextField usernameField, PasswordField passwordField, Text text){
+        user.setUsername(usernameField.getText());
+        String password = passwordField.getText();
+        if (user.getUsername().isEmpty() || password.isEmpty())
+            text.setText("Username or password cannot be empty.");
+        else if(user.getUsername().matches(".*[^a-zA-Z0-9].*") || password.matches(".*[^a-zA-Z0-9].*"))
+            text.setText("You can't use space");
+        else{
+            try {
+                user.setUserSocket(new Socket("localhost", 12345));
+            } catch (IOException _) {}
+            if (user.getUserSocket() == null) text.setText("Server isn't currently running");
+            else {
+                user.setUserInput(user.getUserSocket());
+                user.setUserOutput(user.getUserSocket());
+                user.getUserOutput().sendMessage("SIGNUP" + "," + user.getUsername() + "," + password);
+                String response = user.getUserInput().receiveMessage();
+                if (response.equals("ALLOWED")) {
+                    text.setText("Account create succesfully!");
+                    playerLogin.run();
+                }
+                else if (response.equals("USERNAME_TAKEN")) text.setText("Username already taken!");
+            }
+        }
+        text.setVisible(true);
+        PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
+        visiblePause.setOnFinished(_ -> text.setVisible(false));
+        visiblePause.play();
+    }
     private void changeScene(TextField usernameField, PasswordField passwordField, Text text) {
         user.setUsername(usernameField.getText());
         String password = passwordField.getText();
@@ -110,7 +144,8 @@ public class LoginScreen {
                 user.getUserOutput().sendMessage("LOGIN" + "," + user.getUsername() + "," + password);
                 String response = user.getUserInput().receiveMessage();
                 if (response.equals("ALLOWED")) playerLogin.run();
-                else text.setText("Incorrect login or password");
+                else if(response.equals("ALREADY_LOGGED_IN")) text.setText("You are already logged in");
+                else text.setText("Incorrect username or password");
             }
         }
         text.setVisible(true);

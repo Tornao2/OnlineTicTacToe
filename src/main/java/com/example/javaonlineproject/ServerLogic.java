@@ -164,7 +164,33 @@ public class ServerLogic extends Application {
                 String loginAttempt;
                 loginAttempt = temp.getUserInput().receiveMessage();
                 String[]data = loginAttempt.split(",");
-                if (isUsernameCorrect(data[1]))
+                //Tutaj można dodać sprawdzanie hasła i loginu z data[1] i data[2]
+                File file = new File(FILEPATH);
+                System.out.println("File path: " + file.getAbsolutePath());
+                if (!file.exists()) {System.out.println("File dont exist");} //Debuging
+
+                //Dodawanie nowego gracza
+                if("SIGNUP".equals(data[0])){
+                    if(isUsernameCorrect(data[1])){
+                        temp.getUserOutput().sendMessage("USERNAME_TAKEN");
+                        continue;
+                    }
+                    registerNewUser(data[1], data[2]);
+                    temp.setUsername(data[1]);
+                    temp.getUserOutput().sendMessage("ALLOWED");
+                    userMap.put(data[1], temp);
+                    Thread listener = new Thread(mainListener);
+                    listener.setDaemon(true);
+                    listenerThreads.add(listener);
+                    listener.start();
+                }
+
+                if (userMap.containsKey(data[1])) {
+                    temp.getUserOutput().sendMessage("ALREADY_LOGGED_IN");
+                    continue;
+                }
+
+                if (isUsernameCorrect(data[1])) {
                     if(checkPassword(data[1], data[2])) {
                         temp.setUsername(data[1]);
                         temp.getUserOutput().sendMessage("ALLOWED");
@@ -174,7 +200,10 @@ public class ServerLogic extends Application {
                         listenerThreads.add(listener);
                         listener.start();
                     }
-                    else temp.getUserOutput().sendMessage("WRONGPASSWORD");
+                    else{
+                        temp.getUserOutput().sendMessage("Wrong password!");
+                    }
+                }
                 else {
                     registerNewUser(data[1], data[2]);
                     temp.setUsername(data[1]);
