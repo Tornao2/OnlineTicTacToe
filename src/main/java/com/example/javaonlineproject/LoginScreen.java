@@ -24,6 +24,7 @@ public class LoginScreen {
     private Runnable playerLogin;
     private final UserInfo user = new UserInfo();
 
+
     private ImageView createLogo() {
         ImageView logoImageView = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/images/TictacToe.png"))));
         logoImageView.setFitHeight(200);
@@ -60,7 +61,7 @@ public class LoginScreen {
     private Button createSignUpButton(TextField usernameField, PasswordField passwordField, Text text){
         Button signUpButton = new Button("Sign up");
         signUpButton.setFont(new Font(16.0));
-        signUpButton.setOnAction(_ -> changeScene(usernameField, passwordField, text));
+        signUpButton.setOnAction(_ -> handleSignUp(usernameField, passwordField, text));
         return signUpButton;
     }
     private VBox createVBox() {
@@ -99,7 +100,38 @@ public class LoginScreen {
         manageScene(Manager, primaryStage);
         centerElements(logoImageView, errorText, Manager);
     }
-
+    private void handleSignUp(TextField usernameField, PasswordField passwordField, Text text){
+        user.setUsername(usernameField.getText());
+        String password = passwordField.getText();
+        if (user.getUsername().isEmpty() || password.isEmpty())
+            text.setText("Username or password cannot be empty.");
+        else if(user.getUsername().matches(".*[^a-zA-Z0-9].*") || password.matches(".*[^a-zA-Z0-9].*"))
+            text.setText("You can't use space");
+        else{
+            try {
+                user.setUserSocket(new Socket("localhost", 12345));
+            } catch (IOException _) {}
+            if (user.getUserSocket() == null) text.setText("Server isn't currently running");
+            else {
+                //wysylanie danych do serwera
+                user.setUserInput(user.getUserSocket());
+                user.setUserOutput(user.getUserSocket());
+                user.getUserOutput().sendMessage("SIGNUP" + "," + user.getUsername() + "," + password);
+                String response = user.getUserInput().receiveMessage();
+                if (response.equals("ALLOWED")) {
+                    text.setText("Account create succesfully!");
+                    playerLogin.run(); //Nie wiem czy chcesz zeby rejestracja tworzyla konto czy tez przezucala do menu wiec zostawie narazie
+                }
+                else if (response.equals("USERNAME_TAKEN")) {
+                    text.setText("Username already taken!");
+                }
+            }
+        }
+        text.setVisible(true);
+        PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
+        visiblePause.setOnFinished(_ -> text.setVisible(false));
+        visiblePause.play();
+    }
     private void changeScene(TextField usernameField, PasswordField passwordField, Text text) {
         user.setUsername(usernameField.getText());
         String password = passwordField.getText();
