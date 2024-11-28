@@ -182,6 +182,11 @@ public class ServerLogic extends Application {
                     System.out.println("File dont exist");
                 } //Debuging
 
+                if (userMap.containsKey(data[1])) {
+                    temp.getUserOutput().sendMessage("ALREADY_LOGGED_IN");
+                    continue;  // Skip further login attempts for this user
+                }
+
                 if (isUsernameCorrect(data[1])) {
                     if(checkPassword(data[1], data[2])) {
                         temp.setUsername(data[1]);
