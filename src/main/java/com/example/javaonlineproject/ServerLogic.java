@@ -182,18 +182,21 @@ public class ServerLogic extends Application {
                     System.out.println("File dont exist");
                 } //Debuging
 
-                if(isLoginValid(data[1], data[2])){
-                    //Uzytkownik istnieje
-                    temp.setUsername(data[1]);
-                    temp.getUserOutput().sendMessage("ALLOWED");
-                    userMap.put(temp.getUsername(), temp);
-                    Thread listener = new Thread(mainListener);
-                    listener.setDaemon(true);
-                    listenerThreads.add(listener);
-                    listener.start();
+                if (isUsernameCorrect(data[1])) {
+                    if(checkPassword(data[1], data[2])) {
+                        temp.setUsername(data[1]);
+                        temp.getUserOutput().sendMessage("ALLOWED");
+                        userMap.put(temp.getUsername(), temp);
+                        Thread listener = new Thread(mainListener);
+                        listener.setDaemon(true);
+                        listenerThreads.add(listener);
+                        listener.start();
+                    }
+                    else{
+                        temp.getUserOutput().sendMessage("Wrong password!");
+                    }
                 }
-                else{
-                    //Uzytkownik nie istnieje
+                else {
                     registerNewUser(data[1], data[2]);
                     temp.setUsername(data[1]);
                     temp.getUserOutput().sendMessage("ALLOWED");
@@ -202,31 +205,42 @@ public class ServerLogic extends Application {
                     listener.setDaemon(true);
                     listenerThreads.add(listener);
                     listener.start();
-                }/*
-                temp.setUsername(data[1]);
-                temp.getUserOutput().sendMessage("ALLOWED");
-                userMap.put(temp.getUsername(), temp);
-                Thread listener = new Thread(mainListener);
-                listener.setDaemon(true);
-                listenerThreads.add(listener);
-                listener.start();*/
+                }
             }
         };
         connectingThread = new Thread(connectionListener);
         connectingThread.setDaemon(true);
         connectingThread.start();
     }
+    private boolean isUsernameCorrect(String username){
+        try{
+            List<LoginData> users = loadUsersFromFile();
+            for(LoginData user : users){
+                System.out.println("User: " + user.getLogin());//debuging
+            }
+            for (LoginData user : users) {
+                if (user.getLogin().equals(username)) {
+                    return true;
+                }
+            }
+        }catch(IOException e){
+            System.err.println("isUsernameCorrect exception: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
 
-    private boolean isLoginValid(String username, String password) {
+    private boolean checkPassword(String username, String password){
         try {
             List<LoginData> users = loadUsersFromFile();
-            for (LoginData user : users) {
+            for (LoginData user: users) {
+                System.out.println(", Password: " + user.getPassword()); // debug
                 if (user.getLogin().equals(username) && user.getPassword().equals(password)) {
                     return true;
                 }
             }
         } catch (IOException e) {
-            System.err.println("isLoginValid exception: " + e.getMessage());
+            System.err.println("checkPassword exception: " + e.getMessage());
             e.printStackTrace();
         }
         return false;
