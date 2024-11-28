@@ -1,8 +1,12 @@
 package com.example.javaonlineproject;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class LoginData {
-    public LoginData(String login, String password){
+
+    @JsonCreator
+    public LoginData(@JsonProperty("login") String login, @JsonProperty("password") String password) {
         this.login = login;
         this.password = password;
     }

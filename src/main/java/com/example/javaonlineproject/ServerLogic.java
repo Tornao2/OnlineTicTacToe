@@ -61,6 +61,7 @@ public class ServerLogic extends Application {
     }
 
     private void logic() {
+
         Runnable mainListener = () -> {
             int disconnectCheck = 0;
             long startTime = System.currentTimeMillis();
@@ -175,10 +176,16 @@ public class ServerLogic extends Application {
                 loginAttempt = temp.getUserInput().receiveMessage();
                 String[]data = loginAttempt.split(",");
                 //Tutaj można dodać sprawdzanie hasła i loginu z data[1] i data[2]
+                File file = new File(FILEPATH);
+                System.out.println("File path: " + file.getAbsolutePath());
+                if (!file.exists()) {
+                    System.out.println("File dont exist");
+                } //Debuging
+
                 if(isLoginValid(data[1], data[2])){
                     //Uzytkownik istnieje
                     temp.setUsername(data[1]);
-                    temp.getUserOutput().sendMessage("ALLOWED0");
+                    temp.getUserOutput().sendMessage("ALLOWED");
                     userMap.put(temp.getUsername(), temp);
                     Thread listener = new Thread(mainListener);
                     listener.setDaemon(true);
@@ -219,10 +226,12 @@ public class ServerLogic extends Application {
                 }
             }
         } catch (IOException e) {
-            System.err.println("isLoginValid exception");
+            System.err.println("isLoginValid exception: " + e.getMessage());
+            e.printStackTrace();
         }
         return false;
     }
+
     private List<LoginData> loadUsersFromFile() throws IOException {
         File file = new File(FILEPATH);
         if(!file.exists()){

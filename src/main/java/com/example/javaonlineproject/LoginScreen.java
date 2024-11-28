@@ -99,6 +99,8 @@ public class LoginScreen {
         String password = passwordField.getText();
         if (user.getUsername().isEmpty() || password.isEmpty())
             text.setText("Username or password cannot be empty.");
+        else if(user.getUsername().contains(" ") || password.contains(" "))
+            text.setText("You can't use space");
         else {
             try {
                 user.setUserSocket(new Socket("localhost", 12345));
