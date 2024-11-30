@@ -2,6 +2,7 @@ package com.example.javaonlineproject;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.application.Application;
+import javafx.css.Match;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -14,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class ServerLogic extends Application {
@@ -23,8 +25,9 @@ public class ServerLogic extends Application {
     private final LinkedHashMap<String, UserInfo> userMap = new LinkedHashMap <>();
     private final ArrayList <UserInfo> waitingToPlay = new ArrayList<>();
     private final HashMap<UserInfo, UserInfo> playersInProgress = new HashMap<>();
-    private static final String FILEPATH = "LoginData.json";
+    private static final String LOGINDATAFILEPATH = "LoginData.json";
     private static final String STATSFILEPATH = "StatsData.json";
+    private static final String MATCHHISTORYFILEPATH = "MatchHistoryData.json";
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private Button createExitButton() {
@@ -213,6 +216,37 @@ public class ServerLogic extends Application {
                 break;
         }
         saveStatsToFile(statsList);
+        UserInfo opponent = playersInProgress.get(userMap.get(username));
+        saveMatchHistory(username, opponent.getUsername(), result);
+    }
+    private void saveMatchHistory(String playerUsername, String opponentUsername, String result){
+        List<MatchHistoryData> historyList = loadMatchHistoryFromFile();
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm");
+        String dateTime = sdf.format(new Date());
+
+        MatchHistoryData matchHistory = new MatchHistoryData(dateTime, playerUsername, opponentUsername, result);
+        historyList.add(matchHistory);
+        saveMatchHistoryToFile(historyList);
+    }
+
+    private List<MatchHistoryData> loadMatchHistoryFromFile() {
+        File file = new File(MATCHHISTORYFILEPATH);
+        if (!file.exists() || file.length() == 0) return new ArrayList<>();
+        try {
+            return objectMapper.readValue(file, objectMapper.getTypeFactory().constructCollectionType(List.class, MatchHistoryData.class));
+        } catch (IOException e) {
+            System.err.println("Failed to load match history: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    private void saveMatchHistoryToFile(List<MatchHistoryData> historyList) {
+        File file = new File(MATCHHISTORYFILEPATH);
+        try {
+            objectMapper.writeValue(file, historyList);
+        } catch (IOException e) {
+            System.err.println("Failed to save match history: " + e.getMessage());
+        }
     }
 
     private StatsData getStatsForUser(String username, List<StatsData> statsList) {
@@ -271,7 +305,7 @@ public class ServerLogic extends Application {
         return false;
     }
     private List<LoginData> loadUsersFromFile() {
-        File file = new File(FILEPATH);
+        File file = new File(LOGINDATAFILEPATH);
         if(!file.exists() || file.length() == 0) return new ArrayList<>();
         try {
             return objectMapper.readValue(file, objectMapper.getTypeFactory().constructCollectionType(List.class, LoginData.class));
@@ -289,7 +323,7 @@ public class ServerLogic extends Application {
     }
     private void saveUsersToFile(List<LoginData> users){
         try {
-            objectMapper.writeValue(new File(FILEPATH), users);
+            objectMapper.writeValue(new File(LOGINDATAFILEPATH), users);
         } catch (IOException _) {
             System.err.println("saveUsersToFile");
         }
