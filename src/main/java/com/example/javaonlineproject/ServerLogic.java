@@ -24,6 +24,7 @@ public class ServerLogic extends Application {
     private final ArrayList <UserInfo> waitingToPlay = new ArrayList<>();
     private final HashMap<UserInfo, UserInfo> playersInProgress = new HashMap<>();
     private static final String FILEPATH = "LoginData.json";
+    private static final String STATSFILEPATH = "StatsData.json";
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private Button createExitButton() {
@@ -112,10 +113,14 @@ public class ServerLogic extends Application {
                         break;
                     case "WIN":
                         //+1 lose dla tego co przegrał + 1 win dla drugiego zapisać do pliku
+                        updateStatsForUser(userServed.getUsername(), "WIN");
+                        updateStatsForUser(playersInProgress.get(userServed).getUsername(), "LOSE");
                         playersInProgress.get(userServed).getUserOutput().sendMessage("LOST");
                         break;
                     case "DRAW":
                         //+1 draw dla obu zapisać w pliku
+                        updateStatsForUser(userServed.getUsername(), "DRAW");
+                        updateStatsForUser(playersInProgress.get(userServed).getUsername(), "DRAW");
                         playersInProgress.get(userServed).getUserOutput().sendMessage("DRAW");
                         break;
                     case "MOVE":
@@ -125,6 +130,8 @@ public class ServerLogic extends Application {
                         break;
                     case "RESIGNED":
                         //+1 lose dla tego co zrezygnował + 1 win dla drugiego zapisać do pliku
+                        updateStatsForUser(userServed.getUsername(), "LOSE");
+                        updateStatsForUser(playersInProgress.get(userServed).getUsername(), "WIN");
                         playersInProgress.get(userServed).getUserOutput().sendMessage("ENEMYRESIGNED");
                         playersInProgress.remove(playersInProgress.get(userServed));
                         playersInProgress.remove(userServed);
@@ -187,6 +194,57 @@ public class ServerLogic extends Application {
         connectingThread.setDaemon(true);
         connectingThread.start();
     }
+    private void updateStatsForUser(String username, String result) {
+        List<StatsData> statsList = loadStatsFromFile();
+        StatsData stats = getStatsForUser(username, statsList);
+        if (stats == null) {
+            stats = new StatsData(username);
+            statsList.add(stats);
+        }
+        switch (result) {
+            case "WIN":
+                stats.incrementWins();
+                break;
+            case "DRAW":
+                stats.incrementDraws();
+                break;
+            case "LOSE":
+                stats.incrementLosses();
+                break;
+        }
+        saveStatsToFile(statsList);
+    }
+
+    private StatsData getStatsForUser(String username, List<StatsData> statsList) {
+        for (StatsData stats : statsList) {
+            if (stats.getUsername().equals(username)) {
+                return stats;
+            }
+        }
+        return null;
+    }
+
+    private void saveStatsToFile(List<StatsData> statsList) {
+        File file = new File(STATSFILEPATH);
+
+        try {
+            objectMapper.writeValue(file, statsList);
+        } catch (IOException e) {
+            System.err.println("Failed to save Stats: " + e.getMessage());
+        }
+    }
+
+    private List<StatsData> loadStatsFromFile(){
+        File file = new File(STATSFILEPATH);
+        if(!file.exists() || file.length() == 0) return new ArrayList<>();
+        try{
+            return objectMapper.readValue(file, objectMapper.getTypeFactory().constructCollectionType(List.class, StatsData.class));
+        } catch (IOException e) {
+            System.err.println("Failed to load statistics: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
     private void handleLogin(String username, UserInfo temp, Runnable mainListener) {
         temp.setUsername(username);
         temp.getUserOutput().sendMessage("ALLOWED");
