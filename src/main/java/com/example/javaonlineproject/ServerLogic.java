@@ -2,7 +2,6 @@ package com.example.javaonlineproject;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.application.Application;
-import javafx.css.Match;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -126,13 +125,11 @@ public class ServerLogic extends Application {
                         playersInProgress.put(secondUser, firstUser);
                         break;
                     case "WIN":
-                        //+1 lose dla tego co przegrał + 1 win dla drugiego zapisać do pliku
                         updateStatsForUser(userServed.getUsername(), "WIN");
                         updateStatsForUser(playersInProgress.get(userServed).getUsername(), "LOSE");
                         playersInProgress.get(userServed).getUserOutput().sendMessage("LOST");
                         break;
                     case "DRAW":
-                        //+1 draw dla obu zapisać w pliku
                         updateStatsForUser(userServed.getUsername(), "DRAW");
                         updateStatsForUser(playersInProgress.get(userServed).getUsername(), "DRAW");
                         playersInProgress.get(userServed).getUserOutput().sendMessage("DRAW");
@@ -143,7 +140,6 @@ public class ServerLogic extends Application {
                         playersInProgress.get(userServed).getUserOutput().sendMessage("MOVE," + row + "," + col);
                         break;
                     case "RESIGNED":
-                        //+1 lose dla tego co zrezygnował + 1 win dla drugiego zapisać do pliku
                         updateStatsForUser(userServed.getUsername(), "LOSE");
                         updateStatsForUser(playersInProgress.get(userServed).getUsername(), "WIN");
                         playersInProgress.get(userServed).getUserOutput().sendMessage("ENEMYRESIGNED");
@@ -164,6 +160,12 @@ public class ServerLogic extends Application {
                         break;
                     case "NAME":
                         userServed.getUserOutput().sendMessage(playersInProgress.get((userServed)).getUsername());
+                        break;
+                    case "MESSAGE":
+                        playersInProgress.get(userServed).getUserOutput().sendMessage("MESSAGE,"+moveSplit[1]);
+                        break;
+                    case "GETCHATHISTORY":
+                        userServed.getUserOutput().sendMessage("ENEMY,ASDASDSA,PLAYER,ASDSADAS,ENEMY,DDSDSDS,PLAYER,FDFDF");
                         break;
                     default:
                         break;
@@ -212,7 +214,7 @@ public class ServerLogic extends Application {
         List<StatsData> statsList = loadStatsFromFile();
         StatsData stats = getStatsForUser(username, statsList);
         if (stats == null) {
-            stats = new StatsData(username, stats.getWins(), stats.getDraws(), stats.getLosses());
+            stats = new StatsData(username, 0, 0, 0);
             statsList.add(stats);
         }
         switch (result) {
@@ -342,7 +344,7 @@ public class ServerLogic extends Application {
             int score2 = stats2.getWins() * 3 + stats2.getDraws();
             return Integer.compare(score2, score1);
         });
-        List<StatsData> top3Players = statsList.stream().limit(3).collect(Collectors.toList());
+        List<StatsData> top3Players = statsList.stream().limit(3).toList();
         String topPlayersJson = top3Players.stream()
                 .map(this::convertStatsToJson)
                 .collect(Collectors.joining(","));
