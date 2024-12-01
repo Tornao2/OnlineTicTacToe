@@ -85,6 +85,10 @@ public class ServerLogic extends Application {
                     case "GETMATCHHISTORY":
                         sendMatchHistoryToPlayer(userServed.getUsername());
                         break;
+                    case "GETSTATS":
+                        String playerUsername = userServed.getUsername();
+                        sendStatsToPlayer(playerUsername);
+                        break;
                     case "SOCKETERROR":
                         for(UserInfo user: waitingToPlay)
                             if (user == userServed) {
@@ -301,6 +305,29 @@ public class ServerLogic extends Application {
         } catch (IOException e) {
             System.err.println("Failed to load statistics: " + e.getMessage());
             return new ArrayList<>();
+        }
+    }
+    private void sendStatsToPlayer(String username){
+        List<StatsData> statsList = loadStatsFromFile();
+        StatsData playerStats = getStatsForUser(username, statsList);
+        if(playerStats != null){
+            String statsJson = convertStatsToJson(playerStats);
+            UserInfo user = userMap.get(username);
+            if(user != null){
+                user.getUserOutput().sendMessage("STATS:" + statsJson);
+            }
+            else{
+                System.out.println("Player stats not found for username: " + username);
+            }
+        }
+    }
+
+    private String convertStatsToJson(StatsData playerStats) {
+        try {
+            return objectMapper.writeValueAsString(playerStats);
+        } catch (IOException e) {
+            System.err.println("Error converting player stats to JSON: " + e.getMessage());
+            return "ERROR";
         }
     }
 

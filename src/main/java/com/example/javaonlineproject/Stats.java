@@ -35,14 +35,15 @@ public class Stats {
         VBox organizer = new VBox(12);
         organizer.setPrefSize(280, 210);
         organizer.setPadding(new Insets(8, 8, 10, 8));
-        organizer.setAlignment(Pos.BASELINE_CENTER);
+        organizer.setAlignment(Pos.CENTER_RIGHT);
         return organizer;
     }
 
     private BorderPane createManager(VBox organizer, Button backButton) {
         BorderPane root = new BorderPane();
-        root.setBottom(backButton);
         root.setCenter(organizer);
+        root.setBottom(backButton);
+        BorderPane.setAlignment(backButton, Pos.BOTTOM_CENTER);
         root.setStyle("-fx-background-color: #1A1A1A;");
         return root;
     }
@@ -53,6 +54,8 @@ public class Stats {
         primaryStage.setScene(scene);
         primaryStage.show();
     }
+
+
 
     private void displayMatchHistory(List<MatchHistoryData> matchHistory) {
         VBox organizer = createVBox();
@@ -68,6 +71,7 @@ public class Stats {
                 Label matchLabel = new Label(matchDetails);
                 matchLabel.setFont(new Font(14.0));
                 matchLabel.setTextFill(Color.WHITE);
+                matchLabel.setAlignment(Pos.CENTER_RIGHT);
                 organizer.getChildren().add(matchLabel);
             }
         }
@@ -86,7 +90,7 @@ public class Stats {
                 if (message == null) continue;
                 if (message.startsWith("MATCHHISTORY: ")) {
                     String matchHistoryJson = message.substring("MATCHHISTORY: ".length());
-                    System.out.println(matchHistoryJson);
+                    System.out.println(matchHistoryJson);//DEBUG
                     try {
                         List<MatchHistoryData> matchHistory = objectMapper.readValue(matchHistoryJson, new TypeReference<List<MatchHistoryData>>() {});
                         Platform.runLater(() -> displayMatchHistory(matchHistory));
@@ -107,6 +111,47 @@ public class Stats {
         historyThread.start();
     }
 
+    private void reciveStatsFromServer(){
+        while (!Thread.currentThread().isInterrupted()) {
+            user.getUserOutput().sendMessage("GETSTATS");
+            String message = user.getUserInput().receiveMessage();
+            if(message == null) continue;
+            if(message.startsWith("STATS:")){
+                String statsJson = message.substring("STATS:".length());
+                System.out.println(statsJson); //debug
+                try{
+                    List<StatsData> statsData = objectMapper.readValue(statsJson, new TypeReference<List<StatsData>>() {});
+                    Platform.runLater(() -> displayStats(statsData));
+                    break;
+                }catch(IOException e){
+                    System.err.println("Error Parsing stats: " + e.getMessage());
+                    break;
+                }
+            }else{
+                System.out.println("Message does not contain statsData " + message);
+                break;
+            }
+        }
+    }
+
+    private void displayStats(List<StatsData> statsData) {
+        VBox organizer = createVBox();
+        if(statsData == null || statsData.isEmpty()) organizer.getChildren().add((new Label("No stats found.")));
+        else{
+            for(StatsData stats : statsData){
+                String statsDetails = "Username: " + stats.getUsername() +
+                        " |Wins: " + stats.getWins() +
+                        " |Draws" + stats.getDraws() +
+                        " |Loses" + stats.getLosses();
+                Label statsLabel = new Label(statsDetails);
+                statsLabel.setFont(new Font(14));
+                statsLabel.setTextFill(Color.RED);
+                organizer.getChildren().add(statsLabel);
+            }
+        }
+    }
+
+
     public void start(Stage primaryStage, UserInfo user) {
         this.user = user;
         this.primaryStage = primaryStage;
@@ -116,6 +161,7 @@ public class Stats {
         organizer.getChildren().add(backButton);
         BorderPane manager = createManager(organizer, backButton);
         reciveMatchHistoryFromServer();
+        reciveStatsFromServer();
 
         manageScene(primaryStage, manager);
         checkForDisconnect();
