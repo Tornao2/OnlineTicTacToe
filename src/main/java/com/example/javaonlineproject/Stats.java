@@ -16,7 +16,9 @@
     import java.io.IOException;
     import java.util.Collections;
     import java.util.List;
-    
+    /*
+    Wszystkie parametry są wysyłane do stats, zostało do zrobienia wyświetlanie ich wszystkich i żeby wyglądało to jakoś
+     */
     public class Stats {
         private Runnable onBack;
         private Runnable onDisconnect;
@@ -113,10 +115,14 @@
     
         private void reciveStatsFromServer(){
             while (!Thread.currentThread().isInterrupted()) {
-                user.getUserOutput().sendMessage("GETSTATS");
+                /*
+                musisz zamienic to co zakomentowane w zaleznosci co chcesz wyswietlic
+                narazie nie jest zrobione
+                 */
+                user.getUserOutput().sendMessage("GETBESTPLAYERS"); //DEBUG //("GETSTATS");
                 String message = user.getUserInput().receiveMessage();
                 if(message == null) continue;
-                if(message.startsWith("STATS:")){
+                if(message.startsWith("Top Player: ")){ //DEBUG //("STATS:")
                     String statsJson = message.substring("STATS:".length());
                     System.out.println(statsJson); //debug
                     try{
@@ -165,7 +171,8 @@
             organizer.getChildren().add(backButton);
             BorderPane manager = createManager(organizer, backButton);
             reciveStatsFromServer();
-         //   reciveMatchHistoryFromServer();
+         //   reciveMatchHistoryFromServer(); jest zakomentowane jesli chcesz wyswietlic match history
+            //obecnie nie ma od wyswietlania bialsnu top 3 graczy mozna zmienic na wiecej
 
             manageScene(primaryStage, manager);
             checkForDisconnect();

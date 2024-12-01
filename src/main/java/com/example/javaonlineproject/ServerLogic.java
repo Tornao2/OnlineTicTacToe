@@ -17,6 +17,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ServerLogic extends Application {
     private Thread connectingThread;
@@ -88,6 +89,9 @@ public class ServerLogic extends Application {
                     case "GETSTATS":
                         String playerUsername = userServed.getUsername();
                         sendStatsToPlayer(playerUsername);
+                        break;
+                    case "GETBESTPLAYERS":
+                        sendBestPlayerToStats(userServed.getUsername());
                         break;
                     case "SOCKETERROR":
                         for(UserInfo user: waitingToPlay)
@@ -328,6 +332,26 @@ public class ServerLogic extends Application {
         } catch (IOException e) {
             System.err.println("Error converting player stats to JSON: " + e.getMessage());
             return "ERROR";
+        }
+    }
+
+    private void sendBestPlayerToStats(String username){
+        List<StatsData> statsList = loadStatsFromFile();
+        statsList.sort((stats1, stats2) ->{
+            int score1 = stats1.getWins() * 3 + stats1.getDraws();
+            int score2 = stats2.getWins() * 3 + stats2.getDraws();
+            return Integer.compare(score2, score1);
+        });
+        List<StatsData> top3Players = statsList.stream().limit(3).collect(Collectors.toList());
+        String topPlayersJson = top3Players.stream()
+                .map(this::convertStatsToJson)
+                .collect(Collectors.joining(","));
+
+        UserInfo user = userMap.get(username);
+        if (user != null) {
+            user.getUserOutput().sendMessage("BESTPLAYERS:" + topPlayersJson);
+        } else {
+            System.out.println("User not found: " + username);
         }
     }
 
