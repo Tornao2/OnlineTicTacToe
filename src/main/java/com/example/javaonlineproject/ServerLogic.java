@@ -82,6 +82,9 @@ public class ServerLogic extends Application {
                         waitingToPlay.remove(userServed);
                         sendListToEveryoneBesides(userServed);
                         break;
+                    case "GETMATCHHISTORY":
+                        sendMatchHistoryToPlayer(userServed.getUsername());
+                        break;
                     case "SOCKETERROR":
                         for(UserInfo user: waitingToPlay)
                             if (user == userServed) {
@@ -223,12 +226,10 @@ public class ServerLogic extends Application {
         List<MatchHistoryData> historyList = loadMatchHistoryFromFile();
         SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm");
         String dateTime = sdf.format(new Date());
-
         MatchHistoryData matchHistory = new MatchHistoryData(dateTime, playerUsername, opponentUsername, result);
         historyList.add(matchHistory);
         saveMatchHistoryToFile(historyList);
     }
-
     private List<MatchHistoryData> loadMatchHistoryFromFile() {
         File file = new File(MATCHHISTORYFILEPATH);
         if (!file.exists() || file.length() == 0) return new ArrayList<>();
@@ -248,6 +249,30 @@ public class ServerLogic extends Application {
             System.err.println("Failed to save match history: " + e.getMessage());
         }
     }
+    private void sendMatchHistoryToPlayer(String username) {
+        List<MatchHistoryData> historyList = loadMatchHistoryFromFile();
+        List<MatchHistoryData> playerHistory = new ArrayList<>();
+        for (MatchHistoryData userMatch : historyList) {
+            if (userMatch.getPlayer1username().equals(username)) {
+                playerHistory.add(userMatch);
+            }
+        }
+        String matchHistoryJson = convertMatchHistoryToJson(playerHistory);
+        UserInfo user = userMap.get(username);
+        if (user != null) {
+            user.getUserOutput().sendMessage("MATCHHISTORY: " + matchHistoryJson);
+        }
+    }
+
+    private String convertMatchHistoryToJson(List<MatchHistoryData> playerHistory) {
+        try{
+            return objectMapper.writeValueAsString(playerHistory);
+        }catch(IOException e){
+            System.err.println("Error converting match history to JSON: " + e.getMessage());
+            return "ERROR";
+        }
+    }
+
 
     private StatsData getStatsForUser(String username, List<StatsData> statsList) {
         for (StatsData stats : statsList) {

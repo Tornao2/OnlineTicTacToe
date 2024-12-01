@@ -8,11 +8,6 @@ public class MatchHistoryData {
     private String player1username;
     private String player2username;
     private String result;
-    /*
-Imo powinniśmy zapisywać result w stosunku do player1 i potem przy przeszukiwaniu listy sprawdzamu czy nick
-jest player1 czy 2 i potem po prostu result.equals("W") ? "W" : "L" i zapisujemy to w ten sposób
-duzo pamieci zajmuje ale tymczasowo nie mam lepszego pomyslu
- */
 
     @JsonCreator
     public MatchHistoryData(

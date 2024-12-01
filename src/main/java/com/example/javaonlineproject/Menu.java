@@ -98,6 +98,7 @@ public class Menu  {
         onStartSuccess.run();
     }
     private void statsButton() {
+        System.out.println("YAAY");
         disconnectThread.interrupt();
         try {
             disconnectThread.join();
