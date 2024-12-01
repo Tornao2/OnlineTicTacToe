@@ -1,0 +1,19 @@
+.grid-pane {
+    -fx-background-color: #1A1A1A;  /* Kolor tła planszy */
+    -fx-hgap: 4;
+    -fx-vgap: 4;
+}
+
+.button {
+    -fx-background-color: #1A1A1A;  /* Tło komórek */
+    -fx-border-color: white;        /* Kolor obramowania komórek */
+    -fx-border-width: 4;            /* Szerokość obramowania komórek (białe linie) */
+    -fx-border-radius: 0;           /* Brak zaokrąglenia rogów przycisków */
+    -fx-padding: 6;                 /* Wewnętrzne odstępy w komórkach */
+    -fx-text-fill: white;           /* Kolor tekstu - biały (X lub O) */
+}
+
+/* Styl komórek po najechaniu */
+.button:hover {
+    -fx-effect: dropshadow(gaussian, #FFFFFF, 20, 0.5, 0, 0);
+}

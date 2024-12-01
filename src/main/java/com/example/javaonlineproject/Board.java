@@ -58,10 +58,12 @@ public class Board {
         gridPane.setAlignment(Pos.BASELINE_CENTER);
         gridPane.setHgap(6);
         gridPane.setVgap(6);
+        gridPane.getStyleClass().add("grid-pane"); // Dodanie klasy CSS
+
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 3; column++) {
                 Button cell = new Button("");
-                cell.setStyle("-fx-background-color: #FFFFFF;");
+                cell.getStyleClass().add("button"); // Dodanie klasy CSS
                 cell.setMinSize(150, 150);
                 cell.setFont(new Font(48));
                 final int r = row;
@@ -73,6 +75,7 @@ public class Board {
         }
         return gridPane;
     }
+
     private Button createResignButton() {
         Button resign = new Button("Resign");
         resign.setFont(new Font(16));
@@ -102,12 +105,17 @@ public class Board {
         root.setStyle("-fx-background-color: #1A1A1A;");
         return root;
     }
+
+
     private void manageScene(Stage primaryStage, BorderPane manager) {
         Scene scene = new Scene(manager, 1024, 768);
+        scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm()); // Dodanie pliku CSS
         primaryStage.setTitle("Game");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
+
+
     private void setTurns() {
         moved = !symbolUsed[0].equals("X");
         if (moved)
