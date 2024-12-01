@@ -249,7 +249,7 @@ public class ServerLogic extends Application {
             System.err.println("Failed to save match history: " + e.getMessage());
         }
     }
-    private void sendMatchHistoryToPlayer(String username) {
+        private void sendMatchHistoryToPlayer(String username) {
         List<MatchHistoryData> historyList = loadMatchHistoryFromFile();
         List<MatchHistoryData> playerHistory = new ArrayList<>();
         for (MatchHistoryData userMatch : historyList) {

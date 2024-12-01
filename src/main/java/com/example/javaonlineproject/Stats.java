@@ -15,9 +15,7 @@ import javafx.stage.Stage;
 import javafx.scene.paint.Color;
 import java.io.IOException;
 import java.util.List;
-/*
-(nie wyswietla sie back button) Historia sie wyswietla nie byla testowana, kod do wyczyszczenia
- */
+
 public class Stats {
     private Runnable onBack;
     private Runnable onDisconnect;
@@ -41,8 +39,10 @@ public class Stats {
         return organizer;
     }
 
-    private BorderPane createManager(VBox organizer) {
-        BorderPane root = new BorderPane(organizer);
+    private BorderPane createManager(VBox organizer, Button backButton) {
+        BorderPane root = new BorderPane();
+        root.setBottom(backButton);
+        root.setCenter(organizer);
         root.setStyle("-fx-background-color: #1A1A1A;");
         return root;
     }
@@ -72,7 +72,8 @@ public class Stats {
             }
         }
 
-        BorderPane root = createManager(organizer);
+        Button backButton = createBackButton();
+        BorderPane root = createManager(organizer, backButton);
         manageScene(primaryStage, root);
     }
 
@@ -83,18 +84,20 @@ public class Stats {
                 String message = user.getUserInput().receiveMessage();
 
                 if (message == null) continue;
-
                 if (message.startsWith("MATCHHISTORY: ")) {
                     String matchHistoryJson = message.substring("MATCHHISTORY: ".length());
-
+                    System.out.println(matchHistoryJson);
                     try {
                         List<MatchHistoryData> matchHistory = objectMapper.readValue(matchHistoryJson, new TypeReference<List<MatchHistoryData>>() {});
                         Platform.runLater(() -> displayMatchHistory(matchHistory));
+                        break;
                     } catch (IOException e) {
                         System.err.println("Error parsing match history: " + e.getMessage());
+                        break;
                     }
                 } else {
                     System.out.println("Message does not contain match history: " + message);
+                    break;
                 }
             }
         };
@@ -111,9 +114,7 @@ public class Stats {
         Button backButton = createBackButton();
         VBox organizer = createVBox();
         organizer.getChildren().add(backButton);
-        BorderPane manager = createManager(organizer);
-
-        user.getUserOutput().sendMessage("GETMATCHHISTORY");
+        BorderPane manager = createManager(organizer, backButton);
         reciveMatchHistoryFromServer();
 
         manageScene(primaryStage, manager);
