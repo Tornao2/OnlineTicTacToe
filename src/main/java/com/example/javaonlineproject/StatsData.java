@@ -10,12 +10,16 @@ public class StatsData {
     private int losses;
 
     @JsonCreator
-    public StatsData(@JsonProperty("username") String username) {
+    public StatsData(@JsonProperty("username") String username,
+                     @JsonProperty("wins") int wins,
+                     @JsonProperty("draws") int draws,
+                     @JsonProperty("losses") int losses) {
         this.username = username;
-        this.wins = 0;
-        this.draws = 0;
-        this.losses = 0;
+        this.wins = wins;
+        this.draws = draws;
+        this.losses = losses;
     }
+
     public String getUsername() {
         return username;
     }

@@ -208,7 +208,7 @@ public class ServerLogic extends Application {
         List<StatsData> statsList = loadStatsFromFile();
         StatsData stats = getStatsForUser(username, statsList);
         if (stats == null) {
-            stats = new StatsData(username);
+            stats = new StatsData(username, stats.getWins(), stats.getDraws(), stats.getLosses());
             statsList.add(stats);
         }
         switch (result) {
