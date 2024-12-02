@@ -334,21 +334,33 @@ public class Board {
         return true;
     }
     private void resetBoard() {
-        for (Button[] row : board)
+        for (Button[] row : board) {
             for (Button cell : row) {
-                cell.setText("");
-                cell.setStyle("-fx-background-color: #FFFFFF;");
+                cell.setText(""); // Wyczyszczenie tekstu w przyciskach
+                cell.setStyle(null); // Usunięcie wszelkich stylów inline
+                cell.getStyleClass().add("button"); // Przywrócenie klasy CSS
             }
-        setTurns();
+        }
+
+        finishedMatch = false; // Oznaczenie, że nowa gra jest rozpoczęta
+        otherSideRematch = false; // Reset flagi rematchu
+        setTurns(); // Przywrócenie kolejności graczy na podstawie symbolu
     }
+
+
     private void rematch() {
         if (finishedMatch && !quiting) {
             if (!otherSideRematch) {
                 user.getUserOutput().sendMessage("REMATCH");
                 statusText.setText("You want a rematch!");
-            } else  user.getUserOutput().sendMessage("ACCEPT");
+            } else {
+                user.getUserOutput().sendMessage("ACCEPT");
+                Platform.runLater(this::resetBoard); // Reset planszy po zaakceptowaniu rematchu
+                finishedMatch = false; // Oznaczenie, że gra nie jest zakończona
+            }
         }
     }
+
 
     private void resign() {
         if (!quiting) {
