@@ -12,14 +12,14 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class ServerLogic extends Application {
     private Thread connectingThread;
+    private Thread broadCasting;
     private final ArrayList <Thread> listenerThreads = new ArrayList<>();
     private ServerSocket serverSocket;
     private final LinkedHashMap<String, UserInfo> userMap = new LinkedHashMap <>();
@@ -206,6 +206,45 @@ public class ServerLogic extends Application {
                     temp.getUserOutput().sendMessage("NOLOGIN");
             }
         };
+        Runnable preConnection = () -> {
+            MulticastSocket socket = null;
+            try {
+                socket = new MulticastSocket(12346);
+            } catch (SocketException _) {
+                System.err.println("broadcasting socket");
+                System.exit(-1);
+            } catch (IOException e) {
+                System.err.println("broadcasting socket");
+                System.exit(-11);
+            }
+            while (!Thread.currentThread().isInterrupted()) {
+                byte[] buf;
+                String dString = "REQUEST";
+                buf = dString.getBytes();
+                InetAddress address = null;
+                try {
+                    address = InetAddress.getByName("224.0.0.0");
+                } catch (UnknownHostException e) {
+                    System.err.println("getByName");
+                    System.exit(-3);
+                }
+                DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 12346);
+                try {
+                    socket.send(packet);
+                } catch (IOException _) {
+
+                }
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException _) {
+                    return;
+                }
+            }
+            socket.close();
+        };
+        broadCasting = new Thread(preConnection);
+        broadCasting.setDaemon(true);
+        broadCasting.start();
         connectingThread = new Thread(connectionListener);
         connectingThread.setDaemon(true);
         connectingThread.start();
@@ -422,6 +461,7 @@ public class ServerLogic extends Application {
     }
     private void stopAll() {
         connectingThread.interrupt();
+        broadCasting.interrupt();
         for (Thread thread: listenerThreads) thread.interrupt();
         for (UserInfo reader : userMap.values()) reader.closeConnection();
         userMap.clear();

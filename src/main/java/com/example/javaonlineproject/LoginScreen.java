@@ -15,7 +15,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.*;
-import java.net.Socket;
+import java.net.*;
 import java.util.Objects;
 
 import static javafx.scene.paint.Color.WHITE;
@@ -23,6 +23,7 @@ import static javafx.scene.paint.Color.WHITE;
 public class LoginScreen {
     private Runnable playerLogin;
     private final UserInfo user = new UserInfo();
+    InetAddress serverIp;
 
     private ImageView createLogo() {
         ImageView logoImageView = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/images/TictacToe.png"))));
@@ -98,6 +99,48 @@ public class LoginScreen {
         BorderPane Manager = createManager(organizer);
         manageScene(Manager, primaryStage);
         centerElements(logoImageView, errorText, Manager);
+        logic();
+    }
+    private void logic() {
+        MulticastSocket socket = null;
+        try {
+            socket = new MulticastSocket(12346);
+            socket.setSoTimeout(3000);
+        } catch (IOException e) {
+            System.err.println("socketMulticast");
+            System.exit(-1);
+        }
+        InetAddress group = null;
+        try {
+            group = InetAddress.getByName("224.0.0.0");
+        } catch (UnknownHostException e) {
+            System.err.println("getByName");
+            System.exit(-2);
+        }
+        try {
+            socket.joinGroup(group);
+        } catch (IOException e) {
+            System.err.println("joinGroup");
+            System.exit(-3);
+        }
+        byte[] buf = new byte[256];
+        DatagramPacket packet = new DatagramPacket(buf, buf.length);
+        try {
+            socket.receive(packet);
+        } catch (SocketTimeoutException _) {
+            System.exit(-4);
+        }catch (IOException _) {
+            System.err.println("socket receive");
+            System.exit(-5);
+        }
+        try {
+            socket.leaveGroup(group);
+        } catch (IOException e) {
+            System.err.println("leaveGroup");
+            System.exit(-6);
+        }
+        socket.close();
+        serverIp = packet.getAddress();
     }
     private void buttonsFunc(TextField usernameField, PasswordField passwordField, Text text, boolean isSignIn) {
         user.setUsername(usernameField.getText());
@@ -106,10 +149,8 @@ public class LoginScreen {
         else if(user.getUsername().matches(".*[^a-zA-Z0-9].*") || password.matches(".*[^a-zA-Z0-9].*")) text.setText("Use letters or digits");
         else {
             try {
-                user.setUserSocket(new Socket("localhost", 12345));
+                user.setUserSocket(new Socket(serverIp, 12345));
             } catch (IOException _) {}
-            if (user.getUserSocket() == null) text.setText("Server isn't currently running");
-            else {
                 user.setUserInput(user.getUserSocket());
                 user.setUserOutput(user.getUserSocket());
                 if (isSignIn) user.getUserOutput().sendMessage("LOGIN," + user.getUsername() + "," + password);
@@ -129,7 +170,6 @@ public class LoginScreen {
                         text.setText("Incorrect username or password");
                 }
                 user.closeConnection();
-            }
         }
         text.setVisible(true);
         PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
