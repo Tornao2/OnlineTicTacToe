@@ -24,7 +24,7 @@
         private Runnable onDisconnect;
         private UserInfo user;
         private Thread disconnectThread;
-        private ObjectMapper objectMapper = new ObjectMapper();
+        private final ObjectMapper objectMapper = new ObjectMapper();
         private Stage primaryStage;
     
         private Button createBackButton() {
@@ -92,7 +92,7 @@
                         String matchHistoryJson = message.substring("MATCHHISTORY: ".length());
                         System.out.println(matchHistoryJson);//DEBUG
                         try {
-                            List<MatchHistoryData> matchHistory = objectMapper.readValue(matchHistoryJson, new TypeReference<List<MatchHistoryData>>() {});
+                            List<MatchHistoryData> matchHistory = objectMapper.readValue(matchHistoryJson, new TypeReference<>() {});
                             Platform.runLater(() -> displayMatchHistory(matchHistory));
                             break;
                         } catch (IOException e) {
