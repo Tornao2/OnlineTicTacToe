@@ -23,8 +23,8 @@ public class UserInfo {
         this.userSocket = usersocket;
         try {
             userSocket.setSoTimeout(250);
-        } catch (SocketException _) {
-            System.err.println("setUserSocket");
+        } catch (SocketException e) {
+            System.err.println("setUserSocket" + e.getMessage());
         }
         Runtime.getRuntime().addShutdownHook(new Thread(() -> { if (userSocket != null && userSocket.isClosed()) closeConnection();}));
     }

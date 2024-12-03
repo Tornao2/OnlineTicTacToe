@@ -55,7 +55,7 @@ public class ServerLogic extends Application {
         try {
             serverSocket = new ServerSocket(12345);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.err.println("Serversocket" + e.getMessage());
         }
         Button exitButton = createExitButton();
         VBox organizer = createVBox();
@@ -210,11 +210,11 @@ public class ServerLogic extends Application {
             MulticastSocket socket = null;
             try {
                 socket = new MulticastSocket(12346);
-            } catch (SocketException _) {
-                System.err.println("broadcasting socket");
+            } catch (SocketException e) {
+                System.err.println("broadcasting socket" + e.getMessage());
                 System.exit(-1);
             } catch (IOException e) {
-                System.err.println("broadcasting socket");
+                System.err.println("broadcasting socket" + e.getMessage());
                 System.exit(-11);
             }
             while (!Thread.currentThread().isInterrupted()) {
@@ -225,7 +225,7 @@ public class ServerLogic extends Application {
                 try {
                     address = InetAddress.getByName("224.0.0.0");
                 } catch (UnknownHostException e) {
-                    System.err.println("getByName");
+                    System.err.println("getByName" + e.getMessage());
                     System.exit(-3);
                 }
                 DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 12346);
@@ -334,7 +334,6 @@ public class ServerLogic extends Application {
 
     private void saveStatsToFile(List<StatsData> statsList) {
         File file = new File(STATSFILEPATH);
-
         try {
             objectMapper.writeValue(file, statsList);
         } catch (IOException e) {
@@ -426,8 +425,8 @@ public class ServerLogic extends Application {
         if(!file.exists() || file.length() == 0) return new ArrayList<>();
         try {
             return objectMapper.readValue(file, objectMapper.getTypeFactory().constructCollectionType(List.class, LoginData.class));
-        } catch (IOException _) {
-            System.err.println("loadUsersFromFile");
+        } catch (IOException e) {
+            System.err.println("loadUsersFromFile" + e.getMessage());
             return null;
         }
     }
@@ -441,8 +440,8 @@ public class ServerLogic extends Application {
     private void saveUsersToFile(List<LoginData> users){
         try {
             objectMapper.writeValue(new File(LOGINDATAFILEPATH), users);
-        } catch (IOException _) {
-            System.err.println("saveUsersToFile");
+        } catch (IOException e) {
+            System.err.println("saveUsersToFile" + e.getMessage());
         }
     }
 
@@ -469,8 +468,8 @@ public class ServerLogic extends Application {
         if (serverSocket != null && !serverSocket.isClosed())
             try {
                 serverSocket.close();
-            } catch (IOException _) {
-                System.err.println("stopAll exception");
+            } catch (IOException e) {
+                System.err.println("stopAll exception" + e.getMessage());
             }
         System.exit(0);
     }

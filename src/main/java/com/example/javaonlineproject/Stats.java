@@ -62,7 +62,6 @@
     
         private void displayMatchHistory(List<MatchHistoryData> matchHistory) {
             VBox organizer = createVBox();
-    
             if (matchHistory == null || matchHistory.isEmpty()) {
                 organizer.getChildren().add(new Label("No match history found."));
             } else {
@@ -88,7 +87,6 @@
                 while (!Thread.currentThread().isInterrupted()) {
                     user.getUserOutput().sendMessage("GETMATCHHISTORY");
                     String message = user.getUserInput().receiveMessage();
-    
                     if (message == null) continue;
                     if (message.startsWith("MATCHHISTORY: ")) {
                         String matchHistoryJson = message.substring("MATCHHISTORY: ".length());

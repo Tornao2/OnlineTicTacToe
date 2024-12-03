@@ -9,15 +9,15 @@ public class Listener{
     public void setInput(Socket socket) {
         try {
             input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        } catch (IOException _) {
-            System.err.println("setInput");
+        } catch (IOException e) {
+            System.err.println("setInput" + e.getMessage());
         }
     }
     public void closeInput() {
         try {
             if (input != null) input.close();
-        } catch (IOException _) {
-            System.err.println("closeInput");
+        } catch (IOException e) {
+            System.err.println("closeInput" + e.getMessage());
         }
     }
     public String receiveMessage() {
@@ -27,8 +27,8 @@ public class Listener{
             return "SOCKETERROR";
         } catch (SocketTimeoutException _) {
             return null;
-        } catch (IOException _) {
-            System.err.println("receiveMessage");
+        } catch (IOException e) {
+            System.err.println("receiveMessage" + e.getMessage());
             return null;
         }
     }

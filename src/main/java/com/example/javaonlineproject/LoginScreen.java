@@ -22,6 +22,7 @@ import static javafx.scene.paint.Color.WHITE;
 
 public class LoginScreen {
     private Runnable playerLogin;
+    private Thread preConnectionThread;
     private final UserInfo user = new UserInfo();
     InetAddress serverIp;
 
@@ -102,55 +103,72 @@ public class LoginScreen {
         logic();
     }
     private void logic() {
-        MulticastSocket socket = null;
-        try {
-            socket = new MulticastSocket(12346);
-            socket.setSoTimeout(3000);
-        } catch (IOException e) {
-            System.err.println("socketMulticast");
-            System.exit(-1);
-        }
-        InetAddress group = null;
-        try {
-            group = InetAddress.getByName("224.0.0.0");
-        } catch (UnknownHostException e) {
-            System.err.println("getByName");
-            System.exit(-2);
-        }
-        try {
-            socket.joinGroup(group);
-        } catch (IOException e) {
-            System.err.println("joinGroup");
-            System.exit(-3);
-        }
-        byte[] buf = new byte[256];
-        DatagramPacket packet = new DatagramPacket(buf, buf.length);
-        try {
-            socket.receive(packet);
-        } catch (SocketTimeoutException _) {
-            System.exit(-4);
-        }catch (IOException _) {
-            System.err.println("socket receive");
-            System.exit(-5);
-        }
-        try {
-            socket.leaveGroup(group);
-        } catch (IOException e) {
-            System.err.println("leaveGroup");
-            System.exit(-6);
-        }
-        socket.close();
-        serverIp = packet.getAddress();
+        Runnable preConnection = () -> {
+            while (!Thread.currentThread().isInterrupted() && serverIp == null) {
+                try (MulticastSocket socket = new MulticastSocket(12346)) {
+                    try {
+                        socket.setSoTimeout(3000);
+                    } catch (SocketException e) {
+                        System.err.println("SocketException" + e.getMessage());
+                    }
+                    InetAddress group = null;
+                    try {
+                        group = InetAddress.getByName("224.0.0.0");
+                    } catch (UnknownHostException e) {
+                        System.err.println("getByName" + e.getMessage());
+                        System.exit(-2);
+                    }
+                    try {
+                        NetworkInterface networkInterface = NetworkInterface.getByName("MyName");
+                        socket.joinGroup(new InetSocketAddress(group, 12346), networkInterface);
+                    } catch (IOException e) {
+                        System.err.println("joinGroup" + e.getMessage());
+                        System.exit(-3);
+                    }
+                    byte[] buf = new byte[256];
+                    DatagramPacket packet = new DatagramPacket(buf, buf.length);
+                    try {
+                        socket.receive(packet);
+                    } catch (SocketTimeoutException _) {
+                        continue;
+                    } catch (IOException e) {
+                        System.err.println("socket receive" + e.getMessage());
+                        System.exit(-5);
+                    }
+                    try {
+                        NetworkInterface networkInterface = NetworkInterface.getByName("MyName");
+                        socket.leaveGroup(new InetSocketAddress(group, 12346), networkInterface);
+                    } catch (IOException e) {
+                        System.err.println("leaveGroup" + e.getMessage());
+                        System.exit(-6);
+                    }
+                    serverIp = packet.getAddress();
+                } catch (IOException e) {
+                    System.err.println("preconnection" + e.getMessage());
+                    System.exit(-7);
+                }
+            }
+        };
+        preConnectionThread = new Thread(preConnection);
+        preConnectionThread.setDaemon(true);
+        preConnectionThread.start();
     }
     private void buttonsFunc(TextField usernameField, PasswordField passwordField, Text text, boolean isSignIn) {
-        user.setUsername(usernameField.getText());
-        String password = passwordField.getText();
-        if (user.getUsername().isEmpty() || password.isEmpty()) text.setText("Username or password cannot be empty.");
-        else if(user.getUsername().matches(".*[^a-zA-Z0-9].*") || password.matches(".*[^a-zA-Z0-9].*")) text.setText("Use letters or digits");
-        else {
-            try {
-                user.setUserSocket(new Socket(serverIp, 12345));
-            } catch (IOException _) {}
+        if (serverIp == null){
+            text.setText("Couldn't connect to the server");
+        } else {
+            user.setUsername(usernameField.getText());
+            String password = passwordField.getText();
+            if (user.getUsername().isEmpty() || password.isEmpty())
+                text.setText("Username or password cannot be empty.");
+            else if (user.getUsername().matches(".*[^a-zA-Z0-9].*") || password.matches(".*[^a-zA-Z0-9].*"))
+                text.setText("Use letters or digits");
+            else {
+                try {
+                    user.setUserSocket(new Socket(serverIp, 12345));
+                } catch (IOException e) {
+                    System.err.println("buttonsFunc" + e.getMessage());
+                }
                 user.setUserInput(user.getUserSocket());
                 user.setUserOutput(user.getUserSocket());
                 if (isSignIn) user.getUserOutput().sendMessage("LOGIN," + user.getUsername() + "," + password);
@@ -158,6 +176,12 @@ public class LoginScreen {
                 String response = user.getUserInput().receiveMessage();
                 switch (response) {
                     case "ALLOWED":
+                        preConnectionThread.interrupt();
+                        try {
+                            preConnectionThread.join();
+                        } catch (InterruptedException e) {
+                            System.err.println("Couldn't join " + e.getMessage());
+                        }
                         playerLogin.run();
                         return;
                     case "ALREADYLOGGEDIN":
@@ -170,6 +194,7 @@ public class LoginScreen {
                         text.setText("Incorrect username or password");
                 }
                 user.closeConnection();
+            }
         }
         text.setVisible(true);
         PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
