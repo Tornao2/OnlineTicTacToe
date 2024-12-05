@@ -28,6 +28,7 @@ public class ServerLogic extends Application {
     private static final String LOGINDATAFILEPATH = "LoginData.json";
     private static final String STATSFILEPATH = "StatsData.json";
     private static final String MATCHHISTORYFILEPATH = "MatchHistoryData.json";
+    private static final String CHATHISTORYDATAFILEPATH = "ChatHistoryData.json";
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private Button createExitButton() {
@@ -162,7 +163,9 @@ public class ServerLogic extends Application {
                         userServed.getUserOutput().sendMessage(playersInProgress.get((userServed)).getUsername());
                         break;
                     case "MESSAGE":
-                        playersInProgress.get(userServed).getUserOutput().sendMessage("MESSAGE,"+moveSplit[1]);
+                        String message = moveSplit[1];
+                        String receiverNick = playersInProgress.get(userServed).getUsername();
+                        saveMessageToHistory(userServed.getUsername(), receiverNick, message);
                         break;
                     case "GETCHATHISTORY":
                         userServed.getUserOutput().sendMessage("ENEMY,ASDASDSA,PLAYER,ASDSADAS,ENEMY,DDSDSDS,PLAYER,FDFDF");
@@ -249,6 +252,44 @@ public class ServerLogic extends Application {
         connectingThread.setDaemon(true);
         connectingThread.start();
     }
+    //-----------------------------------------------------------------------------------------
+    private void saveMessageToHistory(String senderNick, String reciverNick, String message){
+        UserInfo sender = userMap.get(senderNick);
+        UserInfo reciver = userMap.get(reciverNick);
+        if(sender != null){
+            ChatHistoryData chatHistory = new ChatHistoryData(senderNick, reciverNick, message);
+            saveMessageToFile(chatHistory);
+            reciver.getUserOutput().sendMessage("MESSAGE," + message);
+        }
+        else{
+            System.out.println("Only 1 player alive X_X");
+        }
+    }
+
+    private void saveMessageToFile(ChatHistoryData chatHistory) {
+        List<ChatHistoryData> chatHistoryList = loadMessagesFromFile();
+        chatHistoryList.add(chatHistory);
+        File file = new File(CHATHISTORYDATAFILEPATH);
+        try {
+            objectMapper.writeValue(file, chatHistoryList);
+        } catch (IOException e) {
+            System.err.println("Failed to save chat history: " + e.getMessage());
+        }
+    }
+
+    private List<ChatHistoryData> loadMessagesFromFile() {
+        File file = new File("ChatHistoryData.json");
+        if (!file.exists() || file.length() == 0) return new ArrayList<>();
+
+        try {
+            return objectMapper.readValue(file, objectMapper.getTypeFactory().constructCollectionType(List.class, ChatHistoryData.class));
+        } catch (IOException e) {
+            System.err.println("Failed to load chat history: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+
     private void updateStatsForUser(String username, String result) {
         List<StatsData> statsList = loadStatsFromFile();
         StatsData stats = getStatsForUser(username, statsList);

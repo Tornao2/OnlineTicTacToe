@@ -64,11 +64,11 @@ public class Board {
         gridPane.setAlignment(Pos.BASELINE_CENTER);
         gridPane.setHgap(6);
         gridPane.setVgap(6);
-        gridPane.getStyleClass().add("grid-pane"); // Dodanie klasy CSS
+        gridPane.getStyleClass().add("grid-pane");
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 3; column++) {
                 Button cell = new Button("");
-                cell.getStyleClass().add("button"); // Dodanie klasy CSS
+                cell.getStyleClass().add("button");
                 cell.setMinSize(150, 150);
                 cell.setFont(new Font(48));
                 final int r = row;
@@ -144,7 +144,7 @@ public class Board {
     }
     private void manageScene(Stage primaryStage, BorderPane manager) {
         Scene scene = new Scene(manager, 1200, 900);
-        scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm()); // Dodanie pliku CSS
+        scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
         primaryStage.setTitle("Game");
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -256,6 +256,7 @@ public class Board {
                     case "MOVE":
                         String row = moveSplit[1];
                         String col = moveSplit[2];
+                        System.out.println(moveSplit[2]);
                         int rowInt = Integer.parseInt(row);
                         int colInt = Integer.parseInt(col);
                         Platform.runLater(() -> {
