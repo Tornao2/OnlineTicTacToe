@@ -356,9 +356,9 @@ public class ServerLogic extends Application {
         }
         String matchHistoryJson = convertMatchHistoryToJson(playerHistory);
         UserInfo user = userMap.get(username);
-        if (user != null) {
+        //if (user != null) {
             user.getUserOutput().sendMessage("MATCHHISTORY: " + matchHistoryJson);
-        }
+        //}
     }
 
     private String convertMatchHistoryToJson(List<MatchHistoryData> playerHistory) {
@@ -402,15 +402,16 @@ public class ServerLogic extends Application {
     private void sendStatsToPlayer(String username){
         List<StatsData> statsList = loadStatsFromFile();
         StatsData playerStats = getStatsForUser(username, statsList);
+        if(playerStats == null) {
+            playerStats = new StatsData(username, 0, 0, 0);
+            statsList.add(playerStats);
+        }
         if(playerStats != null){
+            System.out.println(3);
             String statsJson = convertStatsToJson(playerStats);
             UserInfo user = userMap.get(username);
-            if(user != null){
-                user.getUserOutput().sendMessage("STATS:" + statsJson);
-            }
-            else{
-                System.out.println("Player stats not found for username: " + username);
-            }
+            System.out.println(33);
+            user.getUserOutput().sendMessage("STATS:" + statsJson);
         }
     }
 

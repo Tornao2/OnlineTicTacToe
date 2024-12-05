@@ -17,6 +17,7 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.scene.paint.Color;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -84,9 +85,11 @@ public class Stats {
                 displayMatchHistory(matchHistory, organizer);
             } catch (IOException e) {
                 System.err.println("Error parsing match history: " + e.getMessage());
+                organizer.getChildren().add((new Label("Match history parse ERROR")));
             }
         } else {
             System.out.println("Message does not contain match history: " + message);
+            organizer.getChildren().add(new Label("No match history found."));
         }
     }
     private void reciveStatsFromServer(VBox organizer) {
@@ -101,9 +104,11 @@ public class Stats {
                 displayStats(Collections.singletonList(statsData), organizer);
             } catch (IOException e) {
                 System.err.println("Error Parsing stats: " + e.getMessage());
+                organizer.getChildren().add((new Label("Match history parse ERROR")));
             }
         } else {
             System.out.println("Message does not contain statsData " + message);
+            organizer.getChildren().add(new Label("No match history found."));
         }
     }
     private void displayStats(List<StatsData> statsData, VBox organizer) {
@@ -165,10 +170,9 @@ public class Stats {
         VBox organizer = createVBox();
         BorderPane manager = createManager(organizer);
         organizer.getChildren().add(backButton);
-        reciveStatsFromServer(organizer);
         reciveMatchHistoryFromServer(organizer);
         reciveBestPlayersFromServer(organizer);
-        //obecnie nie ma od wyswietlania bialsnu top 3 graczy mozna zmienic na wiecej
+        reciveStatsFromServer(organizer);
         manageScene(manager);
         checkForDisconnect();
     }

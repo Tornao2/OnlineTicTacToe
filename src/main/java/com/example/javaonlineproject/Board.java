@@ -256,7 +256,6 @@ public class Board {
                     case "MOVE":
                         String row = moveSplit[1];
                         String col = moveSplit[2];
-                        System.out.println(moveSplit[2]);
                         int rowInt = Integer.parseInt(row);
                         int colInt = Integer.parseInt(col);
                         Platform.runLater(() -> {
