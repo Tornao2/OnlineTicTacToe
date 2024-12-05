@@ -253,13 +253,13 @@ public class ServerLogic extends Application {
         connectingThread.start();
     }
     //-----------------------------------------------------------------------------------------
-    private void saveMessageToHistory(String senderNick, String reciverNick, String message){
+    private void saveMessageToHistory(String senderNick, String receiverNick, String message){
         UserInfo sender = userMap.get(senderNick);
-        UserInfo reciver = userMap.get(reciverNick);
+        UserInfo receiver = userMap.get(receiverNick);
         if(sender != null){
-            ChatHistoryData chatHistory = new ChatHistoryData(senderNick, reciverNick, message);
+            ChatHistoryData chatHistory = new ChatHistoryData(senderNick, receiverNick, message);
             saveMessageToFile(chatHistory);
-            reciver.getUserOutput().sendMessage("MESSAGE," + message);
+            receiver.getUserOutput().sendMessage("MESSAGE," + message);
         }
         else{
             System.out.println("Only 1 player alive X_X");
@@ -431,7 +431,7 @@ public class ServerLogic extends Application {
             int score2 = stats2.getWins() * 3 + stats2.getDraws();
             return Integer.compare(score2, score1);
         });
-        List<StatsData> top3Players = statsList.stream().limit(3).toList();
+        List<StatsData> top3Players = statsList.stream().limit(5).toList();
         String topPlayersJson = top3Players.stream()
                 .map(this::convertStatsToJson)
                 .collect(Collectors.joining(","));

@@ -1,8 +1,5 @@
 package com.example.javaonlineproject;
 
-
-
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.application.Platform;
@@ -11,13 +8,15 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.scene.paint.Color;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -37,16 +36,35 @@ public class Stats {
         backButton.setOnAction(_ -> backButton());
         return backButton;
     }
-    private VBox createVBox() {
+
+/*    private HBox createHBox(VBox left, VBox right){
+        HBox organizer = new HBox(12);
+        organizer.setPadding(new Insets(8, 8, 8, 100));
+        organizer.setSpacing(20);
+        HBox.setHgrow(organizer, Priority.ALWAYS);
+    }*/
+
+    private VBox createVBoxRight() {
         VBox organizer = new VBox(12);
         organizer.setPrefSize(280, 210);
-        organizer.setPadding(new Insets(8, 8, 10, 8));
-        organizer.setAlignment(Pos.CENTER_RIGHT);
+        organizer.setPadding(new Insets(40, 8, 40, 20));
+        organizer.setAlignment(Pos.BASELINE_RIGHT);
         return organizer;
     }
-    private BorderPane createManager(VBox organizer) {
+
+    private VBox createVBoxLeft() {
+        VBox organizer = new VBox(12);
+        organizer.setPrefSize(280, 210);
+        organizer.setPadding(new Insets(40, 8, 40, 20));
+        organizer.setAlignment(Pos.BASELINE_LEFT);
+        return organizer;
+    }
+
+    private BorderPane createManager(VBox organizer, VBox organizer2) {
         BorderPane root = new BorderPane();
+        root.setPrefSize(900, 600);
         root.setCenter(organizer);
+        root.setLeft(organizer2);
         root.setStyle("-fx-background-color: #1A1A1A;");
         return root;
     }
@@ -73,7 +91,7 @@ public class Stats {
             }
         }
     }
-    private void reciveMatchHistoryFromServer(VBox organizer) {
+    private void receiveMatchHistoryFromServer(VBox organizer) {
         user.getUserOutput().sendMessage("GETMATCHHISTORY");
         String message = user.getUserInput().receiveMessage();
         if (message.startsWith("MATCHHISTORY: ")) {
@@ -92,7 +110,7 @@ public class Stats {
             organizer.getChildren().add(new Label("No match history found."));
         }
     }
-    private void reciveStatsFromServer(VBox organizer) {
+    private void receiveStatsFromServer(VBox organizer) {
         user.getUserOutput().sendMessage("GETSTATS");
         String message = user.getUserInput().receiveMessage();
         System.out.println(message);
@@ -115,19 +133,18 @@ public class Stats {
         if (statsData == null || statsData.isEmpty()) organizer.getChildren().add((new Label("No stats found.")));
         else {
             for (StatsData stats : statsData) {
-                String statsDetails = "Username: " + stats.getUsername() +
-                        " |Wins: " + stats.getWins() +
-                        " |Draws" + stats.getDraws() +
-                        " |Loses" + stats.getLosses();
+                String statsDetails = "You: " + stats.getUsername() +
+                        "   " + stats.getWins() +
+                        "-" + stats.getDraws() +
+                        "-" + stats.getLosses();
                 Label statsLabel = new Label(statsDetails);
-                statsLabel.setFont(new Font(14));
+                statsLabel.setFont(new Font(34));
                 statsLabel.setTextFill(Color.RED);
-                System.out.println(33333333);
                 organizer.getChildren().add(statsLabel);
             }
         }
     }
-    private void reciveBestPlayersFromServer(VBox organizer) {
+    private void receiveBestPlayersFromServer(VBox organizer) {
         user.getUserOutput().sendMessage("GETBESTPLAYERS");
         String message = user.getUserInput().receiveMessage();
         if (message.startsWith("BESTPLAYERS:")) {
@@ -157,7 +174,7 @@ public class Stats {
                         " |Draws" + player.getDraws() +
                         " |Loses" + player.getLosses();
                 Label statsLabel = new Label(statsDetails);
-                statsLabel.setFont(new Font(14));
+                statsLabel.setFont(new Font(28));
                 statsLabel.setTextFill(Color.BLUE);
                 organizer.getChildren().add(statsLabel);
             }
@@ -167,12 +184,13 @@ public class Stats {
         this.user = user;
         this.primaryStage = primaryStage;
         Button backButton = createBackButton();
-        VBox organizer = createVBox();
-        BorderPane manager = createManager(organizer);
+        VBox organizer = createVBoxRight();
+        VBox organizer2 = createVBoxLeft();
+        BorderPane manager = createManager(organizer, organizer2);
         organizer.getChildren().add(backButton);
-        reciveMatchHistoryFromServer(organizer);
-        reciveBestPlayersFromServer(organizer);
-        reciveStatsFromServer(organizer);
+        receiveStatsFromServer(organizer);
+        receiveMatchHistoryFromServer(organizer);
+        receiveBestPlayersFromServer(organizer2);
         manageScene(manager);
         checkForDisconnect();
     }
