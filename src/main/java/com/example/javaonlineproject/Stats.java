@@ -90,26 +90,20 @@ public class Stats {
         }
     }
     private void reciveStatsFromServer(VBox organizer) {
-        while (!Thread.currentThread().isInterrupted()) {
-            user.getUserOutput().sendMessage("GETSTATS");
-            String message = user.getUserInput().receiveMessage();
-            System.out.println(message);
-            if (message == null) continue;
-            if (message.startsWith("STATS:")) {
-                String statsJson = message.substring("STATS:".length());
-                System.out.println(statsJson); //debug
-                try {
-                    StatsData statsData = objectMapper.readValue(statsJson, StatsData.class);
-                    displayStats(Collections.singletonList(statsData), organizer);
-                    break;
-                } catch (IOException e) {
-                    System.err.println("Error Parsing stats: " + e.getMessage());
-                    break;
-                }
-            } else {
-                System.out.println("Message does not contain statsData " + message);
-                break;
+        user.getUserOutput().sendMessage("GETSTATS");
+        String message = user.getUserInput().receiveMessage();
+        System.out.println(message);
+        if (message.startsWith("STATS:")) {
+            String statsJson = message.substring("STATS:".length());
+            System.out.println(statsJson); //debug
+            try {
+                StatsData statsData = objectMapper.readValue(statsJson, StatsData.class);
+                displayStats(Collections.singletonList(statsData), organizer);
+            } catch (IOException e) {
+                System.err.println("Error Parsing stats: " + e.getMessage());
             }
+        } else {
+            System.out.println("Message does not contain statsData " + message);
         }
     }
     private void displayStats(List<StatsData> statsData, VBox organizer) {
@@ -129,27 +123,25 @@ public class Stats {
         }
     }
     private void reciveBestPlayersFromServer(VBox organizer) {
-        while (!Thread.currentThread().isInterrupted()) {
-            user.getUserOutput().sendMessage("GETBESTPLAYERS");
-            String message = user.getUserInput().receiveMessage();
-            if (message == null) continue;
-            if (message.startsWith("BESTPLAYERS:")) {
-                String statsJson = message.substring("BESTPLAYERS:".length());
-                System.out.println(statsJson);
-                try {
-                    StatsData bestPlayer = objectMapper.readValue(statsJson, StatsData.class);
-                    displayBestPlayers(Collections.singletonList(bestPlayer), organizer);
-                    break;
-                } catch (IOException e) {
-                    System.err.println("Error Parsing stats: " + e.getMessage());
-                    break;
+        user.getUserOutput().sendMessage("GETBESTPLAYERS");
+        String message = user.getUserInput().receiveMessage();
+        if (message.startsWith("BESTPLAYERS:")) {
+            String statsJson = message.substring("BESTPLAYERS:".length());
+            System.out.println(statsJson);
+            try {
+                if (!statsJson.startsWith("[")) {
+                    statsJson = "[" + statsJson + "]";
                 }
-            } else {
-                System.out.println("Message does not contain statsData " + message);
-                break;
+                List<StatsData> bestPlayer = objectMapper.readValue(statsJson, new TypeReference<List<StatsData>>() {});
+                displayBestPlayers(bestPlayer, organizer);
+            } catch (IOException e) {
+                System.err.println("Error Parsing stats: " + e.getMessage());
             }
+        } else {
+            System.out.println("Message does not contain statsData " + message);
         }
     }
+
     private void displayBestPlayers(List<StatsData> bestplayer, VBox organizer) {
         if (bestplayer == null || bestplayer.isEmpty())
             organizer.getChildren().add((new Label("No best player found.")));

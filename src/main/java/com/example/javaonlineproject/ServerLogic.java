@@ -267,6 +267,13 @@ public class ServerLogic extends Application {
                 stats.incrementLosses();
                 break;
         }
+        try {
+            String jsonResponse = objectMapper.writeValueAsString(statsList);
+            System.out.println("Updated stats in JSON format: " + jsonResponse); // debug
+        } catch (IOException e) {
+            System.err.println("Error converting stats to JSON: " + e.getMessage());
+        }
+
         saveStatsToFile(statsList);
         UserInfo opponent = playersInProgress.get(userMap.get(username));
         saveMatchHistory(username, opponent.getUsername(), result);
