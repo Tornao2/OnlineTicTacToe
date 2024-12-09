@@ -1,9 +1,9 @@
 package com.example.javaonlineproject;
 
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -11,6 +11,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
@@ -18,9 +19,6 @@ import javafx.scene.paint.Color;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-
-
-
 
 public class Stats {
     private Runnable onBack;
@@ -32,47 +30,32 @@ public class Stats {
 
     private Button createBackButton() {
         Button backButton = new Button("Back");
-        backButton.setFont(new Font(16.0));
+        backButton.setFont(new Font(32.0));
         backButton.setOnAction(_ -> backButton());
         return backButton;
     }
 
-
-    private VBox createVBoxRight() {
-        VBox organizer = new VBox(12);
-        organizer.setPrefSize(280, 210);
-        organizer.setPadding(new Insets(40, 8, 40, 20));
-        organizer.setAlignment(Pos.TOP_RIGHT);
+    private HBox createHBox() {
+        HBox organizer = new HBox(12);
+        organizer.setAlignment(Pos.CENTER);
+        organizer.setPadding(new Insets(8, 8, 10, 8));
         return organizer;
     }
 
-
-    private VBox createVBoxLeft() {
+    private VBox createVBox() {
         VBox organizer = new VBox(12);
-        organizer.setPrefSize(280, 210);
-        organizer.setPadding(new Insets(40, 8, 40, 20));
-        organizer.setAlignment(Pos.BASELINE_LEFT);
+        organizer.setAlignment(Pos.CENTER);
+        organizer.setPadding(new Insets(4, 8, 40, 2));
         return organizer;
     }
 
-
-    private VBox createVBoxBottomCenter() {
-        VBox organizer = new VBox(12);
-        organizer.setPrefSize(280, 10);
-        organizer.setPadding(new Insets(0, 8, 50, 20));
-        organizer.setAlignment(Pos.BOTTOM_CENTER);
-        return organizer;
-    }
-
-    private BorderPane createManager(VBox organizer, VBox organizer2, VBox organizer3) {
-        BorderPane root = new BorderPane();
-        root.setPrefSize(900, 600);
-        root.setCenter(organizer);
-        root.setLeft(organizer2);
-        root.setBottom(organizer3);
+    private BorderPane createManager(VBox overallOrganizer) {
+        BorderPane root = new BorderPane(overallOrganizer);
+        root.setPrefSize(700, 500);
         root.setStyle("-fx-background-color: #1A1A1A;");
         return root;
     }
+
     private void manageScene(BorderPane manager) {
         Scene scene = new Scene(manager);
         primaryStage.setTitle("Stats");
@@ -95,21 +78,21 @@ public class Stats {
             tableView.getColumns().addAll(dateColumn, enemyColumn, resultColumn);
             tableView.setItems(FXCollections.observableArrayList(matchHistory));
             tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+            dateColumn.setSortType(TableColumn.SortType.ASCENDING);
+            tableView.getSortOrder().add(dateColumn);
             ScrollPane scrollPane = new ScrollPane(tableView);
-            scrollPane.setPrefSize(100, 500);
+            scrollPane.setPrefSize(400, 1050);
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
             organizer.getChildren().add(scrollPane);
         }
     }
 
-
     private void receiveMatchHistoryFromServer(VBox organizer) {
         user.getUserOutput().sendMessage("GETMATCHHISTORY");
         String message = user.getUserInput().receiveMessage();
         if (message.startsWith("MATCHHISTORY: ")) {
             String matchHistoryJson = message.substring("MATCHHISTORY: ".length());
-            System.out.println(matchHistoryJson);//DEBUG
             try {
                 List<MatchHistoryData> matchHistory = objectMapper.readValue(matchHistoryJson, new TypeReference<>() {
                 });
@@ -126,10 +109,8 @@ public class Stats {
     private void receiveStatsFromServer(VBox organizer) {
         user.getUserOutput().sendMessage("GETSTATS");
         String message = user.getUserInput().receiveMessage();
-        System.out.println(message);
         if (message.startsWith("STATS:")) {
             String statsJson = message.substring("STATS:".length());
-            System.out.println(statsJson); //debug
             try {
                 StatsData statsData = objectMapper.readValue(statsJson, StatsData.class);
                 displayStats(Collections.singletonList(statsData), organizer);
@@ -162,7 +143,6 @@ public class Stats {
         String message = user.getUserInput().receiveMessage();
         if (message.startsWith("BESTPLAYERS:")) {
             String statsJson = message.substring("BESTPLAYERS:".length());
-            System.out.println(statsJson);
             try {
                 if (!statsJson.startsWith("[")) {
                     statsJson = "[" + statsJson + "]";
@@ -177,43 +157,54 @@ public class Stats {
         }
     }
 
-
     private void displayBestPlayers(List<StatsData> bestplayer, VBox organizer) {
-        if (bestplayer == null || bestplayer.isEmpty())
-            organizer.getChildren().add((new Label("No best player found.")));
-        else {
-            int i = 1;
-            for (StatsData player : bestplayer) {
-                    String statsDetails = i + ". Username: " + player.getUsername() +
-                            " |Wins: " + player.getWins() +
-                            " |Draws" + player.getDraws() +
-                            " |Loses" + player.getLosses();
-                    Label statsLabel = new Label(statsDetails);
-                    statsLabel.setFont(new Font(28));
-                    statsLabel.setTextFill(Color.BLUE);
-                    organizer.getChildren().add(statsLabel);
-                i++;
-            }
+        organizer.getChildren().clear();
+        if (bestplayer == null || bestplayer.isEmpty()) {
+            organizer.getChildren().add(new Label("No best player found."));
+        } else {
+            TableView<StatsData> tableView = new TableView<>();
+            TableColumn<StatsData, String> usernameColumn = new TableColumn<>("Username");
+            usernameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getUsername()));
+            TableColumn<StatsData, Integer> winsColumn = new TableColumn<>("Wins");
+            winsColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getWins()).asObject());
+            TableColumn<StatsData, Integer> drawsColumn = new TableColumn<>("Draws");
+            drawsColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getDraws()).asObject());
+            TableColumn<StatsData, Integer> lossesColumn = new TableColumn<>("Losses");
+            lossesColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getLosses()).asObject());
+            tableView.getColumns().addAll(usernameColumn, winsColumn, drawsColumn, lossesColumn);
+            tableView.setItems(FXCollections.observableArrayList(bestplayer));
+            tableView.setStyle("-fx-background-color: #1A1A1A;");
+            tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+            ScrollPane scrollPane = new ScrollPane(tableView);
+            scrollPane.setPrefSize(200, 250);
+            scrollPane.setFitToWidth(true);
+            scrollPane.setFitToHeight(true);
+            organizer.getChildren().add(scrollPane);
         }
     }
+
     public void start(Stage primaryStage, UserInfo user) {
         this.user = user;
         this.primaryStage = primaryStage;
+        VBox overallOrganizer = createVBox();
+        HBox backButtonBox = createHBox();
         Button backButton = createBackButton();
-        VBox organizerRight = createVBoxRight();
-        VBox organizerLeft = createVBoxLeft();
-        VBox organizerBottomCenter = createVBoxBottomCenter();
-        BorderPane manager = createManager(organizerRight, organizerLeft, organizerBottomCenter);
-        organizerBottomCenter.getChildren().add(backButton);
-        receiveStatsFromServer(organizerRight);
-        receiveMatchHistoryFromServer(organizerLeft);
-        receiveBestPlayersFromServer(organizerRight);
+        backButtonBox.getChildren().add(backButton);
+        HBox topSection = createHBox();
+        VBox leftSection = createVBox();
+        VBox rightSection = createVBox();
+        receiveBestPlayersFromServer(leftSection);
+        VBox statsVBox = createVBox();
+        receiveStatsFromServer(statsVBox);
+        VBox matchHistoryOrganizer = createVBox();
+        receiveMatchHistoryFromServer(matchHistoryOrganizer);
+        rightSection.getChildren().addAll(statsVBox, matchHistoryOrganizer);
+        topSection.getChildren().addAll(leftSection, rightSection);
+        overallOrganizer.getChildren().addAll(topSection, backButtonBox);
+        BorderPane manager = createManager(overallOrganizer);
         manageScene(manager);
         checkForDisconnect();
     }
-
-
-
 
     private void checkForDisconnect() {
         Runnable disconnectChecker = () -> {
@@ -252,5 +243,3 @@ public class Stats {
         this.onDisconnect = onDisconnect;
     }
 }
-
-

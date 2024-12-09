@@ -81,6 +81,9 @@ public class Board {
         return gridPane;
     }
     private void initChatView() {
+        user.getUserOutput().sendMessage("NAME");
+        enemyName = user.getUserInput().receiveMessage();
+        System.out.println("Imie cwela " + enemyName);
         chatField.setPrefWidth(450);
         scrollPane = new ScrollPane(chatView);
         scrollPane.setStyle("-fx-background-color: white;");
@@ -88,22 +91,36 @@ public class Board {
         scrollPane.setFitToWidth(true);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         user.getUserOutput().sendMessage("GETCHATHISTORY");
-        String[] listOfMessages = user.getUserInput().receiveMessage().split(",");
-        for(int i = 0; i < listOfMessages.length; i += 2){
-            Label messageLabel = new Label(listOfMessages[i+1].replace("~", ","));
-            messageLabel.setFont(new Font(14));
-            messageLabel.setMaxWidth(400);
-            messageLabel.setWrapText(true);
-            messageLabel.setPadding(new Insets(3, 3, 0, 3));
-            HBox messageContainer = new HBox(messageLabel);
-            if (listOfMessages[i].equals("ENEMY"))
-                messageContainer.setAlignment(Pos.CENTER_LEFT);
-            else
-                messageContainer.setAlignment(Pos.CENTER_RIGHT);
-            chatView.getChildren().add(messageContainer);
-            scrollPane.setVvalue(1.0);
+        String receivedMessages = user.getUserInput().receiveMessage();
+        if (receivedMessages != null && !receivedMessages.isEmpty()) {
+            String[] messagePairs = receivedMessages.split(",");
+            for (String pair : messagePairs) {
+                String[] senderMessage = pair.split(":");
+                if (senderMessage.length == 2) {
+                    String sender = senderMessage[0].trim();
+                    String message = senderMessage[1].trim().replace("~", ",");
+                    Label messageLabel = new Label(message);
+                    messageLabel.setFont(new Font(14));
+                    messageLabel.setMaxWidth(400);
+                    messageLabel.setWrapText(true);
+                    messageLabel.setPadding(new Insets(3, 3, 0, 3));
+                    HBox messageContainer = new HBox(messageLabel);
+                    if (sender.equals(enemyName)) {
+                        messageContainer.setAlignment(Pos.CENTER_LEFT);
+                    } else {
+                        messageContainer.setAlignment(Pos.CENTER_RIGHT);
+                    }
+                    chatView.getChildren().add(messageContainer);
+                    scrollPane.setVvalue(1.0);
+                } else {
+                    System.out.println("Warning: Invalid format for pair: " + pair);
+                }
+            }
+        } else {
+            System.out.println("No chat history received or empty response.");
         }
     }
+
     private Button createResignButton() {
         Button resign = new Button("Resign");
         resign.setFont(new Font(16));
@@ -336,15 +353,15 @@ public class Board {
     private void resetBoard() {
         for (Button[] row : board) {
             for (Button cell : row) {
-                cell.setText(""); // Wyczyszczenie tekstu w przyciskach
-                cell.setStyle(null); // Usunięcie wszelkich stylów inline
-                cell.getStyleClass().add("button"); // Przywrócenie klasy CSS
+                cell.setText("");
+                cell.setStyle(null);
+                cell.getStyleClass().add("button");
             }
         }
 
-        finishedMatch = false; // Oznaczenie, że nowa gra jest rozpoczęta
-        otherSideRematch = false; // Reset flagi rematchu
-        setTurns(); // Przywrócenie kolejności graczy na podstawie symbolu
+        finishedMatch = false;
+        otherSideRematch = false;
+        setTurns();
     }
 
 
@@ -355,8 +372,8 @@ public class Board {
                 statusText.setText("You want a rematch!");
             } else {
                 user.getUserOutput().sendMessage("ACCEPT");
-                Platform.runLater(this::resetBoard); // Reset planszy po zaakceptowaniu rematchu
-                finishedMatch = false; // Oznaczenie, że gra nie jest zakończona
+                Platform.runLater(this::resetBoard);
+                finishedMatch = false;
             }
         }
     }

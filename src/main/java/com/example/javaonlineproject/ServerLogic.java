@@ -168,7 +168,9 @@ public class ServerLogic extends Application {
                         saveMessageToHistory(userServed.getUsername(), receiverNick, message);
                         break;
                     case "GETCHATHISTORY":
-                        userServed.getUserOutput().sendMessage("ENEMY,ASDASDSA,PLAYER,ASDSADAS,ENEMY,DDSDSDS,PLAYER,FDFDF");
+                       String opponentUsername = playersInProgress.get(userServed).getUsername();
+                       sendChatHistoryToPlayer(userServed.getUsername(), opponentUsername);
+                        // userServed.getUserOutput().sendMessage("ENEMY,ASDASDSA,PLAYER,ASDSADAS,ENEMY,DDSDSDS,PLAYER,FDFDF");
                         break;
                     default:
                         break;
@@ -252,7 +254,22 @@ public class ServerLogic extends Application {
         connectingThread.setDaemon(true);
         connectingThread.start();
     }
-    //-----------------------------------------------------------------------------------------
+
+    private void sendChatHistoryToPlayer(String player1, String player2){
+        List<ChatHistoryData> chatHistoryList = loadMessagesFromFile();
+        List<String> filteredMessages = new ArrayList<>();
+        for (ChatHistoryData chat : chatHistoryList) {
+            if ((chat.getSender().equals(player1) && chat.getReciver().equals(player2)) ||
+                    (chat.getSender().equals(player2) && chat.getReciver().equals(player1))) {
+                filteredMessages.add(chat.getSender() + ": " + chat.getMessage());
+            }
+        }
+        UserInfo user = userMap.get(player1);
+        if(user != null){
+            String chatHistory = String.join(",", filteredMessages);
+            user.getUserOutput().sendMessage("CHATHISTORY:" + chatHistory);
+        }
+    }
     private void saveMessageToHistory(String senderNick, String receiverNick, String message){
         UserInfo sender = userMap.get(senderNick);
         UserInfo receiver = userMap.get(receiverNick);
@@ -262,12 +279,13 @@ public class ServerLogic extends Application {
             receiver.getUserOutput().sendMessage("MESSAGE," + message);
         }
         else{
-            System.out.println("Only 1 player alive X_X");
+            System.out.println("Only 1 player online");
         }
     }
 
     private void saveMessageToFile(ChatHistoryData chatHistory) {
         List<ChatHistoryData> chatHistoryList = loadMessagesFromFile();
+        System.out.println("Saving message: " + chatHistory.getMessage());
         chatHistoryList.add(chatHistory);
         File file = new File(CHATHISTORYDATAFILEPATH);
         try {
@@ -278,7 +296,7 @@ public class ServerLogic extends Application {
     }
 
     private List<ChatHistoryData> loadMessagesFromFile() {
-        File file = new File("ChatHistoryData.json");
+        File file = new File(CHATHISTORYDATAFILEPATH);
         if (!file.exists() || file.length() == 0) return new ArrayList<>();
 
         try {
@@ -310,7 +328,6 @@ public class ServerLogic extends Application {
         }
         try {
             String jsonResponse = objectMapper.writeValueAsString(statsList);
-            System.out.println("Updated stats in JSON format: " + jsonResponse); // debug
         } catch (IOException e) {
             System.err.println("Error converting stats to JSON: " + e.getMessage());
         }
@@ -405,10 +422,8 @@ public class ServerLogic extends Application {
             statsList.add(playerStats);
         }
         if(playerStats != null){
-            System.out.println(3);
             String statsJson = convertStatsToJson(playerStats);
             UserInfo user = userMap.get(username);
-            System.out.println(33);
             user.getUserOutput().sendMessage("STATS:" + statsJson);
         }
     }
