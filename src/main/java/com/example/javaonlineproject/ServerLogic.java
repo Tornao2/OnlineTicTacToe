@@ -356,9 +356,7 @@ public class ServerLogic extends Application {
         }
         String matchHistoryJson = convertMatchHistoryToJson(playerHistory);
         UserInfo user = userMap.get(username);
-        //if (user != null) {
-            user.getUserOutput().sendMessage("MATCHHISTORY: " + matchHistoryJson);
-        //}
+        user.getUserOutput().sendMessage("MATCHHISTORY: " + matchHistoryJson);
     }
 
     private String convertMatchHistoryToJson(List<MatchHistoryData> playerHistory) {
@@ -431,7 +429,7 @@ public class ServerLogic extends Application {
             int score2 = stats2.getWins() * 3 + stats2.getDraws();
             return Integer.compare(score2, score1);
         });
-        List<StatsData> top3Players = statsList.stream().limit(5).toList();
+        List<StatsData> top3Players = statsList.stream().limit(10).toList();
         String topPlayersJson = top3Players.stream()
                 .map(this::convertStatsToJson)
                 .collect(Collectors.joining(","));
