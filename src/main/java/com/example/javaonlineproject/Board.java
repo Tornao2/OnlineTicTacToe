@@ -83,7 +83,6 @@ public class Board {
     private void initChatView() {
         user.getUserOutput().sendMessage("NAME");
         enemyName = user.getUserInput().receiveMessage();
-        System.out.println("Imie cwela " + enemyName);
         chatField.setPrefWidth(450);
         scrollPane = new ScrollPane(chatView);
         scrollPane.setStyle("-fx-background-color: white;");

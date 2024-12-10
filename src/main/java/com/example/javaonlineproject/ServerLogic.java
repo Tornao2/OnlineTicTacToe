@@ -385,7 +385,6 @@ public class ServerLogic extends Application {
         }
     }
 
-
     private StatsData getStatsForUser(String username, List<StatsData> statsList) {
         for (StatsData stats : statsList) {
             if (stats.getUsername().equals(username)) {
@@ -444,8 +443,8 @@ public class ServerLogic extends Application {
             int score2 = stats2.getWins() * 3 + stats2.getDraws();
             return Integer.compare(score2, score1);
         });
-        List<StatsData> top3Players = statsList.stream().limit(10).toList();
-        String topPlayersJson = top3Players.stream()
+        List<StatsData> topPlayers = statsList.stream().limit(10).toList();
+        String topPlayersJson = topPlayers.stream()
                 .map(this::convertStatsToJson)
                 .collect(Collectors.joining(","));
 

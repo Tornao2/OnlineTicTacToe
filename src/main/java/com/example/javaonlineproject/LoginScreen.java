@@ -187,11 +187,14 @@ public class LoginScreen {
                     case "ALREADYLOGGEDIN":
                         text.setText("You are already logged in");
                         break;
-                    case "USERNAMETAKEN":
-                        text.setText("Username already taken!");
+                    case "WRONGLOGIN":
+                        text.setText("Account doesn't exist");
+                        break;
+                    case "WRONGPASSWORD":
+                        text.setText("Wrong password!");
                         break;
                     default:
-                        text.setText("Incorrect username or password");
+                        text.setText("Username already taken!");
                 }
                 user.closeConnection();
             }

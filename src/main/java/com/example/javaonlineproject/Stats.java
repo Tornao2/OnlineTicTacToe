@@ -62,6 +62,26 @@ public class Stats {
         primaryStage.setScene(scene);
         primaryStage.show();
     }
+
+    private void receiveMatchHistoryFromServer(VBox organizer) {
+        user.getUserOutput().sendMessage("GETMATCHHISTORY");
+        String message = user.getUserInput().receiveMessage();
+        if (message.startsWith("MATCHHISTORY: ")) {
+            String matchHistoryJson = message.substring("MATCHHISTORY: ".length());
+            try {
+                List<MatchHistoryData> matchHistory = objectMapper.readValue(matchHistoryJson, new TypeReference<>() {
+                });
+                displayMatchHistory(matchHistory, organizer);
+            } catch (IOException e) {
+                System.err.println("Error parsing match history: " + e.getMessage());
+                organizer.getChildren().add((new Label("Match history parse ERROR")));
+            }
+        } else {
+            System.out.println("Message does not contain match history: " + message);
+            organizer.getChildren().add(new Label("No match history found."));
+        }
+    }
+
     private void displayMatchHistory(List<MatchHistoryData> matchHistory, VBox organizer) {
         organizer.getChildren().clear();
         if (matchHistory == null || matchHistory.isEmpty()) {
@@ -88,24 +108,6 @@ public class Stats {
         }
     }
 
-    private void receiveMatchHistoryFromServer(VBox organizer) {
-        user.getUserOutput().sendMessage("GETMATCHHISTORY");
-        String message = user.getUserInput().receiveMessage();
-        if (message.startsWith("MATCHHISTORY: ")) {
-            String matchHistoryJson = message.substring("MATCHHISTORY: ".length());
-            try {
-                List<MatchHistoryData> matchHistory = objectMapper.readValue(matchHistoryJson, new TypeReference<>() {
-                });
-                displayMatchHistory(matchHistory, organizer);
-            } catch (IOException e) {
-                System.err.println("Error parsing match history: " + e.getMessage());
-                organizer.getChildren().add((new Label("Match history parse ERROR")));
-            }
-        } else {
-            System.out.println("Message does not contain match history: " + message);
-            organizer.getChildren().add(new Label("No match history found."));
-        }
-    }
     private void receiveStatsFromServer(VBox organizer) {
         user.getUserOutput().sendMessage("GETSTATS");
         String message = user.getUserInput().receiveMessage();
