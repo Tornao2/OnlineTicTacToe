@@ -6,10 +6,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
@@ -35,9 +32,9 @@ public class Board {
     private int thisSessionL = 0;
     private UserInfo user;
     private String enemyName;
-    private final VBox chatView = new VBox();
-    TextField chatField = new TextField();
-    ScrollPane scrollPane;
+    private final VBox chatView = new VBox(10);
+    private TextField chatField = new TextField();
+    private ScrollPane scrollPane;
 
     private void createScoreText() {
         user.getUserOutput().sendMessage("NAME");
@@ -46,9 +43,11 @@ public class Board {
         scoreText.setFill(WHITE);
         scoreText.setFont(new Font(26));
     }
+
     private void refreshScoreText() {
         scoreText.setText("You " + thisSessionW + "-" + thisSessionD + "-" + thisSessionL + " " + enemyName);
     }
+
     private void initStatusText() {
         if (moved)
             statusText = new Text("Enemy's turn!");
@@ -59,6 +58,7 @@ public class Board {
         statusText.setWrappingWidth(600);
         statusText.setTextAlignment(TextAlignment.CENTER);
     }
+
     private GridPane initializeBoard() {
         GridPane gridPane = new GridPane();
         gridPane.setAlignment(Pos.BASELINE_CENTER);
@@ -80,15 +80,21 @@ public class Board {
         }
         return gridPane;
     }
+
     private void initChatView() {
         user.getUserOutput().sendMessage("NAME");
         enemyName = user.getUserInput().receiveMessage();
         chatField.setPrefWidth(450);
+        chatField.getStyleClass().add("text-field");
+        chatField.setPrefHeight(40);
+
         scrollPane = new ScrollPane(chatView);
-        scrollPane.setStyle("-fx-background-color: white;");
+        scrollPane.getStyleClass().add("scroll-pane");
         scrollPane.setPrefSize(600, 600);
         scrollPane.setFitToWidth(true);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setPadding(new Insets(10));
+
         user.getUserOutput().sendMessage("GETCHATHISTORY");
         String receivedMessages = user.getUserInput().receiveMessage();
         if (receivedMessages != null && !receivedMessages.isEmpty()) {
@@ -105,8 +111,10 @@ public class Board {
                     messageLabel.setPadding(new Insets(3, 3, 0, 3));
                     HBox messageContainer = new HBox(messageLabel);
                     if (sender.equals(enemyName)) {
+                        messageContainer.getStyleClass().add("message-left");
                         messageContainer.setAlignment(Pos.CENTER_LEFT);
                     } else {
+                        messageContainer.getStyleClass().add("message-right");
                         messageContainer.setAlignment(Pos.CENTER_RIGHT);
                     }
                     chatView.getChildren().add(messageContainer);
@@ -120,85 +128,44 @@ public class Board {
         }
     }
 
-    private Button createResignButton() {
-        Button resign = new Button("Resign");
-        resign.setFont(new Font(16));
-        resign.setOnAction(_ -> resign());
-        return resign;
+    private void initSendingField() {
+        chatField.setFont(new Font(16));
+        chatField.getStyleClass().add("text-field");
+        chatField.setPromptText("Type your message here 😎...");
     }
-    private Button createRematchButton() {
-        Button rematch = new Button("Rematch");
-        rematch.setFont(new Font(16));
-        rematch.setOnAction(_ -> rematch());
-        return rematch;
-    }
-    private VBox createVBox() {
-        VBox organizer = new VBox(12);
-        organizer.setAlignment(Pos.CENTER);
-        organizer.setPadding(new Insets(8, 8, 10, 8));
-        return organizer;
-    }
-    private HBox createHBox() {
-        HBox organizer = new HBox(12);
-        organizer.setAlignment(Pos.CENTER);
-        organizer.setPadding(new Insets(8, 8, 10, 8));
-        return organizer;
-    }
+
+
     private Button sendMessageButton() {
         Button send = new Button("Send");
+        send.getStyleClass().add("send-button");
         send.setFont(new Font(16));
         send.setOnAction(_ -> addMessage(false, chatField.getText()));
         return send;
     }
-    private void initSendingField() {
-        chatField.setFont(new Font(16));
-    }
-    private BorderPane createManager(HBox organizer){
-        BorderPane root = new BorderPane(organizer);
-        root.setStyle("-fx-background-color: #1A1A1A;");
-        return root;
-    }
-    private void manageScene(Stage primaryStage, BorderPane manager) {
-        Scene scene = new Scene(manager, 1200, 900);
-        scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
-        primaryStage.setTitle("Game");
-        primaryStage.setScene(scene);
-        primaryStage.show();
-    }
-    private void setTurns() {
-        moved = !symbolUsed[0].equals("X");
-        if (moved)
-            statusText.setText("Enemy's turn!");
-        else
-            statusText.setText("Your turn!");
 
+    private void addMessage(boolean isOpponent, String message) {
+        message = message.replace(',', '~');
+        if (!message.isBlank() && !message.isEmpty()) {
+            Label messageLabel = new Label(message.replace("~", ","));
+            messageLabel.setFont(new Font(14));
+            messageLabel.setMaxWidth(400);
+            messageLabel.setWrapText(true);
+            messageLabel.setPadding(new Insets(3, 3, 0, 3));
+            HBox messageContainer = new HBox(messageLabel);
+            if (!isOpponent) {
+                messageContainer.getStyleClass().add("message-right");
+                messageContainer.setAlignment(Pos.CENTER_RIGHT);
+                user.getUserOutput().sendMessage("MESSAGE," + message);
+                chatField.clear();
+            } else {
+                messageContainer.getStyleClass().add("message-left");
+                messageContainer.setAlignment(Pos.CENTER_LEFT);
+            }
+            chatView.getChildren().add(messageContainer);
+            scrollPane.setVvalue(1.0);
+        }
     }
-    public void start(Stage primaryStage, UserInfo user, String[] usedSymbols) {
-        this.user = user;
-        this.symbolUsed = usedSymbols;
-        initSendingField();
-        setTurns();
-        initChatView();
-        initStatusText();
-        GridPane gameGrid = initializeBoard();
-        createScoreText();
-        Button resignButton = createResignButton();
-        Button rematchButton= createRematchButton();
-        Button sendButton = sendMessageButton();
-        HBox buttons = createHBox();
-        VBox gameOrganizer = createVBox();
-        VBox chatOrganizer = createVBox();
-        HBox chatSenders = createHBox();
-        HBox overallOrganizer = createHBox();
-        buttons.getChildren().addAll(rematchButton, resignButton);
-        gameOrganizer.getChildren().addAll(statusText, scoreText, gameGrid, buttons);
-        chatSenders.getChildren().addAll(chatField, sendButton);
-        chatOrganizer.getChildren().addAll(scrollPane, chatSenders);
-        overallOrganizer.getChildren().addAll(gameOrganizer, chatOrganizer);
-        BorderPane manager = createManager(overallOrganizer);
-        manageScene(primaryStage, manager);
-        listeningLogic();
-    }
+
 
     private void handleMove(int row, int column, Button cell) {
         if (!moved && !finishedMatch && cell.getText().isEmpty()) {
@@ -222,6 +189,153 @@ public class Board {
             }
         }
     }
+
+    private boolean checkWin() {
+        String color = "-fx-background-color: #1e990e";
+        for (int j = 0; j < 2; j++) {
+            for (int i = 0; i < 3; i++) {
+                if (board[i][0].getText().equals(symbolUsed[j]) &&
+                        board[i][1].getText().equals(symbolUsed[j]) &&
+                        board[i][2].getText().equals(symbolUsed[j])) {
+                    board[i][0].setStyle(color);
+                    board[i][1].setStyle(color);
+                    board[i][2].setStyle(color);
+                    return true;
+                }
+            }
+            for (int i = 0; i < 3; i++) {
+                if (board[0][i].getText().equals(symbolUsed[j]) &&
+                        board[1][i].getText().equals(symbolUsed[j]) &&
+                        board[2][i].getText().equals(symbolUsed[j])) {
+                    board[0][i].setStyle(color);
+                    board[1][i].setStyle(color);
+                    board[2][i].setStyle(color);
+                    return true;
+                }
+            }
+            if (board[0][0].getText().equals(symbolUsed[j]) &&
+                    board[1][1].getText().equals(symbolUsed[j]) &&
+                    board[2][2].getText().equals(symbolUsed[j])) {
+                board[0][0].setStyle(color);
+                board[1][1].setStyle(color);
+                board[2][2].setStyle(color);
+                return true;
+            }
+            if (board[0][2].getText().equals(symbolUsed[j]) &&
+                    board[1][1].getText().equals(symbolUsed[j]) &&
+                    board[2][0].getText().equals(symbolUsed[j])) {
+                board[0][2].setStyle(color);
+                board[1][1].setStyle(color);
+                board[2][0].setStyle(color);
+                return true;
+            }
+            color = "-fx-background-color: #9e0a03";
+        }
+        return false;
+    }
+
+    private boolean checkDraw() {
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++)
+                if (board[i][j].getText().isEmpty())
+                    return false;
+        String color = "-fx-background-color: #a29390 ";
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++)
+                board[i][j].setStyle(color);
+        return true;
+    }
+
+    private void resetBoard() {
+        for (Button[] row : board) {
+            for (Button cell : row) {
+                cell.setText("");
+                cell.setStyle(null);
+                cell.getStyleClass().add("button");
+            }
+        }
+        finishedMatch = false;
+        otherSideRematch = false;
+        setTurns();
+    }
+
+    private void setTurns() {
+        moved = !symbolUsed[0].equals("X");
+        if (moved)
+            statusText.setText("Enemy's turn!");
+        else
+            statusText.setText("Your turn!");
+    }
+
+    public void start(Stage primaryStage, UserInfo user, String[] usedSymbols) {
+        this.user = user;
+        this.symbolUsed = usedSymbols;
+        initSendingField();
+        setTurns();
+        initChatView();
+        initStatusText();
+        GridPane gameGrid = initializeBoard();
+        createScoreText();
+        Button resignButton = createResignButton();
+        Button rematchButton = createRematchButton();
+        Button sendButton = sendMessageButton();
+        HBox buttons = createHBox();
+        VBox gameOrganizer = createVBox();
+        VBox chatOrganizer = createVBox();
+        HBox chatSenders = createHBox();
+        HBox overallOrganizer = createHBox();
+        buttons.getChildren().addAll(rematchButton, resignButton);
+        gameOrganizer.getChildren().addAll(statusText, scoreText, gameGrid, buttons);
+        chatSenders.getChildren().addAll(chatField, sendButton);
+        chatOrganizer.getChildren().addAll(scrollPane, chatSenders);
+        overallOrganizer.getChildren().addAll(gameOrganizer, chatOrganizer);
+        BorderPane manager = createManager(overallOrganizer);
+        manageScene(primaryStage, manager);
+        listeningLogic();
+    }
+
+    private Button createResignButton() {
+        Button resign = new Button("Resign");
+        resign.setFont(new Font(16));
+        resign.setOnAction(_ -> resign());
+        return resign;
+    }
+
+    private Button createRematchButton() {
+        Button rematch = new Button("Rematch");
+        rematch.setFont(new Font(16));
+        rematch.setOnAction(_ -> rematch());
+        return rematch;
+    }
+
+    private VBox createVBox() {
+        VBox organizer = new VBox(12);
+        organizer.setAlignment(Pos.CENTER);
+        organizer.setPadding(new Insets(8, 8, 10, 8));
+        return organizer;
+    }
+
+    private HBox createHBox() {
+        HBox organizer = new HBox(12);
+        organizer.setAlignment(Pos.CENTER);
+        organizer.setPadding(new Insets(8, 8, 10, 8));
+        return organizer;
+    }
+
+    private BorderPane createManager(HBox organizer) {
+        BorderPane root = new BorderPane(organizer);
+        root.setStyle("-fx-background-color: #1A1A1A;");
+        return root;
+    }
+
+    private void manageScene(Stage primaryStage, BorderPane manager) {
+        Scene scene = new Scene(manager, 1200, 900);
+        scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+        primaryStage.setTitle("Game");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
     private void listeningLogic() {
         Runnable mainListener = () -> {
             while (!Thread.currentThread().isInterrupted()) {
@@ -282,9 +396,7 @@ public class Board {
                         statusText.setText("Your turn!");
                         break;
                     case "MESSAGE":
-                        Platform.runLater(() -> {
-                            addMessage(true, moveSplit[1]);
-                        });
+                        Platform.runLater(() -> addMessage(true, moveSplit[1]));
                         break;
                     default:
                         break;
@@ -295,74 +407,47 @@ public class Board {
         messageListener.setDaemon(true);
         messageListener.start();
     }
-    private boolean checkWin() {
-        String color = "-fx-background-color: #1e990e";
-        for (int j = 0; j < 2; j++) {
-            for (int i = 0; i < 3; i++) {
-                if (board[i][0].getText().equals(symbolUsed[j]) &&
-                        board[i][1].getText().equals(symbolUsed[j]) &&
-                        board[i][2].getText().equals(symbolUsed[j])) {
-                    board[i][0].setStyle(color);
-                    board[i][1].setStyle(color);
-                    board[i][2].setStyle(color);
-                    return true;
-                }
-            }
-            for (int i = 0; i < 3; i++) {
-                if (board[0][i].getText().equals(symbolUsed[j]) &&
-                        board[1][i].getText().equals(symbolUsed[j]) &&
-                        board[2][i].getText().equals(symbolUsed[j])) {
-                    board[0][i].setStyle(color);
-                    board[1][i].setStyle(color);
-                    board[2][i].setStyle(color);
-                    return true;
-                }
-            }
-            if (board[0][0].getText().equals(symbolUsed[j]) &&
-                    board[1][1].getText().equals(symbolUsed[j]) &&
-                    board[2][2].getText().equals(symbolUsed[j])) {
-                board[0][0].setStyle(color);
-                board[1][1].setStyle(color);
-                board[2][2].setStyle(color);
-                return true;
-            }
-            if (board[0][2].getText().equals(symbolUsed[j]) &&
-                    board[1][1].getText().equals(symbolUsed[j]) &&
-                    board[2][0].getText().equals(symbolUsed[j])) {
-                board[0][2].setStyle(color);
-                board[1][1].setStyle(color);
-                board[2][0].setStyle(color);
-                return true;
-            }
-            color = "-fx-background-color: #9e0a03";
-        }
-        return false;
-    }
-    private boolean checkDraw() {
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 3; j++)
-                if (board[i][j].getText().isEmpty())
-                    return false;
-        String color = "-fx-background-color: #a29390 ";
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 3; j++)
-                board[i][j].setStyle(color);
-        return true;
-    }
-    private void resetBoard() {
-        for (Button[] row : board) {
-            for (Button cell : row) {
-                cell.setText("");
-                cell.setStyle(null);
-                cell.getStyleClass().add("button");
-            }
-        }
 
-        finishedMatch = false;
-        otherSideRematch = false;
-        setTurns();
+    private void resign() {
+        if (!quiting) {
+            messageListener.interrupt();
+            try {
+                messageListener.join();
+            } catch (InterruptedException ignored) {}
+            if (!finishedMatch) {
+                thisSessionL++;
+                refreshScoreText();
+                user.getUserOutput().sendMessage("RESIGNED");
+            } else {
+                user.getUserOutput().sendMessage("QUIT");
+            }
+            onResign.run();
+            quiting = true;
+        }
     }
 
+    private void quit() {
+        messageListener.interrupt();
+        try {
+            messageListener.join();
+        } catch (InterruptedException ignored) {}
+        quiting = true;
+        PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
+        visiblePause.setOnFinished(_ -> onResign.run());
+        visiblePause.play();
+        statusText.setText("Enemy has resigned! Quitting the match");
+        finishedMatch = true;
+        moved = true;
+    }
+
+    private void disconnect() {
+        messageListener.interrupt();
+        try {
+            messageListener.join();
+        } catch (InterruptedException ignored) {}
+        user.closeConnection();
+        onDisconnect.run();
+    }
 
     private void rematch() {
         if (finishedMatch && !quiting) {
@@ -377,65 +462,10 @@ public class Board {
         }
     }
 
-
-    private void resign() {
-        if (!quiting) {
-            messageListener.interrupt();
-            try {
-                messageListener.join();
-            } catch (InterruptedException _) {}
-            if (!finishedMatch) {
-                thisSessionL++;
-                refreshScoreText();
-                user.getUserOutput().sendMessage("RESIGNED");
-            } else user.getUserOutput().sendMessage("QUIT");
-            onResign.run();
-            quiting = true;
-        }
-    }
-    private void quit() {
-        messageListener.interrupt();
-        try {
-            messageListener.join();
-        } catch (InterruptedException _) {}
-        quiting = true;
-        PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
-        visiblePause.setOnFinished(_ -> onResign.run());
-        visiblePause.play();
-        statusText.setText("Enemy has resigned! Quiting the match");
-        finishedMatch = true;
-        moved = true;
-    }
-    private void disconnect() {
-        messageListener.interrupt();
-        try {
-            messageListener.join();
-        } catch (InterruptedException _) {}
-        user.closeConnection();
-        onDisconnect.run();
-    }
-    private void addMessage(boolean isOpponent, String message) {
-        message = message.replace(',', '~');
-        if (!message.isBlank() && !message.isEmpty()) {
-            Label messageLabel = new Label(message.replace("~", ","));
-            messageLabel.setFont(new Font(14));
-            messageLabel.setMaxWidth(400);
-            messageLabel.setWrapText(true);
-            messageLabel.setPadding(new Insets(3, 3, 0, 3));
-            HBox messageContainer = new HBox(messageLabel);
-            if (!isOpponent) {
-                messageContainer.setAlignment(Pos.CENTER_RIGHT);
-                user.getUserOutput().sendMessage("MESSAGE," + message);
-                chatField.clear();
-            } else
-                messageContainer.setAlignment(Pos.CENTER_LEFT);
-            chatView.getChildren().add(messageContainer);
-            scrollPane.setVvalue(1.0);
-        }
-    }
-    public void setOnResign(Runnable onResign){
+    public void setOnResign(Runnable onResign) {
         this.onResign = onResign;
     }
+
     public void setOnDisconnect(Runnable onDisconnect) {
         this.onDisconnect = onDisconnect;
     }

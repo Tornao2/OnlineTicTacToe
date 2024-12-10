@@ -17,3 +17,61 @@
 .button:hover {
     -fx-effect: dropshadow(gaussian, #FFFFFF, 20, 0.5, 0, 0);
 }
+
+
+
+
+
+
+/* Styl dla okna czatu */
+.scroll-pane {
+    -fx-background: #2A2A2A; /* Ciemne tło */
+    -fx-border-color: white; /* Obramowanie */
+    -fx-border-width: 2;
+    -fx-border-radius: 5; /* Zaokrąglone rogi */
+    -fx-padding: 10; /* Wewnętrzne odstępy */
+}
+
+/* Styl dla wiadomości przeciwnika */
+.message-left {
+    -fx-background-color: #3A3A3A;
+    -fx-text-fill: white;
+    -fx-padding: 8;
+    -fx-border-radius: 15; /* Zaokrąglenie tła */
+    -fx-background-radius: 15; /* Zaokrąglenie tła */
+}
+
+/* Styl dla Twoich wiadomości */
+.message-right {
+    -fx-background-color: #1E90FF; /* Niebieski */
+    -fx-text-fill: white;
+    -fx-padding: 8;
+    -fx-border-radius: 15; /* Zaokrąglenie tła */
+    -fx-background-radius: 15; /* Zaokrąglenie tła */
+}
+
+/* Pole do wpisywania wiadomości */
+.text-field {
+    -fx-background-color: #2A2A2A;
+    -fx-text-fill: white;
+    -fx-border-color: white;
+    -fx-border-radius: 5;
+    -fx-padding: 5;
+}
+
+/* Styl dla przycisku wysyłania wiadomości */
+.send-button {
+    -fx-background-color: #1E90FF;
+    -fx-text-fill: white;
+    -fx-border-color: white;
+    -fx-border-radius: 5;
+    -fx-padding: 5 20;
+    -fx-min-width: 100px; /* Minimalna szerokość przycisku */
+    -fx-max-width: 100%;   /* Maksymalna szerokość kontenera */
+    -fx-alignment: center;  /* Wyrównanie tekstu w przycisku */
+}
+
+.send-button:hover {
+    -fx-background-color: #4682B4; /* Jaśniejszy odcień przy najechaniu */
+}
+
