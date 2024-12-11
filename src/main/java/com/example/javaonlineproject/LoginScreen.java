@@ -56,12 +56,14 @@ public class LoginScreen {
     private Button createSignInButton(TextField usernameField, PasswordField passwordField, Text text) {
         Button signInButton = new Button("Sign in");
         signInButton.setFont(new Font(16.0));
+        signInButton.getStyleClass().add("button");
         signInButton.setOnAction(_ -> buttonsFunc(usernameField, passwordField, text, true));
         return signInButton;
     }
     private Button createSignUpButton(TextField usernameField, PasswordField passwordField, Text text){
         Button signUpButton = new Button("Sign up");
         signUpButton.setFont(new Font(16.0));
+        signUpButton.getStyleClass().add("button");
         signUpButton.setOnAction(_ -> buttonsFunc(usernameField, passwordField, text, false));
         return signUpButton;
     }
@@ -78,12 +80,15 @@ public class LoginScreen {
         return root;
     }
     private void manageScene(BorderPane root, Stage primaryStage) {
-        Scene scene = new Scene(root);
+        Scene scene = new Scene(root, 400, 500); // szerokość 400 i wysokość 500
         primaryStage.setScene(scene);
         primaryStage.setTitle("Login Screen");
         primaryStage.show();
         root.requestFocus();
+        scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+
     }
+
     private void centerElements(ImageView image, Text text, BorderPane root) {
         image.setX((root.getWidth() - image.getLayoutBounds().getWidth()) / 2);
         text.setX((root.getWidth() - text.getLayoutBounds().getWidth()) / 2);

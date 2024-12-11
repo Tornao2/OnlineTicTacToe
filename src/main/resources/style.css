@@ -1,3 +1,5 @@
+/*PRZYCISKI*/
+
 .grid-pane {
     -fx-background-color: #1A1A1A;  /* Kolor tła planszy */
     -fx-hgap: 4;
@@ -23,6 +25,8 @@
 
 
 
+/*CZAT*/
+
 /* Styl dla okna czatu */
 .scroll-pane {
     -fx-background: #2A2A2A; /* Ciemne tło */
@@ -34,7 +38,7 @@
 
 /* Styl dla wiadomości przeciwnika */
 .message-left {
-    -fx-background-color: #3A3A3A;
+    -fx-background-color: #96C2ED;
     -fx-text-fill: white;
     -fx-padding: 8;
     -fx-border-radius: 15; /* Zaokrąglenie tła */
@@ -43,7 +47,7 @@
 
 /* Styl dla Twoich wiadomości */
 .message-right {
-    -fx-background-color: #1E90FF; /* Niebieski */
+    -fx-background-color: #47CFED; /* Cyan */
     -fx-text-fill: white;
     -fx-padding: 8;
     -fx-border-radius: 15; /* Zaokrąglenie tła */
@@ -73,5 +77,48 @@
 
 .send-button:hover {
     -fx-background-color: #4682B4; /* Jaśniejszy odcień przy najechaniu */
+}
+
+
+
+
+
+
+/*POWITANIE*/
+
+.welcome-text {
+    -fx-font-size: 30px;           /* Większy rozmiar czcionki */
+    -fx-text-fill: white;          /* Kolor tekstu - biały */
+}
+
+
+
+
+
+
+
+/*KOLOR TABELEK W STATS*/
+
+.green {
+    -fx-background-color: #28a745;  /* Zielony kolor dla wygranej (Wins) */
+}
+
+.grey {
+    -fx-background-color: #6c757d;  /* Szary kolor dla remisu (Draws) */
+}
+
+.red {
+    -fx-background-color: #dc3545;  /* Czerwony kolor dla przegranej (Losses) */
+}
+
+
+/* Styl dla tabeli i jej nagłówków */
+.table-view .column-header {
+    -fx-text-fill: black;  /* Kolor tekstu nagłówków tabeli */
+}
+
+/* Styl dla labeli */
+.label {
+    -fx-text-fill: #5D00F5;  /* Kolor tekstu dla labeli */
 }
 

@@ -31,9 +31,11 @@ public class Stats {
     private Button createBackButton() {
         Button backButton = new Button("Back");
         backButton.setFont(new Font(32.0));
+        backButton.getStyleClass().add("button");
         backButton.setOnAction(_ -> backButton());
         return backButton;
     }
+
 
     private HBox createHBox() {
         HBox organizer = new HBox(12);
@@ -58,6 +60,7 @@ public class Stats {
 
     private void manageScene(BorderPane manager) {
         Scene scene = new Scene(manager);
+        scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
         primaryStage.setTitle("Stats");
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -159,22 +162,65 @@ public class Stats {
         }
     }
 
-    private void displayBestPlayers(List<StatsData> bestplayer, VBox organizer) {
+    private void displayBestPlayers(List<StatsData> bestPlayer, VBox organizer) {
         organizer.getChildren().clear();
-        if (bestplayer == null || bestplayer.isEmpty()) {
+        if (bestPlayer == null || bestPlayer.isEmpty()) {
             organizer.getChildren().add(new Label("No best player found."));
         } else {
             TableView<StatsData> tableView = new TableView<>();
             TableColumn<StatsData, String> usernameColumn = new TableColumn<>("Username");
             usernameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getUsername()));
+
             TableColumn<StatsData, Integer> winsColumn = new TableColumn<>("Wins");
             winsColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getWins()).asObject());
+            winsColumn.setCellFactory(column -> new TableCell<StatsData, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (item != null && !empty) {
+                        setText(item.toString());
+                        setStyle("-fx-background-color: #28a745;"); // Zielony kolor
+                    } else {
+                        setText(null);
+                        setStyle("");
+                    }
+                }
+            });
+
             TableColumn<StatsData, Integer> drawsColumn = new TableColumn<>("Draws");
             drawsColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getDraws()).asObject());
+            drawsColumn.setCellFactory(column -> new TableCell<StatsData, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (item != null && !empty) {
+                        setText(item.toString());
+                        setStyle("-fx-background-color: #6c757d;"); // Szary kolor
+                    } else {
+                        setText(null);
+                        setStyle("");
+                    }
+                }
+            });
+
             TableColumn<StatsData, Integer> lossesColumn = new TableColumn<>("Losses");
             lossesColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getLosses()).asObject());
+            lossesColumn.setCellFactory(column -> new TableCell<StatsData, Integer>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (item != null && !empty) {
+                        setText(item.toString());
+                        setStyle("-fx-background-color: #dc3545;"); // Czerwony kolor
+                    } else {
+                        setText(null);
+                        setStyle("");
+                    }
+                }
+            });
+
             tableView.getColumns().addAll(usernameColumn, winsColumn, drawsColumn, lossesColumn);
-            tableView.setItems(FXCollections.observableArrayList(bestplayer));
+            tableView.setItems(FXCollections.observableArrayList(bestPlayer));
             tableView.setStyle("-fx-background-color: #1A1A1A;");
             tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
             ScrollPane scrollPane = new ScrollPane(tableView);
@@ -184,6 +230,7 @@ public class Stats {
             organizer.getChildren().add(scrollPane);
         }
     }
+
 
     public void start(Stage primaryStage, UserInfo user) {
         this.user = user;

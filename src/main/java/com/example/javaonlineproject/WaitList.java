@@ -50,12 +50,14 @@ public class WaitList {
     }
     private Button createInviteButton() {
         Button loginButton = new Button("Invite");
+        loginButton.getStyleClass().add("button");
         loginButton.setFont(new Font(16.0));
         loginButton.setOnAction(_ -> inviteButtonFunc());
         return loginButton;
     }
     private Button createBackButton() {
         Button loginButton = new Button("Back");
+        loginButton.getStyleClass().add("button");
         loginButton.setFont(new Font(16.0));
         loginButton.setOnAction(_ -> backButtonFunc());
         return loginButton;
@@ -79,7 +81,8 @@ public class WaitList {
         return root;
     }
     private void manageScene(Stage primaryStage, BorderPane manager) {
-        Scene scene = new Scene(manager);
+        Scene scene = new Scene(manager, 400, 500);
+        scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
         primaryStage.setTitle("Enemy select");
         primaryStage.setScene(scene);
         primaryStage.show();

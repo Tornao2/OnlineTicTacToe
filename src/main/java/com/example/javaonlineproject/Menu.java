@@ -22,25 +22,30 @@ public class Menu  {
 
     private Text createWelcomeText() {
         Text text = new Text("Welcome " + user.getUsername() + "!");
-        text.setFill(WHITE);
-        text.setFont(new Font(16));
+        text.getStyleClass().add("welcome-text");
+        text.setFill(javafx.scene.paint.Color.WHITE);
         return text;
     }
+
+
     private Button createStartButton() {
         Button startButton = new Button("Start");
         startButton.setFont(new Font(16.0));
+        startButton.getStyleClass().add("button");
         startButton.setOnAction(_ -> ChangeScene());
         return startButton;
     }
     private Button createStatsButton() {
         Button statsButton = new Button("Stats");
         statsButton.setFont(new Font(16.0));
+        statsButton.getStyleClass().add("button");
         statsButton.setOnAction(_ -> statsButton());
         return statsButton;
     }
     private Button createQuitButton() {
         Button quitButton = new Button("Quit");
         quitButton.setFont(new Font(16.0));
+        quitButton.getStyleClass().add("button");
         quitButton.setOnAction(_ -> quitButton());
         return quitButton;
     }
@@ -57,11 +62,14 @@ public class Menu  {
         return root;
     }
     private void manageScene(Stage primaryStage, BorderPane manager) {
-        Scene scene = new Scene(manager);
+        Scene scene = new Scene(manager, 400, 500);
         primaryStage.setTitle("Menu");
         primaryStage.setScene(scene);
         primaryStage.show();
+        scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+
     }
+
 
     public void start(Stage primaryStage, UserInfo user) {
         this.user = user;
