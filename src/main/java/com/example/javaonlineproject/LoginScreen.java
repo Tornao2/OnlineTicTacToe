@@ -16,7 +16,8 @@ import javafx.util.Duration;
 
 import java.io.*;
 import java.net.*;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import static javafx.scene.paint.Color.WHITE;
@@ -25,7 +26,6 @@ public class LoginScreen {
     private Runnable playerLogin;
     private Thread preConnectionThread;
     private final UserInfo user = new UserInfo();
-    InetAddress serverIp;
 
     private ImageView createLogo() {
         ImageView logoImageView = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/images/TictacToe.png"))));
@@ -110,49 +110,20 @@ public class LoginScreen {
     }
     private void logic() {
         Runnable preConnection = () -> {
-            while (!Thread.currentThread().isInterrupted() && serverIp == null) {
-                try (MulticastSocket socket = new MulticastSocket(12346)) {
+            while (!Thread.currentThread().isInterrupted()) {
+                ArrayList<String> temp = (ArrayList<String>) getArpIps();
+                for (String s: temp){
                     try {
-                        socket.setSoTimeout(3000);
-                    } catch (SocketException e) {
-                        System.err.println("SocketException" + e.getMessage());
+                        user.setUserSocket(new Socket(s, 12345));
+                        return;
+                    } catch (IOException _) {
+
                     }
-                    InetAddress group = null;
-                    try {
-                        group = InetAddress.getByName("224.0.0.0");
-                    } catch (UnknownHostException e) {
-                        System.err.println("getByName" + e.getMessage());
-                        System.exit(-2);
-                    }
-                    try {
-                        NetworkInterface networkInterface = NetworkInterface.getByName("MyName");
-                        socket.joinGroup(new InetSocketAddress(group, 12346), networkInterface);
-                    } catch (IOException e) {
-                        System.err.println("joinGroup" + e.getMessage());
-                        System.exit(-3);
-                    }
-                    byte[] buf = new byte[256];
-                    DatagramPacket packet = new DatagramPacket(buf, buf.length);
-                    try {
-                        socket.receive(packet);
-                        System.out.println(packet.getAddress());
-                    } catch (SocketTimeoutException _) {
-                        continue;
-                    } catch (IOException e) {
-                        System.err.println("socket receive" + e.getMessage());
-                        System.exit(-5);
-                    }
-                    try {
-                        NetworkInterface networkInterface = NetworkInterface.getByName("MyName");
-                        socket.leaveGroup(new InetSocketAddress(group, 12346), networkInterface);
-                    } catch (IOException e) {
-                        System.err.println("leaveGroup" + e.getMessage());
-                        System.exit(-6);
-                    }
-                    serverIp = packet.getAddress();
-                } catch (IOException e) {
-                    System.err.println("preconnection" + e.getMessage());
-                    System.exit(-7);
+                }
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException _) {
+
                 }
             }
         };
@@ -161,9 +132,7 @@ public class LoginScreen {
         preConnectionThread.start();
     }
     private void buttonsFunc(TextField usernameField, PasswordField passwordField, Text text, boolean isSignIn) {
-        if (serverIp == null){
-            text.setText("Couldn't connect to the server");
-        } else {
+        if (user.getUserSocket() != null) {
             user.setUsername(usernameField.getText());
             String password = passwordField.getText();
             if (user.getUsername().isEmpty() || password.isEmpty())
@@ -171,11 +140,6 @@ public class LoginScreen {
             else if (user.getUsername().matches(".*[^a-zA-Z0-9].*") || password.matches(".*[^a-zA-Z0-9].*"))
                 text.setText("Use letters or digits");
             else {
-                try {
-                    user.setUserSocket(new Socket(serverIp, 12345));
-                } catch (IOException e) {
-                    System.err.println("buttonsFunc" + e.getMessage());
-                }
                 user.setUserInput(user.getUserSocket());
                 user.setUserOutput(user.getUserSocket());
                 if (isSignIn) user.getUserOutput().sendMessage("LOGIN," + user.getUsername() + "," + password);
@@ -213,6 +177,28 @@ public class LoginScreen {
     }
     public void setOnLoginPlayer(Runnable onLogin) {
         this.playerLogin = onLogin;
+    }
+    public static List<String> getArpIps() {
+        List<String> ipAddresses = new ArrayList<>();
+        try {
+            Process process = Runtime.getRuntime().exec("arp -a");
+            process.waitFor();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(" ");
+                for (String part : parts) {
+                    if (part.matches("\\d+\\.\\d+\\.\\d+\\.\\d+")) {
+                        ipAddresses.add(part);
+                    }
+                }
+            }
+            reader.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return ipAddresses;
     }
     public UserInfo getUser() {
         return user;

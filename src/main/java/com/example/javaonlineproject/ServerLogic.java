@@ -170,7 +170,6 @@ public class ServerLogic extends Application {
                     case "GETCHATHISTORY":
                         String opponentUsername = playersInProgress.get(userServed).getUsername();
                         sendChatHistoryToPlayer(userServed.getUsername(), opponentUsername);
-                        // userServed.getUserOutput().sendMessage("ENEMY,ASDASDSA,PLAYER,ASDSADAS,ENEMY,DDSDSDS,PLAYER,FDFDF");
                         break;
                     default:
                         break;
@@ -190,6 +189,11 @@ public class ServerLogic extends Application {
                 temp.setUserInput(connection);
                 temp.setUserOutput(connection);
                 String loginAttempt;
+                try {
+                    temp.getUserSocket().setSoTimeout(600000);
+                } catch (SocketException e) {
+                    throw new RuntimeException(e);
+                }
                 loginAttempt = temp.getUserInput().receiveMessage();
                 String[]data = loginAttempt.split(",");
                 if (userMap.containsKey(data[1])) {
@@ -211,45 +215,6 @@ public class ServerLogic extends Application {
                     temp.getUserOutput().sendMessage("NOLOGIN");
             }
         };
-        Runnable preConnection = () -> {
-            MulticastSocket socket = null;
-            try {
-                socket = new MulticastSocket(12346);
-            } catch (SocketException e) {
-                System.err.println("broadcasting socket" + e.getMessage());
-                System.exit(-1);
-            } catch (IOException e) {
-                System.err.println("broadcasting socket" + e.getMessage());
-                System.exit(-11);
-            }
-            while (!Thread.currentThread().isInterrupted()) {
-                byte[] buf;
-                String dString = "REQUEST";
-                buf = dString.getBytes();
-                InetAddress address = null;
-                try {
-                    address = InetAddress.getByName("224.0.0.0");
-                } catch (UnknownHostException e) {
-                    System.err.println("getByName" + e.getMessage());
-                    System.exit(-3);
-                }
-                DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 12346);
-                try {
-                    socket.send(packet);
-                } catch (IOException _) {
-
-                }
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException _) {
-                    return;
-                }
-            }
-            socket.close();
-        };
-        broadCasting = new Thread(preConnection);
-        broadCasting.setDaemon(true);
-        broadCasting.start();
         connectingThread = new Thread(connectionListener);
         connectingThread.setDaemon(true);
         connectingThread.start();
