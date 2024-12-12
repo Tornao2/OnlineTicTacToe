@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 
 public class ServerLogic extends Application {
     private Thread connectingThread;
-    private Thread broadCasting;
     private final ArrayList <Thread> listenerThreads = new ArrayList<>();
     private ServerSocket serverSocket;
     private final LinkedHashMap<String, UserInfo> userMap = new LinkedHashMap <>();
@@ -190,9 +189,9 @@ public class ServerLogic extends Application {
                 temp.setUserOutput(connection);
                 String loginAttempt;
                 try {
-                    temp.getUserSocket().setSoTimeout(600000);
-                } catch (SocketException e) {
-                    throw new RuntimeException(e);
+                    temp.getUserSocket().setSoTimeout(0);
+                } catch (SocketException _) {
+                    return;
                 }
                 loginAttempt = temp.getUserInput().receiveMessage();
                 String[]data = loginAttempt.split(",");
@@ -486,7 +485,6 @@ public class ServerLogic extends Application {
     }
     private void stopAll() {
         connectingThread.interrupt();
-        broadCasting.interrupt();
         for (Thread thread: listenerThreads) thread.interrupt();
         for (UserInfo reader : userMap.values()) reader.closeConnection();
         userMap.clear();
