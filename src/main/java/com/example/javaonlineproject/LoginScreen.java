@@ -16,7 +16,7 @@ import javafx.util.Duration;
 
 import java.io.*;
 import java.net.*;
-import java.util.Enumeration;
+import java.util.Arrays;
 import java.util.Objects;
 
 import static javafx.scene.paint.Color.WHITE;
@@ -81,12 +81,13 @@ public class LoginScreen {
         return root;
     }
     private void manageScene(BorderPane root, Stage primaryStage) {
-        Scene scene = new Scene(root, 400, 500);
+        Scene scene = new Scene(root, 400, 500); // szerokość 400 i wysokość 500
         primaryStage.setScene(scene);
         primaryStage.setTitle("Login Screen");
         primaryStage.show();
         root.requestFocus();
         scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+
     }
 
     private void centerElements(ImageView image, Text text, BorderPane root) {
@@ -123,57 +124,35 @@ public class LoginScreen {
                         System.err.println("getByName" + e.getMessage());
                         System.exit(-2);
                     }
-                    Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-                    while (interfaces.hasMoreElements()) {
-                        NetworkInterface networkInterface = interfaces.nextElement();
-                        if (!networkInterface.supportsMulticast() || !networkInterface.isUp()) {
-                            continue;
-                        }
-                        boolean hasIPv4 = networkInterface.getInterfaceAddresses().stream()
-                                .anyMatch(addr -> addr.getAddress() instanceof Inet4Address);
-                        if (!hasIPv4) {
-                            continue;
-                        }
-                        try {
-                            socket.joinGroup(new InetSocketAddress(group, 12346), networkInterface);
-                        } catch (IOException e) {
-                            System.err.println("Join group failed on interface " + networkInterface.getName() + ": " + e.getMessage());
-                            continue;
-                        }
-                        try {
-                            String dString = "REQUEST";
-                            byte[] buf = dString.getBytes();
-                            DatagramPacket sendPacket = new DatagramPacket(buf, buf.length, group, 12346);
-                            socket.send(sendPacket);
-                        } catch (IOException e) {
-                            System.err.println("Sending multicast failed: " + e.getMessage());
-                        }
-                        byte[] buf = new byte[256];
-                        DatagramPacket receivePacket = new DatagramPacket(buf, buf.length);
-                        try {
-                            socket.receive(receivePacket);
-                            serverIp = receivePacket.getAddress();
-                            break;
-                        } catch (SocketTimeoutException _) {
-                            
-                        } catch (IOException e) {
-                            System.err.println("Receive failed: " + e.getMessage());
-                        } finally {
-                            try {
-                                socket.leaveGroup(new InetSocketAddress(group, 12346), networkInterface);
-                            } catch (IOException e) {
-                                System.err.println("Leave group failed on interface " + networkInterface.getName() + ": " + e.getMessage());
-                            }
-                        }
+                    try {
+                        NetworkInterface networkInterface = NetworkInterface.getByName("MyName");
+                        socket.joinGroup(new InetSocketAddress(group, 12346), networkInterface);
+                    } catch (IOException e) {
+                        System.err.println("joinGroup" + e.getMessage());
+                        System.exit(-3);
                     }
+                    byte[] buf = new byte[256];
+                    DatagramPacket packet = new DatagramPacket(buf, buf.length);
+                    try {
+                        socket.receive(packet);
+                        System.out.println(packet.getAddress());
+                    } catch (SocketTimeoutException _) {
+                        continue;
+                    } catch (IOException e) {
+                        System.err.println("socket receive" + e.getMessage());
+                        System.exit(-5);
+                    }
+                    try {
+                        NetworkInterface networkInterface = NetworkInterface.getByName("MyName");
+                        socket.leaveGroup(new InetSocketAddress(group, 12346), networkInterface);
+                    } catch (IOException e) {
+                        System.err.println("leaveGroup" + e.getMessage());
+                        System.exit(-6);
+                    }
+                    serverIp = packet.getAddress();
                 } catch (IOException e) {
-                    System.err.println("MulticastSocket error: " + e.getMessage());
-                    System.exit(-1);
-                }
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+                    System.err.println("preconnection" + e.getMessage());
+                    System.exit(-7);
                 }
             }
         };

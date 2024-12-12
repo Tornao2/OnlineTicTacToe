@@ -67,9 +67,7 @@ public class Menu  {
         primaryStage.setScene(scene);
         primaryStage.show();
         scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
-
     }
-
 
     public void start(Stage primaryStage, UserInfo user) {
         this.user = user;

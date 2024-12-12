@@ -16,7 +16,6 @@ import java.net.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.List;
 
 public class ServerLogic extends Application {
     private Thread connectingThread;
@@ -34,8 +33,7 @@ public class ServerLogic extends Application {
 
     private Button createExitButton() {
         Button loginButton = new Button("Exit");
-        loginButton.setFont(new Font(24.0));
-        loginButton.getStyleClass().add("button");
+        loginButton.setFont(new Font(20));
         loginButton.setOnAction(_ -> stopAll());
         return loginButton;
     }
@@ -53,7 +51,6 @@ public class ServerLogic extends Application {
         primaryStage.setTitle("Server");
         primaryStage.show();
         organizer.requestFocus();
-        scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
     }
     public void start(Stage primaryStage) {
         try {
@@ -171,8 +168,8 @@ public class ServerLogic extends Application {
                         saveMessageToHistory(userServed.getUsername(), receiverNick, message);
                         break;
                     case "GETCHATHISTORY":
-                       String opponentUsername = playersInProgress.get(userServed).getUsername();
-                       sendChatHistoryToPlayer(userServed.getUsername(), opponentUsername);
+                        String opponentUsername = playersInProgress.get(userServed).getUsername();
+                        sendChatHistoryToPlayer(userServed.getUsername(), opponentUsername);
                         // userServed.getUserOutput().sendMessage("ENEMY,ASDASDSA,PLAYER,ASDSADAS,ENEMY,DDSDSDS,PLAYER,FDFDF");
                         break;
                     default:
@@ -219,46 +216,33 @@ public class ServerLogic extends Application {
             try {
                 socket = new MulticastSocket(12346);
             } catch (SocketException e) {
-                System.err.println("Broadcasting socket error: " + e.getMessage());
+                System.err.println("broadcasting socket" + e.getMessage());
                 System.exit(-1);
             } catch (IOException e) {
-                System.err.println("Broadcasting socket error: " + e.getMessage());
+                System.err.println("broadcasting socket" + e.getMessage());
                 System.exit(-11);
             }
             while (!Thread.currentThread().isInterrupted()) {
+                byte[] buf;
+                String dString = "REQUEST";
+                buf = dString.getBytes();
+                InetAddress address = null;
                 try {
-                    Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-                    InetAddress group = InetAddress.getByName("224.0.0.0");
-                    while (interfaces.hasMoreElements()) {
-                        NetworkInterface networkInterface = interfaces.nextElement();
-                        if (!networkInterface.supportsMulticast() || !networkInterface.isUp()) {
-                            continue;
-                        }
-                        boolean hasIPv4 = networkInterface.getInterfaceAddresses().stream()
-                                .anyMatch(addr -> addr.getAddress() instanceof Inet4Address);
-                        if (!hasIPv4) {
-                            continue;
-                        }
-                        try {
-                            String dString = "REQUEST";
-                            byte[] buf = dString.getBytes();
-                            DatagramPacket packet = new DatagramPacket(buf, buf.length, group, 12346);
-                            socket.setNetworkInterface(networkInterface);
-                            socket.send(packet);
-                        } catch (IOException _) {
-
-                        }
-                    }
-                    Thread.sleep(500);
+                    address = InetAddress.getByName("224.0.0.0");
                 } catch (UnknownHostException e) {
-                    System.err.println("Group address error: " + e.getMessage());
+                    System.err.println("getByName" + e.getMessage());
                     System.exit(-3);
-                } catch (IOException e) {
-                    System.err.println("Socket error during iteration: " + e.getMessage());
-                    System.exit(-4);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
+                }
+                DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 12346);
+                try {
+                    socket.send(packet);
+                } catch (IOException _) {
+
+                }
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException _) {
+                    return;
                 }
             }
             socket.close();
@@ -379,7 +363,7 @@ public class ServerLogic extends Application {
             System.err.println("Failed to save match history: " + e.getMessage());
         }
     }
-        private void sendMatchHistoryToPlayer(String username) {
+    private void sendMatchHistoryToPlayer(String username) {
         List<MatchHistoryData> historyList = loadMatchHistoryFromFile();
         List<MatchHistoryData> playerHistory = new ArrayList<>();
         for (MatchHistoryData userMatch : historyList) {
