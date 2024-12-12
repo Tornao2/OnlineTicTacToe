@@ -117,7 +117,6 @@ public class LoginScreen {
             while (!Thread.currentThread().isInterrupted()) {
                 ArrayList<String> temp = (ArrayList<String>) getArpIps();
                 for (String s: temp){
-                    System.out.println(s);
                     try {
                         user.setUserSocket(new Socket(s, 12345));
                         Platform.runLater(() -> text.setVisible(false));
@@ -151,6 +150,7 @@ public class LoginScreen {
                 if (isSignIn) user.getUserOutput().sendMessage("LOGIN," + user.getUsername() + "," + password);
                 else user.getUserOutput().sendMessage("SIGNUP," + user.getUsername() + "," + password);
                 String response = user.getUserInput().receiveMessage();
+                System.out.println(user.getUserSocket());
                 switch (response) {
                     case "ALLOWED":
                         preConnectionThread.interrupt();
@@ -173,7 +173,6 @@ public class LoginScreen {
                     default:
                         text.setText("Username already taken!");
                 }
-                user.closeConnection();
             }
         }
         text.setVisible(true);
@@ -201,7 +200,7 @@ public class LoginScreen {
             }
             reader.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Couldnt get arp" + e);
         }
 
         return ipAddresses;

@@ -19,7 +19,9 @@ import java.util.stream.Collectors;
 
 public class ServerLogic extends Application {
     private Thread connectingThread;
+    private final ArrayList <Thread> loginListeners = new ArrayList<>();
     private final ArrayList <Thread> listenerThreads = new ArrayList<>();
+    private final ArrayList<UserInfo> loginUsers = new ArrayList<>();
     private ServerSocket serverSocket;
     private final LinkedHashMap<String, UserInfo> userMap = new LinkedHashMap <>();
     private final ArrayList <UserInfo> waitingToPlay = new ArrayList<>();
@@ -63,7 +65,6 @@ public class ServerLogic extends Application {
         manageScene(organizer, primaryStage);
         logic();
     }
-
     private void logic() {
         Runnable mainListener = () -> {
             UserInfo userServed = userMap.lastEntry().getValue();
@@ -175,6 +176,44 @@ public class ServerLogic extends Application {
                 }
             }
         };
+        Runnable loginListener = () -> {
+            UserInfo temp = loginUsers.getLast();
+            while (!Thread.currentThread().isInterrupted()) {
+                String loginAttempt;
+                try {
+                    temp.getUserSocket().setSoTimeout(0);
+                } catch (SocketException _) {
+                    loginUsers.remove(temp);
+                    continue;
+                }
+                loginAttempt = temp.getUserInput().receiveMessage();
+                if (loginAttempt.equals("SOCKETERROR")) {
+                    loginUsers.remove(temp);
+                    return;
+                }
+                String[] data = loginAttempt.split(",");
+                if (userMap.containsKey(data[1])) {
+                    temp.getUserOutput().sendMessage("ALREADYLOGGEDIN");
+                    continue;
+                }
+                if (data[0].equals("SIGNUP")) {
+                    if (isUsernameCorrect(data[1])) {
+                        temp.getUserOutput().sendMessage("USERNAMETAKEN");
+                        continue;
+                    }
+                    registerNewUser(data[1], data[2]);
+                    loginUsers.remove(temp);
+                    handleLogin(data[1], temp, mainListener);
+                } else if (isUsernameCorrect(data[1])) {
+                    if (checkPassword(data[1], data[2])) {
+                        handleLogin(data[1], temp, mainListener);
+                        loginUsers.remove(temp);
+                    }
+                    else temp.getUserOutput().sendMessage("WRONGPASSWORD");
+                } else
+                    temp.getUserOutput().sendMessage("NOLOGIN");
+            }
+        };
         Runnable connectionListener = () -> {
             while (!Thread.currentThread().isInterrupted()) {
                 UserInfo temp = new UserInfo();
@@ -182,37 +221,16 @@ public class ServerLogic extends Application {
                 try {
                     connection = serverSocket.accept();
                 } catch (IOException _) {
-                    return;
+                    continue;
                 }
                 temp.setUserSocket(connection);
                 temp.setUserInput(connection);
                 temp.setUserOutput(connection);
-                String loginAttempt;
-                try {
-                    temp.getUserSocket().setSoTimeout(0);
-                } catch (SocketException _) {
-                    continue;
-                }
-                loginAttempt = temp.getUserInput().receiveMessage();
-                if (loginAttempt.equals("SOCKETERROR")) continue;
-                String[]data = loginAttempt.split(",");
-                if (userMap.containsKey(data[1])) {
-                    temp.getUserOutput().sendMessage("ALREADYLOGGEDIN");
-                    continue;
-                }
-                if(data[0].equals("SIGNUP")){
-                    if(isUsernameCorrect(data[1])){
-                        temp.getUserOutput().sendMessage("USERNAMETAKEN");
-                        continue;
-                    }
-                    registerNewUser(data[1], data[2]);
-                    handleLogin(data[1], temp, mainListener);
-                } else if (isUsernameCorrect(data[1])) {
-                    if(checkPassword(data[1], data[2]))
-                        handleLogin(data[1],temp, mainListener);
-                    else temp.getUserOutput().sendMessage("WRONGPASSWORD");
-                } else
-                    temp.getUserOutput().sendMessage("NOLOGIN");
+                loginUsers.add(temp);
+                Thread listener = new Thread(loginListener);
+                listener.setDaemon(true);
+                loginListeners.add(listener);
+                listener.start();
             }
         };
         connectingThread = new Thread(connectionListener);
@@ -296,7 +314,6 @@ public class ServerLogic extends Application {
         } catch (IOException e) {
             System.err.println("Error converting stats to JSON: " + e.getMessage());
         }
-
         saveStatsToFile(statsList);
         UserInfo opponent = playersInProgress.get(userMap.get(username));
         saveMatchHistory(username, opponent.getUsername(), result);
@@ -319,7 +336,6 @@ public class ServerLogic extends Application {
             return new ArrayList<>();
         }
     }
-
     private void saveMatchHistoryToFile(List<MatchHistoryData> historyList) {
         File file = new File(MATCHHISTORYFILEPATH);
         try {
@@ -340,7 +356,6 @@ public class ServerLogic extends Application {
         UserInfo user = userMap.get(username);
         user.getUserOutput().sendMessage("MATCHHISTORY: " + matchHistoryJson);
     }
-
     private String convertMatchHistoryToJson(List<MatchHistoryData> playerHistory) {
         try{
             return objectMapper.writeValueAsString(playerHistory);
@@ -349,7 +364,6 @@ public class ServerLogic extends Application {
             return "ERROR";
         }
     }
-
     private StatsData getStatsForUser(String username, List<StatsData> statsList) {
         for (StatsData stats : statsList) {
             if (stats.getUsername().equals(username)) {
@@ -358,7 +372,6 @@ public class ServerLogic extends Application {
         }
         return null;
     }
-
     private void saveStatsToFile(List<StatsData> statsList) {
         File file = new File(STATSFILEPATH);
         try {
@@ -367,7 +380,6 @@ public class ServerLogic extends Application {
             System.err.println("Failed to save Stats: " + e.getMessage());
         }
     }
-
     private List<StatsData> loadStatsFromFile(){
         File file = new File(STATSFILEPATH);
         if(!file.exists() || file.length() == 0) return new ArrayList<>();
@@ -384,14 +396,12 @@ public class ServerLogic extends Application {
         if(playerStats == null) {
             playerStats = new StatsData(username, 0, 0, 0);
             statsList.add(playerStats);
-        }
-        if(playerStats != null){
+        } else {
             String statsJson = convertStatsToJson(playerStats);
             UserInfo user = userMap.get(username);
             user.getUserOutput().sendMessage("STATS:" + statsJson);
         }
     }
-
     private String convertStatsToJson(StatsData playerStats) {
         try {
             return objectMapper.writeValueAsString(playerStats);
@@ -400,7 +410,6 @@ public class ServerLogic extends Application {
             return "ERROR";
         }
     }
-
     private void sendBestPlayerToStats(String username){
         List<StatsData> statsList = loadStatsFromFile();
         statsList.sort((stats1, stats2) ->{
@@ -412,7 +421,6 @@ public class ServerLogic extends Application {
         String topPlayersJson = topPlayers.stream()
                 .map(this::convertStatsToJson)
                 .collect(Collectors.joining(","));
-
         UserInfo user = userMap.get(username);
         if (user != null) {
             user.getUserOutput().sendMessage("BESTPLAYERS:" + topPlayersJson);
@@ -487,9 +495,11 @@ public class ServerLogic extends Application {
     private void stopAll() {
         connectingThread.interrupt();
         for (Thread thread: listenerThreads) thread.interrupt();
+        for (Thread thread: loginListeners) thread.interrupt();
         for (UserInfo reader : userMap.values()) reader.closeConnection();
         userMap.clear();
         listenerThreads.clear();
+        loginListeners.clear();
         if (serverSocket != null && !serverSocket.isClosed())
             try {
                 serverSocket.close();
