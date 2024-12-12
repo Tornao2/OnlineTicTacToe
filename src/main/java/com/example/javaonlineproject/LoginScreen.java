@@ -150,7 +150,6 @@ public class LoginScreen {
                 if (isSignIn) user.getUserOutput().sendMessage("LOGIN," + user.getUsername() + "," + password);
                 else user.getUserOutput().sendMessage("SIGNUP," + user.getUsername() + "," + password);
                 String response = user.getUserInput().receiveMessage();
-                System.out.println(user.getUserSocket());
                 switch (response) {
                     case "ALLOWED":
                         preConnectionThread.interrupt();
