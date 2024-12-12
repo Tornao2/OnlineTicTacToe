@@ -191,9 +191,10 @@ public class ServerLogic extends Application {
                 try {
                     temp.getUserSocket().setSoTimeout(0);
                 } catch (SocketException _) {
-                    return;
+                    continue;
                 }
                 loginAttempt = temp.getUserInput().receiveMessage();
+                if (loginAttempt.equals("SOCKETERROR")) continue;
                 String[]data = loginAttempt.split(",");
                 if (userMap.containsKey(data[1])) {
                     temp.getUserOutput().sendMessage("ALREADYLOGGEDIN");

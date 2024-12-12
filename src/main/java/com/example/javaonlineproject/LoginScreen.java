@@ -117,16 +117,17 @@ public class LoginScreen {
             while (!Thread.currentThread().isInterrupted()) {
                 ArrayList<String> temp = (ArrayList<String>) getArpIps();
                 for (String s: temp){
+                    System.out.println(s);
                     try {
                         user.setUserSocket(new Socket(s, 12345));
                         Platform.runLater(() -> text.setVisible(false));
                         return;
                     } catch (IOException _) {
-                        user.setUserSocket(null);
+
                     }
                 }
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(100);
                 } catch (InterruptedException _) {
 
                 }
