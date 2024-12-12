@@ -21,6 +21,7 @@ public class UserInfo {
     }
     public void setUserSocket(Socket usersocket) {
         this.userSocket = usersocket;
+        if (usersocket == null) return;
         try {
             userSocket.setSoTimeout(250);
         } catch (SocketException e) {

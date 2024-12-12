@@ -1,6 +1,7 @@
 package com.example.javaonlineproject;
 
 import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -26,6 +27,7 @@ public class LoginScreen {
     private Runnable playerLogin;
     private Thread preConnectionThread;
     private final UserInfo user = new UserInfo();
+    Text text;
 
     private ImageView createLogo() {
         ImageView logoImageView = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/images/TictacToe.png"))));
@@ -47,25 +49,24 @@ public class LoginScreen {
         passwordField.setStyle("-fx-background-color: #222222; -fx-text-fill: white;");
         return passwordField;
     }
-    private Text createErrorText() {
-        Text text = new Text("");
+    private void createErrorText() {
+        text = new Text("");
         text.setFill(WHITE);
-        text.setFont(new Font(16));
+        text.setFont(new Font(20));
         text.setVisible(false);
-        return text;
     }
-    private Button createSignInButton(TextField usernameField, PasswordField passwordField, Text text) {
+    private Button createSignInButton(TextField usernameField, PasswordField passwordField) {
         Button signInButton = new Button("Sign in");
         signInButton.setFont(new Font(16.0));
         signInButton.getStyleClass().add("button");
-        signInButton.setOnAction(_ -> buttonsFunc(usernameField, passwordField, text, true));
+        signInButton.setOnAction(_ -> buttonsFunc(usernameField, passwordField, true));
         return signInButton;
     }
-    private Button createSignUpButton(TextField usernameField, PasswordField passwordField, Text text){
+    private Button createSignUpButton(TextField usernameField, PasswordField passwordField){
         Button signUpButton = new Button("Sign up");
         signUpButton.setFont(new Font(16.0));
         signUpButton.getStyleClass().add("button");
-        signUpButton.setOnAction(_ -> buttonsFunc(usernameField, passwordField, text, false));
+        signUpButton.setOnAction(_ -> buttonsFunc(usernameField, passwordField, false));
         return signUpButton;
     }
     private VBox createVBox() {
@@ -87,10 +88,9 @@ public class LoginScreen {
         primaryStage.show();
         root.requestFocus();
         scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
-
     }
 
-    private void centerElements(ImageView image, Text text, BorderPane root) {
+    private void centerElements(ImageView image, BorderPane root) {
         image.setX((root.getWidth() - image.getLayoutBounds().getWidth()) / 2);
         text.setX((root.getWidth() - text.getLayoutBounds().getWidth()) / 2);
     }
@@ -98,26 +98,31 @@ public class LoginScreen {
         ImageView logoImageView = createLogo();
         TextField usernameField = createUsernameField();
         PasswordField passwordField = createPassField();
-        Text errorText = createErrorText();
-        Button signInButton = createSignInButton(usernameField, passwordField, errorText);
-        Button signUpButton = createSignUpButton(usernameField, passwordField, errorText);
+        createErrorText();
+        Button signInButton = createSignInButton(usernameField, passwordField);
+        Button signUpButton = createSignUpButton(usernameField, passwordField);
         VBox organizer = createVBox();
-        organizer.getChildren().addAll(logoImageView, usernameField, passwordField, signInButton, signUpButton, errorText);
+        organizer.getChildren().addAll(logoImageView, usernameField, passwordField, signInButton, signUpButton, text);
         BorderPane Manager = createManager(organizer);
         manageScene(Manager, primaryStage);
-        centerElements(logoImageView, errorText, Manager);
+        centerElements(logoImageView, Manager);
         logic();
     }
     private void logic() {
         Runnable preConnection = () -> {
+            Platform.runLater(() -> {
+                text.setText("Connecting to the server");
+                text.setVisible(true);
+            });
             while (!Thread.currentThread().isInterrupted()) {
                 ArrayList<String> temp = (ArrayList<String>) getArpIps();
                 for (String s: temp){
                     try {
                         user.setUserSocket(new Socket(s, 12345));
+                        Platform.runLater(() -> text.setVisible(false));
                         return;
                     } catch (IOException _) {
-
+                        user.setUserSocket(null);
                     }
                 }
                 try {
@@ -131,7 +136,7 @@ public class LoginScreen {
         preConnectionThread.setDaemon(true);
         preConnectionThread.start();
     }
-    private void buttonsFunc(TextField usernameField, PasswordField passwordField, Text text, boolean isSignIn) {
+    private void buttonsFunc(TextField usernameField, PasswordField passwordField, boolean isSignIn) {
         if (user.getUserSocket() != null) {
             user.setUsername(usernameField.getText());
             String password = passwordField.getText();
