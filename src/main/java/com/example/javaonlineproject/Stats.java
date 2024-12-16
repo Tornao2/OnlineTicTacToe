@@ -25,7 +25,7 @@ public class Stats {
     private Runnable onDisconnect;
     private UserInfo user;
     private Thread disconnectThread;
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private Stage primaryStage;
 
     private Button createBackButton() {
@@ -35,7 +35,6 @@ public class Stats {
         backButton.setOnAction(_ -> backButton());
         return backButton;
     }
-
 
     private HBox createHBox() {
         HBox organizer = new HBox(12);
@@ -114,7 +113,7 @@ public class Stats {
     private void receiveStatsFromServer(VBox organizer) {
         user.getUserOutput().sendMessage("GETSTATS");
         String message = user.getUserInput().receiveMessage();
-        if (message.startsWith("STATS:")) {
+        if (message != null && message.startsWith("STATS:")) {
             String statsJson = message.substring("STATS:".length());
             try {
                 StatsData statsData = objectMapper.readValue(statsJson, StatsData.class);
@@ -152,7 +151,7 @@ public class Stats {
                 if (!statsJson.startsWith("[")) {
                     statsJson = "[" + statsJson + "]";
                 }
-                List<StatsData> bestPlayer = objectMapper.readValue(statsJson, new TypeReference<List<StatsData>>() {});
+                List<StatsData> bestPlayer = objectMapper.readValue(statsJson, new TypeReference<>() {});
                 displayBestPlayers(bestPlayer, organizer);
             } catch (IOException e) {
                 System.err.println("Error Parsing stats: " + e.getMessage());
@@ -173,7 +172,7 @@ public class Stats {
 
             TableColumn<StatsData, Integer> winsColumn = new TableColumn<>("Wins");
             winsColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getWins()).asObject());
-            winsColumn.setCellFactory(column -> new TableCell<StatsData, Integer>() {
+            winsColumn.setCellFactory(column -> new TableCell<>() {
                 @Override
                 protected void updateItem(Integer item, boolean empty) {
                     super.updateItem(item, empty);
@@ -189,7 +188,7 @@ public class Stats {
 
             TableColumn<StatsData, Integer> drawsColumn = new TableColumn<>("Draws");
             drawsColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getDraws()).asObject());
-            drawsColumn.setCellFactory(column -> new TableCell<StatsData, Integer>() {
+            drawsColumn.setCellFactory(column -> new TableCell<>() {
                 @Override
                 protected void updateItem(Integer item, boolean empty) {
                     super.updateItem(item, empty);
@@ -205,7 +204,7 @@ public class Stats {
 
             TableColumn<StatsData, Integer> lossesColumn = new TableColumn<>("Losses");
             lossesColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getLosses()).asObject());
-            lossesColumn.setCellFactory(column -> new TableCell<StatsData, Integer>() {
+            lossesColumn.setCellFactory(column -> new TableCell<>() {
                 @Override
                 protected void updateItem(Integer item, boolean empty) {
                     super.updateItem(item, empty);

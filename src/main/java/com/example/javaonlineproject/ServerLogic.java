@@ -178,6 +178,7 @@ public class ServerLogic extends Application {
         };
         Runnable loginListener = () -> {
             UserInfo temp = loginUsers.getLast();
+            loginUsers.remove(loginUsers.getLast());
             while (!Thread.currentThread().isInterrupted()) {
                 String loginAttempt;
                 try {
@@ -188,7 +189,6 @@ public class ServerLogic extends Application {
                 }
                 loginAttempt = temp.getUserInput().receiveMessage();
                 if (loginAttempt.equals("SOCKETERROR")) {
-                    loginUsers.remove(temp);
                     return;
                 }
                 String[] data = loginAttempt.split(",");
@@ -202,12 +202,12 @@ public class ServerLogic extends Application {
                         continue;
                     }
                     registerNewUser(data[1], data[2]);
-                    loginUsers.remove(temp);
                     handleLogin(data[1], temp, mainListener);
+                    return;
                 } else if (isUsernameCorrect(data[1])) {
                     if (checkPassword(data[1], data[2])) {
                         handleLogin(data[1], temp, mainListener);
-                        loginUsers.remove(temp);
+                        return;
                     }
                     else temp.getUserOutput().sendMessage("WRONGPASSWORD");
                 } else
