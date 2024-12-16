@@ -85,6 +85,14 @@ public class Stats {
 
     private void displayMatchHistory(List<MatchHistoryData> matchHistory, VBox organizer) {
         organizer.getChildren().clear();
+
+        // Nagłówek tabeli
+        Label headerLabel = new Label("Player match history");
+        headerLabel.setFont(new Font(24));
+        headerLabel.setTextFill(javafx.scene.paint.Color.WHITE);
+        headerLabel.setAlignment(Pos.CENTER);
+        organizer.getChildren().add(headerLabel);
+
         TableView<MatchHistoryData> tableView = new TableView<>();
         tableView.setStyle("-fx-background-color: white;");
 
@@ -168,6 +176,14 @@ public class Stats {
 
     private void displayBestPlayers(List<StatsData> bestPlayers, VBox organizer) {
         organizer.getChildren().clear();
+
+        // Nagłówek tabeli
+        Label headerLabel = new Label("Top 10 players");
+        headerLabel.setFont(new Font(24));
+        headerLabel.setTextFill(javafx.scene.paint.Color.WHITE);
+        headerLabel.setAlignment(Pos.CENTER);
+        organizer.getChildren().add(headerLabel);
+
         TableView<StatsData> tableView = new TableView<>();
         tableView.setStyle("-fx-background-color: white;");
 
@@ -235,7 +251,6 @@ public class Stats {
 
         organizer.getChildren().add(tableView);
     }
-
 
     public void start(Stage primaryStage, UserInfo user) {
         this.user = user;
