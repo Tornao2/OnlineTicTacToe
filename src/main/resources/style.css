@@ -119,6 +119,7 @@
 
 /* Styl dla labeli */
 .label {
-    -fx-text-fill: #5D00F5;  /* Kolor tekstu dla labeli */
+    -fx-text-fill: red;  /* Kolor tekstu dla labeli */
 }
+
 
