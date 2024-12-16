@@ -22,7 +22,6 @@ import java.util.List;
 
 public class Stats {
     private Runnable onBack;
-    private Runnable onDisconnect;
     private UserInfo user;
     private Thread disconnectThread;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -78,38 +77,29 @@ public class Stats {
                 System.err.println("Error parsing match history: " + e.getMessage());
                 organizer.getChildren().add((new Label("Match history parse ERROR")));
             }
-        } else {
-            System.out.println("Message does not contain match history: " + message);
-            organizer.getChildren().add(new Label("No match history found."));
         }
     }
-
     private void displayMatchHistory(List<MatchHistoryData> matchHistory, VBox organizer) {
         organizer.getChildren().clear();
-        if (matchHistory == null || matchHistory.isEmpty()) {
-            organizer.getChildren().add(new Label("No match history found."));
-        } else {
-            TableView<MatchHistoryData> tableView = new TableView<>();
-            TableColumn<MatchHistoryData, String> dateColumn = new TableColumn<>("Date");
-            dateColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getDate()));
-            TableColumn<MatchHistoryData, String> enemyColumn = new TableColumn<>("Enemy");
-            enemyColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getPlayer2username()));
-            TableColumn<MatchHistoryData, String> resultColumn = new TableColumn<>("Result");
-            resultColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getResult()));
-            tableView.setStyle("-fx-background-color: #1A1A1A;");
-            tableView.getColumns().addAll(dateColumn, enemyColumn, resultColumn);
-            tableView.setItems(FXCollections.observableArrayList(matchHistory));
-            tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-            dateColumn.setSortType(TableColumn.SortType.ASCENDING);
-            tableView.getSortOrder().add(dateColumn);
-            ScrollPane scrollPane = new ScrollPane(tableView);
-            scrollPane.setPrefSize(400, 1050);
-            scrollPane.setFitToWidth(true);
-            scrollPane.setFitToHeight(true);
-            organizer.getChildren().add(scrollPane);
-        }
+        TableView<MatchHistoryData> tableView = new TableView<>();
+        TableColumn<MatchHistoryData, String> dateColumn = new TableColumn<>("Date");
+        dateColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getDate()));
+        TableColumn<MatchHistoryData, String> enemyColumn = new TableColumn<>("Enemy");
+        enemyColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getPlayer2username()));
+        TableColumn<MatchHistoryData, String> resultColumn = new TableColumn<>("Result");
+        resultColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getResult()));
+        tableView.setStyle("-fx-background-color: #1A1A1A;");
+        tableView.getColumns().addAll(dateColumn, enemyColumn, resultColumn);
+        tableView.setItems(FXCollections.observableArrayList(matchHistory));
+        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        dateColumn.setSortType(TableColumn.SortType.ASCENDING);
+        tableView.getSortOrder().add(dateColumn);
+        ScrollPane scrollPane = new ScrollPane(tableView);
+        scrollPane.setPrefSize(400, 1050);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        organizer.getChildren().add(scrollPane);
     }
-
     private void receiveStatsFromServer(VBox organizer) {
         user.getUserOutput().sendMessage("GETSTATS");
         String message = user.getUserInput().receiveMessage();
@@ -122,9 +112,6 @@ public class Stats {
                 System.err.println("Error Parsing stats: " + e.getMessage());
                 organizer.getChildren().add((new Label("Match history parse ERROR")));
             }
-        } else {
-            System.out.println("Message does not contain statsData " + message);
-            organizer.getChildren().add(new Label("No match history found."));
         }
     }
     private void displayStats(List<StatsData> statsData, VBox organizer) {
@@ -160,7 +147,6 @@ public class Stats {
             System.out.println("Message does not contain statsData " + message);
         }
     }
-
     private void displayBestPlayers(List<StatsData> bestPlayer, VBox organizer) {
         organizer.getChildren().clear();
         if (bestPlayer == null || bestPlayer.isEmpty()) {
@@ -169,10 +155,9 @@ public class Stats {
             TableView<StatsData> tableView = new TableView<>();
             TableColumn<StatsData, String> usernameColumn = new TableColumn<>("Username");
             usernameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getUsername()));
-
             TableColumn<StatsData, Integer> winsColumn = new TableColumn<>("Wins");
             winsColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getWins()).asObject());
-            winsColumn.setCellFactory(column -> new TableCell<>() {
+            winsColumn.setCellFactory(_ -> new TableCell<>() {
                 @Override
                 protected void updateItem(Integer item, boolean empty) {
                     super.updateItem(item, empty);
@@ -188,7 +173,7 @@ public class Stats {
 
             TableColumn<StatsData, Integer> drawsColumn = new TableColumn<>("Draws");
             drawsColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getDraws()).asObject());
-            drawsColumn.setCellFactory(column -> new TableCell<>() {
+            drawsColumn.setCellFactory(_ -> new TableCell<>() {
                 @Override
                 protected void updateItem(Integer item, boolean empty) {
                     super.updateItem(item, empty);
@@ -204,7 +189,7 @@ public class Stats {
 
             TableColumn<StatsData, Integer> lossesColumn = new TableColumn<>("Losses");
             lossesColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getLosses()).asObject());
-            lossesColumn.setCellFactory(column -> new TableCell<>() {
+            lossesColumn.setCellFactory(_ -> new TableCell<>() {
                 @Override
                 protected void updateItem(Integer item, boolean empty) {
                     super.updateItem(item, empty);
@@ -229,8 +214,6 @@ public class Stats {
             organizer.getChildren().add(scrollPane);
         }
     }
-
-
     public void start(Stage primaryStage, UserInfo user) {
         this.user = user;
         this.primaryStage = primaryStage;
@@ -253,13 +236,12 @@ public class Stats {
         manageScene(manager);
         checkForDisconnect();
     }
-
     private void checkForDisconnect() {
         Runnable disconnectChecker = () -> {
             while (!Thread.currentThread().isInterrupted()) {
                 String move = user.getUserInput().receiveMessage();
                 if (move == null) continue;
-                else if (move.equals("SOCKETERROR")) {
+                if (move.equals("SOCKETERROR") || move.equals("CLOSING")) {
                     Platform.runLater(Stats.this::disconnect);
                     return;
                 }
@@ -282,12 +264,9 @@ public class Stats {
             disconnectThread.join();
         } catch (InterruptedException _) {}
         user.closeConnection();
-        onDisconnect.run();
+        System.exit(-2);
     }
     public void setOnBack(Runnable onBack) {
         this.onBack = onBack;
-    }
-    public void setOnDisconnect(Runnable onDisconnect) {
-        this.onDisconnect = onDisconnect;
     }
 }

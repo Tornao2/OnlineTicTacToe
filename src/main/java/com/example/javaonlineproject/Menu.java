@@ -11,12 +11,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-import static javafx.scene.paint.Color.WHITE;
-
 public class Menu  {
     private Thread disconnectThread;
     private Runnable onStartSuccess;
-    private Runnable onDisconnect;
     private Runnable onStats;
     private UserInfo user;
 
@@ -86,7 +83,7 @@ public class Menu  {
             while (!Thread.currentThread().isInterrupted()) {
                 String move = user.getUserInput().receiveMessage();
                 if (move == null) continue;
-                else if (move.equals("SOCKETERROR")) {
+                if (move.equals("SOCKETERROR") || move.equals("CLOSING")) {
                     Platform.runLater(Menu.this::disconnect);
                     return;
                 }
@@ -124,13 +121,10 @@ public class Menu  {
             disconnectThread.join();
         } catch (InterruptedException _) {}
         user.closeConnection();
-        onDisconnect.run();
+        System.exit(-2);
     }
     public void setOnStartSuccess(Runnable onLoginSuccess) {
         this.onStartSuccess = onLoginSuccess;
-    }
-    public void setOnDisconnect(Runnable onDisconnect) {
-        this.onDisconnect = onDisconnect;
     }
     public void setOnStats(Runnable onStats) {
         this.onStats = onStats;

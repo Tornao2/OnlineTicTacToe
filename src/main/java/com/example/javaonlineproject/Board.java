@@ -18,7 +18,6 @@ import static javafx.scene.paint.Color.WHITE;
 public class Board {
     private Thread messageListener;
     private Runnable onResign;
-    private Runnable onDisconnect;
     private Text statusText = new Text();
     private Text scoreText = new Text();
     private final Button[][] board = new Button[3][3];
@@ -33,7 +32,7 @@ public class Board {
     private UserInfo user;
     private String enemyName;
     private final VBox chatView = new VBox(10);
-    private TextField chatField = new TextField();
+    private final TextField chatField = new TextField();
     private ScrollPane scrollPane;
 
     private void createScoreText() {
@@ -166,7 +165,6 @@ public class Board {
         }
     }
 
-
     private void handleMove(int row, int column, Button cell) {
         if (!moved && !finishedMatch && cell.getText().isEmpty()) {
             cell.setText(symbolUsed[0]);
@@ -233,7 +231,6 @@ public class Board {
         }
         return false;
     }
-
     private boolean checkDraw() {
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
@@ -245,7 +242,6 @@ public class Board {
                 board[i][j].setStyle(color);
         return true;
     }
-
     private void resetBoard() {
         for (Button[] row : board) {
             for (Button cell : row) {
@@ -258,7 +254,6 @@ public class Board {
         otherSideRematch = false;
         setTurns();
     }
-
     private void setTurns() {
         moved = !symbolUsed[0].equals("X");
         if (moved)
@@ -266,7 +261,6 @@ public class Board {
         else
             statusText.setText("Your turn!");
     }
-
     public void start(Stage primaryStage, UserInfo user, String[] usedSymbols) {
         this.user = user;
         this.symbolUsed = usedSymbols;
@@ -293,41 +287,35 @@ public class Board {
         manageScene(primaryStage, manager);
         listeningLogic();
     }
-
     private Button createResignButton() {
         Button resign = new Button("Resign");
         resign.setFont(new Font(16));
         resign.setOnAction(_ -> resign());
         return resign;
     }
-
     private Button createRematchButton() {
         Button rematch = new Button("Rematch");
         rematch.setFont(new Font(16));
         rematch.setOnAction(_ -> rematch());
         return rematch;
     }
-
     private VBox createVBox() {
         VBox organizer = new VBox(12);
         organizer.setAlignment(Pos.CENTER);
         organizer.setPadding(new Insets(8, 8, 10, 8));
         return organizer;
     }
-
     private HBox createHBox() {
         HBox organizer = new HBox(12);
         organizer.setAlignment(Pos.CENTER);
         organizer.setPadding(new Insets(8, 8, 10, 8));
         return organizer;
     }
-
     private BorderPane createManager(HBox organizer) {
         BorderPane root = new BorderPane(organizer);
         root.setStyle("-fx-background-color: #1A1A1A;");
         return root;
     }
-
     private void manageScene(Stage primaryStage, BorderPane manager) {
         Scene scene = new Scene(manager, 1200, 900);
         scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
@@ -343,6 +331,7 @@ public class Board {
                 if (move == null || quiting) continue;
                 String[] moveSplit = move.split(",");
                 switch (moveSplit[0]) {
+                    case "CLOSING":
                     case "SOCKETERROR":
                         Platform.runLater(Board.this::disconnect);
                         return;
@@ -446,7 +435,7 @@ public class Board {
             messageListener.join();
         } catch (InterruptedException ignored) {}
         user.closeConnection();
-        onDisconnect.run();
+        System.exit(-2);
     }
 
     private void rematch() {
@@ -464,9 +453,5 @@ public class Board {
 
     public void setOnResign(Runnable onResign) {
         this.onResign = onResign;
-    }
-
-    public void setOnDisconnect(Runnable onDisconnect) {
-        this.onDisconnect = onDisconnect;
     }
 }

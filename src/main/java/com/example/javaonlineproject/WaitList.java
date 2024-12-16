@@ -20,7 +20,6 @@ import static javafx.scene.paint.Color.WHITE;
 public class WaitList {
     private Runnable onPlay;
     private Runnable onBack;
-    private Runnable onDisconnect;
     private UserInfo user;
     private String[] enemyList;
     private Thread listeningThread;
@@ -110,6 +109,7 @@ public class WaitList {
                 if (move == null) continue;
                 String[] moveSplit = move.split(",");
                     switch (moveSplit[0]) {
+                        case "CLOSING":
                         case "SOCKETERROR":
                             Platform.runLater(WaitList.this::disconnect);
                             return;
@@ -180,16 +180,13 @@ public class WaitList {
             listeningThread.join();
         } catch (InterruptedException _) {}
         user.closeConnection();
-        onDisconnect.run();
+        System.exit(-2);
     }
     public void setOnPlay(Runnable onPlay) {
         this.onPlay = onPlay;
     }
     public void setOnBack(Runnable onBack) {
         this.onBack = onBack;
-    }
-    public void setOnDisconnect(Runnable onDisconnect) {
-        this.onDisconnect = onDisconnect;
     }
     public String[] getSymbols() {
         return usedSymbols;

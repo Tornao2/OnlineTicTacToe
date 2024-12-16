@@ -82,14 +82,13 @@ public class LoginScreen {
         return root;
     }
     private void manageScene(BorderPane root, Stage primaryStage) {
-        Scene scene = new Scene(root, 400, 500); // szerokość 400 i wysokość 500
+        Scene scene = new Scene(root, 400, 500);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Login Screen");
         primaryStage.show();
         root.requestFocus();
         scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
     }
-
     private void centerElements(ImageView image, BorderPane root) {
         image.setX((root.getWidth() - image.getLayoutBounds().getWidth()) / 2);
         text.setX((root.getWidth() - text.getLayoutBounds().getWidth()) / 2);
@@ -150,7 +149,16 @@ public class LoginScreen {
                 if (isSignIn) user.getUserOutput().sendMessage("LOGIN," + user.getUsername() + "," + password);
                 else user.getUserOutput().sendMessage("SIGNUP," + user.getUsername() + "," + password);
                 String response = user.getUserInput().receiveMessage();
+                if(response == null) {
+                    user.closeConnection();
+                    System.exit(-2);
+                }
                 switch (response) {
+                    case "SOCKETERROR":
+                    case "CLOSING":
+                        user.closeConnection();
+                        System.exit(-2);
+                        return;
                     case "ALLOWED":
                         preConnectionThread.interrupt();
                         try {

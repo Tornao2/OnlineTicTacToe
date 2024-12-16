@@ -309,11 +309,6 @@ public class ServerLogic extends Application {
                 stats.incrementLosses();
                 break;
         }
-        try {
-            String jsonResponse = objectMapper.writeValueAsString(statsList);
-        } catch (IOException e) {
-            System.err.println("Error converting stats to JSON: " + e.getMessage());
-        }
         saveStatsToFile(statsList);
         UserInfo opponent = playersInProgress.get(userMap.get(username));
         saveMatchHistory(username, opponent.getUsername(), result);
@@ -396,11 +391,10 @@ public class ServerLogic extends Application {
         if(playerStats == null) {
             playerStats = new StatsData(username, 0, 0, 0);
             statsList.add(playerStats);
-        } else {
-            String statsJson = convertStatsToJson(playerStats);
-            UserInfo user = userMap.get(username);
-            user.getUserOutput().sendMessage("STATS:" + statsJson);
         }
+        String statsJson = convertStatsToJson(playerStats);
+        UserInfo user = userMap.get(username);
+        user.getUserOutput().sendMessage("STATS:" + statsJson);
     }
     private String convertStatsToJson(StatsData playerStats) {
         try {
@@ -493,6 +487,8 @@ public class ServerLogic extends Application {
         return temp;
     }
     private void stopAll() {
+        for (UserInfo s: userMap.values())
+            s.getUserOutput().sendMessage("CLOSING");
         connectingThread.interrupt();
         for (Thread thread: listenerThreads) thread.interrupt();
         for (Thread thread: loginListeners) thread.interrupt();
