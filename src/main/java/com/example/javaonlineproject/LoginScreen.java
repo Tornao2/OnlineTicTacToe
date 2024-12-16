@@ -120,15 +120,11 @@ public class LoginScreen {
                         user.setUserSocket(new Socket(s, 12345));
                         Platform.runLater(() -> text.setVisible(false));
                         return;
-                    } catch (IOException _) {
-
-                    }
+                    } catch (IOException _) {}
                 }
                 try {
                     Thread.sleep(100);
-                } catch (InterruptedException _) {
-
-                }
+                } catch (InterruptedException _) {}
             }
         };
         preConnectionThread = new Thread(preConnection);
@@ -199,17 +195,14 @@ public class LoginScreen {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(" ");
-                for (String part : parts) {
-                    if (part.matches("\\d+\\.\\d+\\.\\d+\\.\\d+")) {
+                for (String part : parts)
+                    if (part.matches("\\d+\\.\\d+\\.\\d+\\.\\d+"))
                         ipAddresses.add(part);
-                    }
-                }
             }
             reader.close();
         } catch (Exception e) {
             System.err.println("Couldnt get arp" + e);
         }
-
         return ipAddresses;
     }
     public UserInfo getUser() {

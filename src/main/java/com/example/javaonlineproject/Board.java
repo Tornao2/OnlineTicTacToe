@@ -86,14 +86,12 @@ public class Board {
         chatField.setPrefWidth(450);
         chatField.getStyleClass().add("text-field");
         chatField.setPrefHeight(40);
-
         scrollPane = new ScrollPane(chatView);
         scrollPane.getStyleClass().add("scroll-pane");
         scrollPane.setPrefSize(600, 600);
         scrollPane.setFitToWidth(true);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setPadding(new Insets(10));
-
         user.getUserOutput().sendMessage("GETCHATHISTORY");
         String receivedMessages = user.getUserInput().receiveMessage();
         if (receivedMessages != null && !receivedMessages.isEmpty()) {
@@ -118,12 +116,8 @@ public class Board {
                     }
                     chatView.getChildren().add(messageContainer);
                     scrollPane.setVvalue(1.0);
-                } else {
-                    System.out.println("Warning: Invalid format for pair: " + pair);
                 }
             }
-        } else {
-            System.out.println("No chat history received or empty response.");
         }
     }
 
@@ -132,7 +126,6 @@ public class Board {
         chatField.getStyleClass().add("text-field");
         chatField.setPromptText("Type your message here 😎...");
     }
-
 
     private Button sendMessageButton() {
         Button send = new Button("Send");

@@ -159,9 +159,7 @@ public class WaitList {
         listeningThread.interrupt();
         try {
             listeningThread.join();
-        } catch (InterruptedException _) {
-
-        }
+        } catch (InterruptedException _) {}
         user.getUserOutput().sendMessage("REMOVE");
         onBack.run();
     }
@@ -169,9 +167,7 @@ public class WaitList {
         listeningThread.interrupt();
         try {
             listeningThread.join();
-        } catch (InterruptedException _) {
-
-        }
+        } catch (InterruptedException _) {}
         onPlay.run();
     }
     private void disconnect() {

@@ -33,10 +33,11 @@ public class ServerLogic extends Application {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private Button createExitButton() {
-        Button loginButton = new Button("Exit");
-        loginButton.setFont(new Font(20));
-        loginButton.setOnAction(_ -> stopAll());
-        return loginButton;
+        Button exitButton = new Button("Exit");
+        exitButton.setFont(new Font(20));
+        exitButton.getStyleClass().add("button");
+        exitButton.setOnAction(_ -> stopAll());
+        return exitButton;
     }
     private VBox createVBox() {
         VBox organizer = new VBox(12);
@@ -49,6 +50,7 @@ public class ServerLogic extends Application {
     private void manageScene(VBox organizer, Stage primaryStage) {
         Scene scene = new Scene(organizer);
         primaryStage.setScene(scene);
+        scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
         primaryStage.setTitle("Server");
         primaryStage.show();
         organizer.requestFocus();
@@ -188,9 +190,8 @@ public class ServerLogic extends Application {
                     continue;
                 }
                 loginAttempt = temp.getUserInput().receiveMessage();
-                if (loginAttempt.equals("SOCKETERROR")) {
+                if (loginAttempt.equals("SOCKETERROR"))
                     return;
-                }
                 String[] data = loginAttempt.split(",");
                 if (userMap.containsKey(data[1])) {
                     temp.getUserOutput().sendMessage("ALREADYLOGGEDIN");
@@ -243,9 +244,8 @@ public class ServerLogic extends Application {
         List<String> filteredMessages = new ArrayList<>();
         for (ChatHistoryData chat : chatHistoryList) {
             if ((chat.getSender().equals(player1) && chat.getReciver().equals(player2)) ||
-                    (chat.getSender().equals(player2) && chat.getReciver().equals(player1))) {
+                    (chat.getSender().equals(player2) && chat.getReciver().equals(player1)))
                 filteredMessages.add(chat.getSender() + ": " + chat.getMessage());
-            }
         }
         UserInfo user = userMap.get(player1);
         if(user != null){
@@ -261,11 +261,7 @@ public class ServerLogic extends Application {
             saveMessageToFile(chatHistory);
             receiver.getUserOutput().sendMessage("MESSAGE," + message);
         }
-        else{
-            System.out.println("Only 1 player online");
-        }
     }
-
     private void saveMessageToFile(ChatHistoryData chatHistory) {
         List<ChatHistoryData> chatHistoryList = loadMessagesFromFile();
         System.out.println("Saving message: " + chatHistory.getMessage());
@@ -277,20 +273,15 @@ public class ServerLogic extends Application {
             System.err.println("Failed to save chat history: " + e.getMessage());
         }
     }
-
     private List<ChatHistoryData> loadMessagesFromFile() {
         File file = new File(CHATHISTORYDATAFILEPATH);
         if (!file.exists() || file.length() == 0) return new ArrayList<>();
-
         try {
             return objectMapper.readValue(file, objectMapper.getTypeFactory().constructCollectionType(List.class, ChatHistoryData.class));
         } catch (IOException e) {
-            System.err.println("Failed to load chat history: " + e.getMessage());
             return new ArrayList<>();
         }
     }
-
-
     private void updateStatsForUser(String username, String result) {
         List<StatsData> statsList = loadStatsFromFile();
         StatsData stats = getStatsForUser(username, statsList);
@@ -342,11 +333,9 @@ public class ServerLogic extends Application {
     private void sendMatchHistoryToPlayer(String username) {
         List<MatchHistoryData> historyList = loadMatchHistoryFromFile();
         List<MatchHistoryData> playerHistory = new ArrayList<>();
-        for (MatchHistoryData userMatch : historyList) {
-            if (userMatch.getPlayer1username().equals(username)) {
+        for (MatchHistoryData userMatch : historyList)
+            if (userMatch.getPlayer1username().equals(username))
                 playerHistory.add(userMatch);
-            }
-        }
         String matchHistoryJson = convertMatchHistoryToJson(playerHistory);
         UserInfo user = userMap.get(username);
         user.getUserOutput().sendMessage("MATCHHISTORY: " + matchHistoryJson);
@@ -360,11 +349,9 @@ public class ServerLogic extends Application {
         }
     }
     private StatsData getStatsForUser(String username, List<StatsData> statsList) {
-        for (StatsData stats : statsList) {
-            if (stats.getUsername().equals(username)) {
+        for (StatsData stats : statsList)
+            if (stats.getUsername().equals(username))
                 return stats;
-            }
-        }
         return null;
     }
     private void saveStatsToFile(List<StatsData> statsList) {
@@ -416,13 +403,9 @@ public class ServerLogic extends Application {
                 .map(this::convertStatsToJson)
                 .collect(Collectors.joining(","));
         UserInfo user = userMap.get(username);
-        if (user != null) {
+        if (user != null)
             user.getUserOutput().sendMessage("BESTPLAYERS:" + topPlayersJson);
-        } else {
-            System.out.println("User not found: " + username);
-        }
     }
-
     private void handleLogin(String username, UserInfo temp, Runnable mainListener) {
         temp.setUsername(username);
         temp.getUserOutput().sendMessage("ALLOWED");
