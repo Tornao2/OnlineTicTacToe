@@ -20,7 +20,6 @@ public class MatchHistoryData {
         this.player2username = player2username;
         this.result = result;
     }
-
     public String getDate() {
         return date;
     }
@@ -28,27 +27,21 @@ public class MatchHistoryData {
     public void setDate(String date) {
         this.date = date;
     }
-
     public String getPlayer1username() {
         return player1username;
     }
-
     public void setPlayer1username(String player1username) {
         this.player1username = player1username;
     }
-
     public String getPlayer2username() {
         return player2username;
     }
-
     public void setPlayer2username(String player2username) {
         this.player2username = player2username;
     }
-
     public String getResult() {
         return result;
     }
-
     public void setResult(String result) {
         this.result = result;
     }

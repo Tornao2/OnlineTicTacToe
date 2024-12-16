@@ -23,26 +23,27 @@ public class Menu  {
         text.setFill(javafx.scene.paint.Color.WHITE);
         return text;
     }
-
-
     private Button createStartButton() {
         Button startButton = new Button("Start");
-        startButton.setFont(new Font(16.0));
+        startButton.setFont(new Font(32.0));
         startButton.getStyleClass().add("button");
+        startButton.setPrefSize(250,80);
         startButton.setOnAction(_ -> ChangeScene());
         return startButton;
     }
     private Button createStatsButton() {
         Button statsButton = new Button("Stats");
-        statsButton.setFont(new Font(16.0));
+        statsButton.setFont(new Font(32.0));
         statsButton.getStyleClass().add("button");
+        statsButton.setPrefSize(250,80);
         statsButton.setOnAction(_ -> statsButton());
         return statsButton;
     }
     private Button createQuitButton() {
         Button quitButton = new Button("Quit");
-        quitButton.setFont(new Font(16.0));
+        quitButton.setFont(new Font(32.0));
         quitButton.getStyleClass().add("button");
+        quitButton.setPrefSize(250,80);
         quitButton.setOnAction(_ -> quitButton());
         return quitButton;
     }
@@ -59,7 +60,7 @@ public class Menu  {
         return root;
     }
     private void manageScene(Stage primaryStage, BorderPane manager) {
-        Scene scene = new Scene(manager, 400, 500);
+        Scene scene = new Scene(manager, 400, 400);
         primaryStage.setTitle("Menu");
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -112,6 +113,7 @@ public class Menu  {
         try {
             disconnectThread.join();
         } catch (InterruptedException _) {}
+        user.getUserOutput().sendMessage("SOCKETERROR");
         user.closeConnection();
         System.exit(0);
     }
