@@ -26,7 +26,7 @@ import static javafx.scene.paint.Color.WHITE;
 public class LoginScreen {
     private Runnable playerLogin;
     private Thread preConnectionThread;
-    private final UserInfo user = new UserInfo();
+    private UserInfo user = new UserInfo();
     Text text;
 
     private ImageView createLogo() {
@@ -207,5 +207,8 @@ public class LoginScreen {
     }
     public UserInfo getUser() {
         return user;
+    }
+    public void setUser(UserInfo userREAD) {
+        user = userREAD;
     }
 }
