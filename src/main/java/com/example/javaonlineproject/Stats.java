@@ -114,7 +114,7 @@ public class Stats {
             tableView.setItems(FXCollections.observableArrayList(placeholder));
         } else {
             tableView.setItems(FXCollections.observableArrayList(matchHistory));
-            dateColumn.setSortType(TableColumn.SortType.ASCENDING);
+            dateColumn.setSortType(TableColumn.SortType.DESCENDING);
             tableView.getSortOrder().add(dateColumn);
         }
 

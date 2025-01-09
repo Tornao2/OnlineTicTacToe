@@ -306,7 +306,7 @@ public class ServerLogic extends Application {
     }
     private void saveMatchHistory(String playerUsername, String opponentUsername, String result){
         List<MatchHistoryData> historyList = loadMatchHistoryFromFile();
-        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         String dateTime = sdf.format(new Date());
         MatchHistoryData matchHistory = new MatchHistoryData(dateTime, playerUsername, opponentUsername, result);
         historyList.add(matchHistory);
