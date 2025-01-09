@@ -4,77 +4,94 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.net.Socket;
-import java.util.List;
+import java.io.*;
+import java.lang.reflect.Field;
 
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class LoginScreenTest {
 
+    private static final Logger log = LoggerFactory.getLogger(LoginScreenTest.class);
+    @Mock
     private LoginScreen loginScreen;
-//    private UserInfo user;
     @Mock
-    private UserInfo user;
+    UserInfo user;
     @Mock
-    private Socket socket;
+    Sender sender;
     @Mock
-    private OutputStream outputStream;
-    private PrintWriter mockedWriter;
-    @Mock
-    private Listener listener;
+    Listener listener;
     @BeforeEach
-    void setUp() throws IOException {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
-        loginScreen = new LoginScreen();
-
-        user.setUserSocket(socket);
-        user.setUserInput(socket);
-        user.setUserOutput(socket);
-        loginScreen.setUser(user);
-        mockedWriter = mock(PrintWriter.class);
-        doNothing().when(mockedWriter).println(anyString());
+        when(loginScreen.getUser()).thenReturn(user);
+        when(loginScreen.getUser().getUserInput()).thenReturn(listener);
+        when(loginScreen.getUser().getUserOutput()).thenReturn(sender);
+        PipedOutputStream outputStream = new PipedOutputStream();
+        PipedInputStream inputStream;
+        PrintWriter printWriter = new PrintWriter(outputStream, true);
+        try {
+            inputStream = new PipedInputStream(outputStream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+        Sender sender = new Sender();
+        Listener listener = new Listener();
+        Field field = null;
+        try {
+            field = sender.getClass().getDeclaredField("output");
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
+        field.setAccessible(true);
+        try {
+            field.set(sender, printWriter);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            field = listener.getClass().getDeclaredField("input");
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
+        field.setAccessible(true);
+        try {
+            field.set(listener, bufferedReader);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
     @Test
-    void testCorrectLogin() throws IOException {
-        when(user.getUserSocket().isConnected()).thenReturn(true);
-        when(user.getUserInput().receiveMessage()).thenReturn("ALLOWED");
-        loginScreen.getUser().setUsername("validUser");
+    void testCorrectLogin()  {
+        when(loginScreen.getUser().getUserInput().receiveMessage()).thenReturn("ALLOWED");
         loginScreen.getUser().getUserOutput().sendMessage("LOGIN,validUser,validPass");
         String response = loginScreen.getUser().getUserInput().receiveMessage();
         assertEquals("ALLOWED", response, "Login should be successful for correct credentials.");
     }
 
     @Test
-    void testIncorrectLogin() throws IOException {
-        when(user.getUserSocket().isConnected()).thenReturn(true);
-        when(user.getUserInput().receiveMessage()).thenReturn("WRONGPASSWORD");
-        loginScreen.getUser().setUsername("validUser");
+    void testIncorrectLogin()  {
+        when(loginScreen.getUser().getUserInput().receiveMessage()).thenReturn("WRONGPASSWORD");
         loginScreen.getUser().getUserOutput().sendMessage("LOGIN,validUser,wrongPass");
         String response = loginScreen.getUser().getUserInput().receiveMessage();
         assertEquals("WRONGPASSWORD", response, "Login should fail for incorrect password.");
     }
 
     @Test
-    void testCorrectRegister() throws IOException {
-        when(user.getUserSocket().isConnected()).thenReturn(true);
-        when(user.getUserInput().receiveMessage()).thenReturn("ALLOWED");
-        loginScreen.getUser().setUsername("newUser");
+    void testCorrectRegister()  {
+        when(loginScreen.getUser().getUserInput().receiveMessage()).thenReturn("ALLOWED");
         loginScreen.getUser().getUserOutput().sendMessage("SIGNUP,newUser,newPass");
         String response = loginScreen.getUser().getUserInput().receiveMessage();
         assertEquals("ALLOWED", response, "Registration should succeed for valid data.");
     }
 
     @Test
-    void testRegisterUsernameAlreadyTaken() throws IOException {
-        when(user.getUserSocket().isConnected()).thenReturn(true);
-        when(user.getUserInput().receiveMessage()).thenReturn("USERNAMEEXISTS");
-        loginScreen.getUser().setUsername("2");
+    void testRegisterUsernameAlreadyTaken()  {
+        when(loginScreen.getUser().getUserInput().receiveMessage()).thenReturn("USERNAMEEXISTS");
         loginScreen.getUser().getUserOutput().sendMessage("SIGNUP,2,newPass");
         String response = loginScreen.getUser().getUserInput().receiveMessage();
         assertEquals("USERNAMEEXISTS", response, "Registration should fail if username is already taken.");
