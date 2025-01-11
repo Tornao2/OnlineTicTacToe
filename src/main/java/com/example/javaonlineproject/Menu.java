@@ -11,18 +11,32 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-public class Menu  {
+/**
+ * Klasa reprezentująca menu aplikacji.
+ * Odpowiada za tworzenie interfejsu użytkownika z przyciskami do rozpoczęcia gry,
+ * wyświetlania statystyk oraz zamknięcia aplikacji.
+ */
+public class Menu {
     private Thread disconnectThread;
     private Runnable onStartSuccess;
     private Runnable onStats;
     private UserInfo user;
 
+    /**
+     * Tworzy tekst powitalny z nazwą użytkownika.
+     * @return Tekst powitalny.
+     */
     private Text createWelcomeText() {
         Text text = new Text("Welcome " + user.getUsername() + "!");
         text.getStyleClass().add("welcome-text");
         text.setFill(javafx.scene.paint.Color.WHITE);
         return text;
     }
+
+    /**
+     * Tworzy przycisk "Start" i ustawia akcję na zmianę sceny.
+     * @return Przycisk "Start".
+     */
     private Button createStartButton() {
         Button startButton = new Button("Start");
         startButton.setFont(new Font(32.0));
@@ -31,6 +45,11 @@ public class Menu  {
         startButton.setOnAction(_ -> ChangeScene());
         return startButton;
     }
+
+    /**
+     * Tworzy przycisk "Stats" i ustawia akcję na wyświetlanie statystyk.
+     * @return Przycisk "Stats".
+     */
     private Button createStatsButton() {
         Button statsButton = new Button("Stats");
         statsButton.setFont(new Font(32.0));
@@ -39,6 +58,11 @@ public class Menu  {
         statsButton.setOnAction(_ -> statsButton());
         return statsButton;
     }
+
+    /**
+     * Tworzy przycisk "Quit" i ustawia akcję na zakończenie aplikacji.
+     * @return Przycisk "Quit".
+     */
     private Button createQuitButton() {
         Button quitButton = new Button("Quit");
         quitButton.setFont(new Font(32.0));
@@ -47,6 +71,11 @@ public class Menu  {
         quitButton.setOnAction(_ -> quitButton());
         return quitButton;
     }
+
+    /**
+     * Tworzy kontener typu VBox do organizowania elementów interfejsu.
+     * @return Kontener typu VBox.
+     */
     private VBox createVBox() {
         VBox organizer = new VBox(12);
         organizer.setPrefSize(280, 210);
@@ -54,11 +83,23 @@ public class Menu  {
         organizer.setAlignment(Pos.BASELINE_CENTER);
         return organizer;
     }
+
+    /**
+     * Tworzy główny kontener typu BorderPane, który zarządza rozmieszczeniem elementów na scenie.
+     * @param organizer Kontener zawierający elementy interfejsu.
+     * @return Główny kontener BorderPane.
+     */
     private BorderPane createManager(VBox organizer) {
         BorderPane root = new BorderPane(organizer);
         root.setStyle("-fx-background-color: #1A1A1A;");
         return root;
     }
+
+    /**
+     * Zarządza ustawieniem sceny i wyświetleniem interfejsu użytkownika.
+     * @param primaryStage Okno aplikacji.
+     * @param manager Główny kontener aplikacji.
+     */
     private void manageScene(Stage primaryStage, BorderPane manager) {
         Scene scene = new Scene(manager, 400, 400);
         primaryStage.setTitle("Menu");
@@ -67,6 +108,11 @@ public class Menu  {
         scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
     }
 
+    /**
+     * Inicjuje menu aplikacji, ustawia wszystkie elementy interfejsu oraz sprawdza połączenie użytkownika.
+     * @param primaryStage Okno aplikacji.
+     * @param user Obiekt reprezentujący użytkownika.
+     */
     public void start(Stage primaryStage, UserInfo user) {
         this.user = user;
         Text welcomeText = createWelcomeText();
@@ -79,6 +125,10 @@ public class Menu  {
         manageScene(primaryStage, manager);
         checkForDisconnect();
     }
+
+    /**
+     * Sprawdza stan połączenia użytkownika w tle i przerywa połączenie, jeśli wystąpił błąd.
+     */
     private void checkForDisconnect() {
         Runnable disconnectChecker = () -> {
             while (!Thread.currentThread().isInterrupted()) {
@@ -94,6 +144,10 @@ public class Menu  {
         disconnectThread.setDaemon(true);
         disconnectThread.start();
     }
+
+    /**
+     * Zmienia scenę po naciśnięciu przycisku "Start".
+     */
     private void ChangeScene() {
         disconnectThread.interrupt();
         try {
@@ -101,6 +155,10 @@ public class Menu  {
         } catch (InterruptedException _) {}
         onStartSuccess.run();
     }
+
+    /**
+     * Wyświetla statystyki po naciśnięciu przycisku "Stats".
+     */
     private void statsButton() {
         disconnectThread.interrupt();
         try {
@@ -108,6 +166,10 @@ public class Menu  {
         } catch (InterruptedException _) {}
         onStats.run();
     }
+
+    /**
+     * Kończy połączenie i zamyka aplikację po naciśnięciu przycisku "Quit".
+     */
     private void quitButton() {
         disconnectThread.interrupt();
         try {
@@ -117,6 +179,10 @@ public class Menu  {
         user.closeConnection();
         System.exit(0);
     }
+
+    /**
+     * Zamyka połączenie i kończy aplikację.
+     */
     private void disconnect() {
         disconnectThread.interrupt();
         try {
@@ -125,10 +191,23 @@ public class Menu  {
         user.closeConnection();
         System.exit(-2);
     }
+
+    /**
+     * Ustawia akcję do wykonania po pomyślnym rozpoczęciu gry.
+     * @param onLoginSuccess Akcja do wykonania po rozpoczęciu gry.
+     */
     public void setOnStartSuccess(Runnable onLoginSuccess) {
         this.onStartSuccess = onLoginSuccess;
     }
+
+    /**
+     * Ustawia akcję do wykonania po wyświetleniu statystyk.
+     * @param onStats Akcja do wykonania po wyświetleniu statystyk.
+     */
     public void setOnStats(Runnable onStats) {
         this.onStats = onStats;
     }
 }
+
+
+
