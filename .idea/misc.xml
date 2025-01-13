@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ExternalStorageConfigurationManager" enabled="true" />
   <component name="JavadocGenerationManager">
-    <option name="OUTPUT_DIRECTORY" value="$PROJECT_DIR$/../../S_PO2_DOK_16B_BARANOWICZ_LESIAK_ŻUBER" />
+    <option name="OUTPUT_DIRECTORY" value="$PROJECT_DIR$/../dokumenty_do_K&amp;K/S_PO2_DOK_16B_BARANOWICZ_LESIAK_ŻUBER" />
     <option name="OPTION_SCOPE" value="public" />
     <option name="OPTION_DOCUMENT_TAG_USE" value="true" />
     <option name="OPTION_DOCUMENT_TAG_AUTHOR" value="true" />

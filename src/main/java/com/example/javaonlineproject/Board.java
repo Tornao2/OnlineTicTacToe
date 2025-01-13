@@ -221,7 +221,7 @@ public class Board {
             } else if (checkDraw()) {
                 thisSessionD++;
                 refreshScoreText();
-                user.getUserOutput().sendMessage("You tied!");
+                user.getUserOutput().sendMessage("DRAW");
                 statusText.setText("You tied!");
                 finishedMatch = true;
             } else {
@@ -399,7 +399,9 @@ public class Board {
         return organizer;
     }
 
-    /**
+
+
+     /**
      * Tworzy kontener typu HBox z wypełnieniem i wyrównaniem do środka.
      *
      * @return Kontener HBox.
@@ -434,7 +436,7 @@ public class Board {
     private void manageScene(Stage primaryStage, BorderPane manager) {
         Scene scene = new Scene(manager, 1200, 900);
         scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
-        primaryStage.setTitle("Gra");
+        primaryStage.setTitle("Game");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -466,7 +468,7 @@ public class Board {
                         thisSessionD++;
                         Platform.runLater(Board.this::refreshScoreText);
                         finishedMatch = true;
-                        statusText.setText("DRAW!");
+                        statusText.setText("You tied!");
                         break;
                     case "ENEMYRESIGNED":
                         thisSessionW++;
