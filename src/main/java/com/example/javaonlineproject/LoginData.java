@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * za pomocą biblioteki Jackson.</p>
  */
 public class LoginData {
-
     /**
      * Konstruktor tworzący obiekt {@code LoginData}.
      *
@@ -22,13 +21,16 @@ public class LoginData {
         this.login = login;
         this.password = password;
     }
-
+    /**
+     * Login użytkownika.
+     */
     @JsonProperty("login")
     private String login;
-
+    /**
+     * Hasło użytkownika.
+     */
     @JsonProperty("password")
     private String password;
-
     /**
      * Pobiera login użytkownika.
      *
@@ -37,7 +39,6 @@ public class LoginData {
     public String getLogin() {
         return login;
     }
-
     /**
      * Ustawia login użytkownika.
      *
@@ -46,7 +47,6 @@ public class LoginData {
     public void setLogin(String login) {
         this.login = login;
     }
-
     /**
      * Pobiera hasło użytkownika.
      *
@@ -55,7 +55,6 @@ public class LoginData {
     public String getPassword() {
         return password;
     }
-
     /**
      * Ustawia hasło użytkownika.
      *

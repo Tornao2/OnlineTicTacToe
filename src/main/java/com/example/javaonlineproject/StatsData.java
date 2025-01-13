@@ -7,27 +7,22 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Klasa reprezentuje dane statystyczne użytkownika, takie jak liczba zwycięstw, remisów i porażek.
  */
 public class StatsData {
-
     /**
      * Nazwa użytkownika.
      */
     private String username;
-
     /**
      * Liczba zwycięstw użytkownika.
      */
     private int wins;
-
     /**
      * Liczba remisów użytkownika.
      */
     private int draws;
-
     /**
      * Liczba porażek użytkownika.
      */
     private int losses;
-
     /**
      * Konstruktor klasy StatsData inicjalizujący wszystkie pola na podstawie podanych parametrów.
      *
@@ -46,7 +41,6 @@ public class StatsData {
         this.draws = draws;
         this.losses = losses;
     }
-
     /**
      * Pobiera nazwę użytkownika.
      *
@@ -55,7 +49,6 @@ public class StatsData {
     public String getUsername() {
         return username;
     }
-
     /**
      * Pobiera liczbę zwycięstw.
      *
@@ -64,7 +57,6 @@ public class StatsData {
     public int getWins() {
         return wins;
     }
-
     /**
      * Pobiera liczbę remisów.
      *
@@ -73,7 +65,6 @@ public class StatsData {
     public int getDraws() {
         return draws;
     }
-
     /**
      * Pobiera liczbę porażek.
      *
@@ -82,7 +73,6 @@ public class StatsData {
     public int getLosses() {
         return losses;
     }
-
     /**
      * Ustawia nazwę użytkownika.
      *
@@ -91,7 +81,6 @@ public class StatsData {
     public void setUsername(String username) {
         this.username = username;
     }
-
     /**
      * Ustawia liczbę zwycięstw.
      *
@@ -100,7 +89,6 @@ public class StatsData {
     public void setWins(int wins) {
         this.wins = wins;
     }
-
     /**
      * Ustawia liczbę remisów.
      *
@@ -109,7 +97,6 @@ public class StatsData {
     public void setDraws(int draws) {
         this.draws = draws;
     }
-
     /**
      * Ustawia liczbę porażek.
      *
@@ -118,21 +105,18 @@ public class StatsData {
     public void setLosses(int losses) {
         this.losses = losses;
     }
-
     /**
      * Zwiększa liczbę zwycięstw o 1.
      */
     public void incrementWins() {
         this.wins++;
     }
-
     /**
      * Zwiększa liczbę remisów o 1.
      */
     public void incrementDraws() {
         this.draws++;
     }
-
     /**
      * Zwiększa liczbę porażek o 1.
      */

@@ -23,15 +23,34 @@ import static javafx.scene.paint.Color.WHITE;
  * oraz reagowanie na zmiany w stanie listy przeciwników.
  */
 public class WaitList {
-
-    private Runnable onPlay; // Funkcja uruchamiana po rozpoczęciu gry
-    private Runnable onBack; // Funkcja uruchamiana po powrocie do poprzedniego ekranu
-    private UserInfo user; // Informacje o użytkowniku
-    private String[] enemyList; // Lista przeciwników
-    private Thread listeningThread; // Wątek nasłuchujący na zmiany w liście przeciwników
-    private final ListView<String> iteractiveList = new ListView<>(); // Interaktywna lista przeciwników
-    private final String[] usedSymbols = new String[2]; // Przechowuje użyte symbole ("X" i "O")
-
+    /**
+     * Funkcja uruchamiana po rozpoczęciu gry.
+     */
+    private Runnable onPlay;
+    /**
+     * Funkcja uruchamiana po powrocie do poprzedniego ekranu.
+     */
+    private Runnable onBack;
+    /**
+     * Informacje o użytkowniku.
+     */
+    private UserInfo user;
+    /**
+     * Lista przeciwników.
+     */
+    private String[] enemyList;
+    /**
+     * Wątek nasłuchujący na zmiany w liście przeciwników.
+     */
+    private Thread listeningThread;
+    /**
+     * Interaktywna lista przeciwników.
+     */
+    private final ListView<String> iteractiveList = new ListView<>();
+    /**
+     * Przechowuje użyte symbole ("X" i "O").
+     */
+    private final String[] usedSymbols = new String[2];
     /**
      * Inicjalizuje listę przeciwników, wysyłając zapytanie o dostępnych graczy.
      */
@@ -40,7 +59,6 @@ public class WaitList {
         String[] list = user.getUserInput().receiveMessage().split(",");
         populateEnemyList(list);
     }
-
     /**
      * Uzupełnia listę przeciwników na podstawie otrzymanej tablicy nazw użytkowników.
      *
@@ -49,7 +67,6 @@ public class WaitList {
     private void populateEnemyList(String[] readList) {
         enemyList = Arrays.copyOfRange(readList, 1, readList.length);
     }
-
     /**
      * Tworzy tekstowy nagłówek "Wybierz przeciwnika".
      *
@@ -61,7 +78,6 @@ public class WaitList {
         label.setFill(WHITE);
         return label;
     }
-
     /**
      * Odświeża listę przeciwników wyświetlaną w interfejsie użytkownika.
      */
@@ -72,7 +88,6 @@ public class WaitList {
                 iteractiveList.getItems().add(username);
         }
     }
-
     /**
      * Tworzy przycisk "Invite", który wysyła zaproszenie do przeciwnika.
      *
@@ -85,7 +100,6 @@ public class WaitList {
         loginButton.setOnAction(_ -> inviteButtonFunc());
         return loginButton;
     }
-
     /**
      * Tworzy przycisk "Back", który wraca do poprzedniego ekranu.
      *
@@ -98,7 +112,6 @@ public class WaitList {
         loginButton.setOnAction(_ -> backButtonFunc());
         return loginButton;
     }
-
     /**
      * Tworzy HBox - kontener na przyciski z odpowiednim odstępem.
      *
@@ -110,7 +123,6 @@ public class WaitList {
         organizer.setPadding(new Insets(8, 8, 10, 8));
         return organizer;
     }
-
     /**
      * Tworzy VBox, który przechowuje listę przeciwników i przyciski.
      *
@@ -123,7 +135,6 @@ public class WaitList {
         organizer.setAlignment(Pos.CENTER);
         return organizer;
     }
-
     /**
      * Tworzy główny kontener BorderPane z organizacją elementów w środku.
      *
@@ -135,7 +146,6 @@ public class WaitList {
         root.setStyle("-fx-background-color: #1A1A1A;");
         return root;
     }
-
     /**
      * Zarządza ustawieniem sceny, wyświetlaniem okna aplikacji.
      *
@@ -149,7 +159,6 @@ public class WaitList {
         primaryStage.setScene(scene);
         primaryStage.show();
     }
-
     /**
      * Inicjuje scenę z ekranem wyboru przeciwnika.
      *
@@ -172,7 +181,6 @@ public class WaitList {
         refreshList();
         listeningForRefresh();
     }
-
     /**
      * Uruchamia nasłuch na zmiany w stanie listy przeciwników.
      */
@@ -180,7 +188,10 @@ public class WaitList {
         Runnable listener = () -> {
             while (!Thread.currentThread().isInterrupted()) {
                 String move = user.getUserInput().receiveMessage();
-                if (move == null) continue;
+                if (move == null) {
+                    Platform.runLater(WaitList.this::disconnect);
+                    return;
+                }
                 String[] moveSplit = move.split(",");
                 switch (moveSplit[0]) {
                     case "CLOSING":
@@ -214,7 +225,6 @@ public class WaitList {
         listeningThread.setDaemon(true);
         listeningThread.start();
     }
-
     /**
      * Funkcja wywoływana po naciśnięciu przycisku "Invite". Wysyła zaproszenie do wybranego przeciwnika.
      */
@@ -232,7 +242,6 @@ public class WaitList {
                 }
         } else if (!enemyInfo[1].equals("- INVITED THEM TO A MATCH")) user.getUserOutput().sendMessage("PLAY," + enemyInfo[0]);
     }
-
     /**
      * Funkcja wywoływana po naciśnięciu przycisku "Back". Zamyka nasłuch i wraca do poprzedniego ekranu.
      */
@@ -244,7 +253,6 @@ public class WaitList {
         user.getUserOutput().sendMessage("REMOVE");
         onBack.run();
     }
-
     /**
      * Funkcja, która wywoływana jest, gdy rozpoczyna się gra z przeciwnikiem.
      */
@@ -255,7 +263,6 @@ public class WaitList {
         } catch (InterruptedException _) {}
         onPlay.run();
     }
-
     /**
      * Funkcja rozłączająca użytkownika w przypadku błędu lub zamknięcia aplikacji.
      */
@@ -267,7 +274,6 @@ public class WaitList {
         user.closeConnection();
         System.exit(-2);
     }
-
     /**
      * Ustawia funkcję, która ma zostać wywołana po rozpoczęciu gry.
      *
@@ -285,7 +291,6 @@ public class WaitList {
     public void setOnBack(Runnable onBack) {
         this.onBack = onBack;
     }
-
     /**
      * Zwraca symbole używane w grze ("X" i "O").
      *

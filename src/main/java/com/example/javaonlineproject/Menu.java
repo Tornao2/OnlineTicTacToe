@@ -17,11 +17,22 @@ import javafx.stage.Stage;
  * wyświetlania statystyk oraz zamknięcia aplikacji.
  */
 public class Menu {
+    /**
+     * Wątek odpowiedzialny za sprawdzanie rozłączania
+     */
     private Thread disconnectThread;
+    /**
+     * Funkcja wykonywana jeśli gracz chce rozpocząć rozgrywkę
+     */
     private Runnable onStartSuccess;
+    /**
+     * Funkcja wykonywana jeśli gracz chce zobaczyć statystyki
+     */
     private Runnable onStats;
+    /**
+     * Obiekt gracza
+     */
     private UserInfo user;
-
     /**
      * Tworzy tekst powitalny z nazwą użytkownika.
      * @return Tekst powitalny.
@@ -32,7 +43,6 @@ public class Menu {
         text.setFill(javafx.scene.paint.Color.WHITE);
         return text;
     }
-
     /**
      * Tworzy przycisk "Start" i ustawia akcję na zmianę sceny.
      * @return Przycisk "Start".
@@ -45,7 +55,6 @@ public class Menu {
         startButton.setOnAction(_ -> ChangeScene());
         return startButton;
     }
-
     /**
      * Tworzy przycisk "Stats" i ustawia akcję na wyświetlanie statystyk.
      * @return Przycisk "Stats".
@@ -58,7 +67,6 @@ public class Menu {
         statsButton.setOnAction(_ -> statsButton());
         return statsButton;
     }
-
     /**
      * Tworzy przycisk "Quit" i ustawia akcję na zakończenie aplikacji.
      * @return Przycisk "Quit".
@@ -71,7 +79,6 @@ public class Menu {
         quitButton.setOnAction(_ -> quitButton());
         return quitButton;
     }
-
     /**
      * Tworzy kontener typu VBox do organizowania elementów interfejsu.
      * @return Kontener typu VBox.
@@ -83,7 +90,6 @@ public class Menu {
         organizer.setAlignment(Pos.BASELINE_CENTER);
         return organizer;
     }
-
     /**
      * Tworzy główny kontener typu BorderPane, który zarządza rozmieszczeniem elementów na scenie.
      * @param organizer Kontener zawierający elementy interfejsu.
@@ -94,7 +100,6 @@ public class Menu {
         root.setStyle("-fx-background-color: #1A1A1A;");
         return root;
     }
-
     /**
      * Zarządza ustawieniem sceny i wyświetleniem interfejsu użytkownika.
      * @param primaryStage Okno aplikacji.
@@ -107,7 +112,6 @@ public class Menu {
         primaryStage.show();
         scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
     }
-
     /**
      * Inicjuje menu aplikacji, ustawia wszystkie elementy interfejsu oraz sprawdza połączenie użytkownika.
      * @param primaryStage Okno aplikacji.
@@ -125,7 +129,6 @@ public class Menu {
         manageScene(primaryStage, manager);
         checkForDisconnect();
     }
-
     /**
      * Sprawdza stan połączenia użytkownika w tle i przerywa połączenie, jeśli wystąpił błąd.
      */
@@ -133,9 +136,8 @@ public class Menu {
         Runnable disconnectChecker = () -> {
             while (!Thread.currentThread().isInterrupted()) {
                 String move = user.getUserInput().receiveMessage();
-                if (move == null) continue;
-                if (move.equals("SOCKETERROR") || move.equals("CLOSING")) {
-                    Platform.runLater(Menu.this::disconnect);
+                if (move == null || move.equals("SOCKETERROR") || move.equals("CLOSING")) {
+                    Platform.runLater(this::disconnect);
                     return;
                 }
             }
@@ -144,7 +146,6 @@ public class Menu {
         disconnectThread.setDaemon(true);
         disconnectThread.start();
     }
-
     /**
      * Zmienia scenę po naciśnięciu przycisku "Start".
      */
@@ -155,7 +156,6 @@ public class Menu {
         } catch (InterruptedException _) {}
         onStartSuccess.run();
     }
-
     /**
      * Wyświetla statystyki po naciśnięciu przycisku "Stats".
      */
@@ -166,7 +166,6 @@ public class Menu {
         } catch (InterruptedException _) {}
         onStats.run();
     }
-
     /**
      * Kończy połączenie i zamyka aplikację po naciśnięciu przycisku "Quit".
      */
@@ -179,7 +178,6 @@ public class Menu {
         user.closeConnection();
         System.exit(0);
     }
-
     /**
      * Zamyka połączenie i kończy aplikację.
      */
@@ -191,7 +189,6 @@ public class Menu {
         user.closeConnection();
         System.exit(-2);
     }
-
     /**
      * Ustawia akcję do wykonania po pomyślnym rozpoczęciu gry.
      * @param onLoginSuccess Akcja do wykonania po rozpoczęciu gry.
@@ -199,7 +196,6 @@ public class Menu {
     public void setOnStartSuccess(Runnable onLoginSuccess) {
         this.onStartSuccess = onLoginSuccess;
     }
-
     /**
      * Ustawia akcję do wykonania po wyświetleniu statystyk.
      * @param onStats Akcja do wykonania po wyświetleniu statystyk.

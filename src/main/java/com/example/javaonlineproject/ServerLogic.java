@@ -21,20 +21,58 @@ import java.util.stream.Collectors;
  * Logika serwera, odpowiedzialna za obsługę połączeń użytkowników, logowanie, rejestrację i zarządzanie grami.
  */
 public class ServerLogic extends Application {
+    /**
+     * Wątek odpowiedzialny za podłączających się graczy
+     */
     private Thread connectingThread;
+    /**
+     * Wątki odpowiedzialne za logowanie
+     */
     private final ArrayList<Thread> loginListeners = new ArrayList<>();
+    /**
+     * Wątki odpowiedzialne za nasłuchiwanie żądań klientów
+     */
     private final ArrayList<Thread> listenerThreads = new ArrayList<>();
+    /**
+     * List zalogowanych graczy
+     */
     private final ArrayList<UserInfo> loginUsers = new ArrayList<>();
+    /**
+     * Gniazdo serwera
+     */
     private ServerSocket serverSocket;
+    /**
+     * Hashmapa nawiązująca nazwy graczy z ich informacjami
+     */
     private final LinkedHashMap<String, UserInfo> userMap = new LinkedHashMap<>();
+    /**
+     * Lista graczy czekających na zaproszenie do gry
+     */
     private final ArrayList<UserInfo> waitingToPlay = new ArrayList<>();
+    /**
+     * Hashmapa nawiązująca graczy z ich przeciwnikami podczas rozgrywki
+     */
     private final HashMap<UserInfo, UserInfo> playersInProgress = new HashMap<>();
+    /**
+     * Nazwa pliku z danymi do logowania
+     */
     private static final String LOGINDATAFILEPATH = "LoginData.json";
+    /**
+     * Nazwa pliku ze statystykami graczy
+     */
     private static final String STATSFILEPATH = "StatsData.json";
+    /**
+     * Nazwa pliku z danymi dotyczącymi historii meczy graczy
+     */
     private static final String MATCHHISTORYFILEPATH = "MatchHistoryData.json";
+    /**
+     * Nazwa pliku z danymi dotyczącymi historii chatu graczy
+     */
     private static final String CHATHISTORYDATAFILEPATH = "ChatHistoryData.json";
+    /**
+     * Obiekt odpowiedzialny za odczytywanie danych
+     */
     private final ObjectMapper objectMapper = new ObjectMapper();
-
     /**
      * Tworzy przycisk "Exit", który zatrzymuje działanie serwera po kliknięciu.
      *
@@ -47,7 +85,6 @@ public class ServerLogic extends Application {
         exitButton.setOnAction(_ -> stopAll());
         return exitButton;
     }
-
     /**
      * Tworzy główny kontener VBox dla GUI serwera.
      *
@@ -61,7 +98,6 @@ public class ServerLogic extends Application {
         organizer.setAlignment(Pos.CENTER);
         return organizer;
     }
-
     /**
      * Zarządza sceną GUI serwera, ustawia tytuł, styl oraz pokazuje okno.
      *
@@ -76,7 +112,6 @@ public class ServerLogic extends Application {
         primaryStage.show();
         organizer.requestFocus();
     }
-
     /**
      * Inicjalizuje serwer, ustawia gniazdo serwera i zaczyna nasłuchiwać na połączenia.
      *
@@ -94,12 +129,10 @@ public class ServerLogic extends Application {
         manageScene(organizer, primaryStage);
         logic();
     }
-
     /**
      * Główna logika serwera. Obsługuje nasłuchiwanie na wiadomości od graczy i odpowiednią reakcję.
      */
     private void logic() {
-
         Runnable mainListener = () -> {
             UserInfo userServed = userMap.lastEntry().getValue();
             while (!Thread.currentThread().isInterrupted()) {
@@ -107,14 +140,12 @@ public class ServerLogic extends Application {
                 if (move == null) continue;
                 String[] moveSplit = move.split(",");
                 switch (moveSplit[0]) {
-                    // Obsługuje różne typy ruchów/akcji użytkowników
                     case "GETENEMY":
                         String enemyList = makeEnemyList(userServed);
                         waitingToPlay.add(userServed);
                         userServed.getUserOutput().sendMessage(enemyList);
                         sendListToEveryoneBesides(userServed);
                         break;
-                    // Obsługuje inne przypadki takich jak zaproszenia do gry, statystyki, historia meczów, wiadomości
                     case "REMOVE":
                         waitingToPlay.remove(userServed);
                         sendListToEveryoneBesides(userServed);
@@ -212,11 +243,9 @@ public class ServerLogic extends Application {
                 }
             }
         };
-
-        // Nasłuchuje logowania użytkowników.
         Runnable loginListener = () -> {
-            UserInfo temp = loginUsers.get(loginUsers.size() - 1);
-            loginUsers.remove(loginUsers.size() - 1);
+            UserInfo temp = loginUsers.getLast();
+            loginUsers.removeLast();
             while (!Thread.currentThread().isInterrupted()) {
                 String loginAttempt;
                 try {
@@ -226,7 +255,7 @@ public class ServerLogic extends Application {
                     continue;
                 }
                 loginAttempt = temp.getUserInput().receiveMessage();
-                if (loginAttempt.equals("SOCKETERROR"))
+                if (loginAttempt == null ||loginAttempt.equals("SOCKETERROR"))
                     return;
                 String[] data = loginAttempt.split(",");
                 if (userMap.containsKey(data[1])) {
@@ -253,8 +282,6 @@ public class ServerLogic extends Application {
                 }
             }
         };
-
-        // Nasłuchuje nowych połączeń.
         Runnable connectionListener = () -> {
             while (!Thread.currentThread().isInterrupted()) {
                 UserInfo temp = new UserInfo();
@@ -274,13 +301,10 @@ public class ServerLogic extends Application {
                 listener.start();
             }
         };
-
         connectingThread = new Thread(connectionListener);
         connectingThread.setDaemon(true);
         connectingThread.start();
     }
-
-
     /**
      * Wysyła historię czatu pomiędzy dwoma graczami.
      *
@@ -301,7 +325,6 @@ public class ServerLogic extends Application {
             user.getUserOutput().sendMessage("CHATHISTORY:" + chatHistory);
         }
     }
-
     /**
      * Zapisuje wiadomość do historii czatu i wysyła ją do odbiorcy.
      *
@@ -318,7 +341,6 @@ public class ServerLogic extends Application {
             receiver.getUserOutput().sendMessage("MESSAGE," + message);
         }
     }
-
     /**
      * Zapisuje wiadomość czatu do pliku.
      *
@@ -326,7 +348,6 @@ public class ServerLogic extends Application {
      */
     private void saveMessageToFile(ChatHistoryData chatHistory) {
         List<ChatHistoryData> chatHistoryList = loadMessagesFromFile();
-        System.out.println("Saving message: " + chatHistory.getMessage());
         chatHistoryList.add(chatHistory);
         File file = new File(CHATHISTORYDATAFILEPATH);
         try {
@@ -335,7 +356,6 @@ public class ServerLogic extends Application {
             System.err.println("Failed to save chat history: " + e.getMessage());
         }
     }
-
     /**
      * Ładuje historię wiadomości z pliku.
      *
@@ -350,7 +370,6 @@ public class ServerLogic extends Application {
             return new ArrayList<>();
         }
     }
-
     /**
      * Aktualizuje statystyki użytkownika po zakończeniu gry.
      *
@@ -379,7 +398,6 @@ public class ServerLogic extends Application {
         UserInfo opponent = playersInProgress.get(userMap.get(username));
         saveMatchHistory(username, opponent.getUsername(), result);
     }
-
     /**
      * Zapisuje historię meczu do pliku.
      *
@@ -395,7 +413,6 @@ public class ServerLogic extends Application {
         historyList.add(matchHistory);
         saveMatchHistoryToFile(historyList);
     }
-
     /**
      * Ładuje historię meczów z pliku.
      *
@@ -411,7 +428,6 @@ public class ServerLogic extends Application {
             return new ArrayList<>();
         }
     }
-
     /**
      * Zapisuje historię meczów do pliku.
      *
@@ -425,7 +441,6 @@ public class ServerLogic extends Application {
             System.err.println("Failed to save match history: " + e.getMessage());
         }
     }
-
     /**
      * Wysyła historię meczów do gracza.
      *
@@ -441,7 +456,6 @@ public class ServerLogic extends Application {
         UserInfo user = userMap.get(username);
         user.getUserOutput().sendMessage("MATCHHISTORY: " + matchHistoryJson);
     }
-
     /**
      * Konwertuje historię meczów do formatu JSON.
      *
@@ -456,7 +470,6 @@ public class ServerLogic extends Application {
             return "ERROR";
         }
     }
-
     /**
      * Pobiera statystyki dla konkretnego użytkownika.
      *
@@ -470,7 +483,6 @@ public class ServerLogic extends Application {
                 return stats;
         return null;
     }
-
     /**
      * Zapisuje statystyki użytkowników do pliku.
      *
@@ -484,7 +496,6 @@ public class ServerLogic extends Application {
             System.err.println("Failed to save Stats: " + e.getMessage());
         }
     }
-
     /**
      * Ładuje statystyki użytkowników z pliku.
      *
@@ -500,7 +511,6 @@ public class ServerLogic extends Application {
             return new ArrayList<>();
         }
     }
-
     /**
      * Wysyła statystyki gracza.
      *
@@ -517,7 +527,6 @@ public class ServerLogic extends Application {
         UserInfo user = userMap.get(username);
         user.getUserOutput().sendMessage("STATS:" + statsJson);
     }
-
     /**
      * Konwertuje statystyki gracza do formatu JSON.
      *
@@ -532,7 +541,6 @@ public class ServerLogic extends Application {
             return "ERROR";
         }
     }
-
     /**
      * Wysyła najlepszych graczy do statystyk.
      *
@@ -553,7 +561,6 @@ public class ServerLogic extends Application {
         if (user != null)
             user.getUserOutput().sendMessage("BESTPLAYERS:" + topPlayersJson);
     }
-
     /**
      * Obsługuje logowanie użytkownika.
      *
@@ -570,7 +577,6 @@ public class ServerLogic extends Application {
         listenerThreads.add(listener);
         listener.start();
     }
-
     /**
      * Sprawdza, czy nazwa użytkownika jest poprawna.
      *
@@ -585,7 +591,6 @@ public class ServerLogic extends Application {
                     return true;
         return false;
     }
-
     /**
      * Sprawdza, czy hasło dla danego użytkownika jest poprawne.
      *
@@ -601,7 +606,6 @@ public class ServerLogic extends Application {
                     return true;
         return false;
     }
-
     /**
      * Ładuje dane logowania użytkowników z pliku.
      *
@@ -617,7 +621,6 @@ public class ServerLogic extends Application {
             return null;
         }
     }
-
     /**
      * Rejestruje nowego użytkownika.
      *
@@ -631,7 +634,6 @@ public class ServerLogic extends Application {
             saveUsersToFile(users);
         }
     }
-
     /**
      * Zapisuje dane użytkowników do pliku.
      *
@@ -644,7 +646,6 @@ public class ServerLogic extends Application {
             System.err.println("saveUsersToFile" + e.getMessage());
         }
     }
-
     /**
      * Wysyła listę oczekujących graczy do wszystkich graczy oprócz użytkownika.
      *
@@ -657,7 +658,6 @@ public class ServerLogic extends Application {
                 users.getUserOutput().sendMessage("REFRESH" + enemyList);
         }
     }
-
     /**
      * Tworzy listę przeciwników dla użytkownika.
      *
@@ -671,7 +671,6 @@ public class ServerLogic extends Application {
                 temp = temp.concat("," + users.getUsername());
         return temp;
     }
-
     /**
      * Zatrzymuje wszystkie wątki i kończy działanie serwera.
      */
@@ -693,7 +692,6 @@ public class ServerLogic extends Application {
             }
         System.exit(0);
     }
-
     /**
      * Zatrzymuje połączenie użytkownika i usuwa go z mapy użytkowników.
      *

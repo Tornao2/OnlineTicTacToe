@@ -25,13 +25,30 @@ import java.util.List;
  * Zawiera interfejs do wyświetlania danych o statystykach i historii meczów.
  */
 public class Stats {
+    /**
+     * Funkcja uruchamiana po powrocie do poprzedniego ekranu
+     */
     private Runnable onBack;
+    /**
+     * Funkcja uruchamiana przy rozłaczeniu
+     */
     private Runnable onDisconnect;
+    /**
+     * Obiekt z informacyjami dotyczącymi użytkownika
+     */
     private UserInfo user;
+    /**
+     * Wątek badający czy nastąpiło rozłączenie
+     */
     private Thread disconnectThread;
+    /**
+     * Obiekt odpowiedzialny za odczytywanie danych
+     */
     private final ObjectMapper objectMapper = new ObjectMapper();
+    /**
+     * Główne okno programu
+     */
     private Stage primaryStage;
-
     /**
      * Tworzy przycisk "Back" do powrotu do poprzedniego widoku.
      *
@@ -44,7 +61,6 @@ public class Stats {
         backButton.setOnAction(_ -> backButton());
         return backButton;
     }
-
     /**
      * Tworzy HBox - pojemnik na elementy .
      *
@@ -56,7 +72,6 @@ public class Stats {
         organizer.setPadding(new Insets(8, 8, 10, 8));
         return organizer;
     }
-
     /**
      * Tworzy VBox - pojemnik na elementy.
      *
@@ -68,7 +83,6 @@ public class Stats {
         organizer.setPadding(new Insets(4, 8, 40, 2));
         return organizer;
     }
-
     /**
      * Tworzy główny layout w postaci BorderPane, który zawiera całą stronę zorganizowaną w VBox.
      *
@@ -81,7 +95,6 @@ public class Stats {
         root.setStyle("-fx-background-color: #1A1A1A;");
         return root;
     }
-
     /**
      * Zarządza sceną JavaFX, ustawia odpowiednią scenę i tytuł okna.
      *
@@ -94,7 +107,6 @@ public class Stats {
         primaryStage.setScene(scene);
         primaryStage.show();
     }
-
     /**
      * Odbiera historię meczów użytkownika od serwera i wyświetla ją w tabeli.
      *
@@ -117,7 +129,6 @@ public class Stats {
             displayMatchHistory(Collections.emptyList(), organizer);
         }
     }
-
     /**
      * Wyświetla historię meczów w tabeli.
      *
@@ -126,30 +137,22 @@ public class Stats {
      */
     private void displayMatchHistory(List<MatchHistoryData> matchHistory, VBox organizer) {
         organizer.getChildren().clear();
-
-        // Nagłówek tabeli
         Label headerLabel = new Label("Player match history");
         headerLabel.setFont(new Font(24));
         headerLabel.setTextFill(javafx.scene.paint.Color.WHITE);
         headerLabel.setAlignment(Pos.CENTER);
         organizer.getChildren().add(headerLabel);
-
         TableView<MatchHistoryData> tableView = new TableView<>();
         tableView.setStyle("-fx-background-color: white;");
-
         TableColumn<MatchHistoryData, String> dateColumn = new TableColumn<>("Date");
         dateColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getDate()));
         dateColumn.setPrefWidth(300);
-
         TableColumn<MatchHistoryData, String> enemyColumn = new TableColumn<>("Enemy");
         enemyColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getPlayer2username()));
-
         TableColumn<MatchHistoryData, String> resultColumn = new TableColumn<>("Result");
         resultColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getResult()));
-
         tableView.getColumns().addAll(dateColumn, enemyColumn, resultColumn);
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-
         if (matchHistory == null || matchHistory.isEmpty()) {
             MatchHistoryData placeholder = new MatchHistoryData("No match history found", "", "", "");
             tableView.setItems(FXCollections.observableArrayList(placeholder));
@@ -158,10 +161,8 @@ public class Stats {
             dateColumn.setSortType(TableColumn.SortType.DESCENDING);
             tableView.getSortOrder().add(dateColumn);
         }
-
         organizer.getChildren().add(tableView);
     }
-
     /**
      * Odbiera statystyki użytkownika od serwera i wyświetla je na ekranie.
      *
@@ -184,7 +185,6 @@ public class Stats {
             organizer.getChildren().add(new Label("No stats found."));
         }
     }
-
     /**
      * Wyświetla statystyki użytkownika w prostym formacie tekstowym.
      *
@@ -206,7 +206,6 @@ public class Stats {
             }
         }
     }
-
     /**
      * Odbiera dane o najlepszych graczach od serwera i wyświetla je w tabeli.
      *
@@ -218,9 +217,8 @@ public class Stats {
         if (message.startsWith("BESTPLAYERS:")) {
             String statsJson = message.substring("BESTPLAYERS:".length());
             try {
-                if (!statsJson.startsWith("[")) {
+                if (!statsJson.startsWith("["))
                     statsJson = "[" + statsJson + "]";
-                }
                 List<StatsData> bestPlayers = objectMapper.readValue(statsJson, new TypeReference<List<StatsData>>() {});
                 displayBestPlayers(bestPlayers, organizer);
             } catch (IOException e) {
@@ -230,7 +228,6 @@ public class Stats {
             System.out.println("Message does not contain best players: " + message);
         }
     }
-
     /**
      * Wyświetla tabelę najlepszych graczy.
      *
@@ -239,22 +236,18 @@ public class Stats {
      */
     private void displayBestPlayers(List<StatsData> bestPlayers, VBox organizer) {
         organizer.getChildren().clear();
-
         Label headerLabel = new Label("Top 10 players");
         headerLabel.setFont(new Font(24));
         headerLabel.setTextFill(javafx.scene.paint.Color.WHITE);
         headerLabel.setAlignment(Pos.CENTER);
         organizer.getChildren().add(headerLabel);
-
         TableView<StatsData> tableView = new TableView<>();
         tableView.setStyle("-fx-background-color: white;");
-
         TableColumn<StatsData, String> usernameColumn = new TableColumn<>("Username");
         usernameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getUsername()));
-
         TableColumn<StatsData, Integer> winsColumn = new TableColumn<>("Wins");
         winsColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getWins()).asObject());
-        winsColumn.setCellFactory(column -> new TableCell<>() {
+        winsColumn.setCellFactory(_ -> new TableCell<>() {
             @Override
             protected void updateItem(Integer wins, boolean empty) {
                 super.updateItem(wins, empty);
@@ -263,14 +256,13 @@ public class Stats {
                     setStyle("");
                 } else {
                     setText(String.valueOf(wins));
-                    setStyle("-fx-background-color: #90EE90;"); // Jasny zielony kolor
+                    setStyle("-fx-background-color: #90EE90;");
                 }
             }
         });
-
         TableColumn<StatsData, Integer> drawsColumn = new TableColumn<>("Draws");
         drawsColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getDraws()).asObject());
-        drawsColumn.setCellFactory(column -> new TableCell<>() {
+        drawsColumn.setCellFactory(_ -> new TableCell<>() {
             @Override
             protected void updateItem(Integer draws, boolean empty) {
                 super.updateItem(draws, empty);
@@ -279,14 +271,13 @@ public class Stats {
                     setStyle("");
                 } else {
                     setText(String.valueOf(draws));
-                    setStyle("-fx-background-color: #D3D3D3;"); // Jasny szary kolor
+                    setStyle("-fx-background-color: #D3D3D3;");
                 }
             }
         });
-
         TableColumn<StatsData, Integer> lossesColumn = new TableColumn<>("Losses");
         lossesColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getLosses()).asObject());
-        lossesColumn.setCellFactory(column -> new TableCell<>() {
+        lossesColumn.setCellFactory(_ -> new TableCell<>() {
             @Override
             protected void updateItem(Integer losses, boolean empty) {
                 super.updateItem(losses, empty);
@@ -295,25 +286,18 @@ public class Stats {
                     setStyle("");
                 } else {
                     setText(String.valueOf(losses));
-                    setStyle("-fx-background-color: #FF7F7F;"); // Jasny czerwony kolor
+                    setStyle("-fx-background-color: #FF7F7F;");
                 }
             }
         });
-
-        // Dodanie kolumn do tabeli
         tableView.getColumns().addAll(usernameColumn, winsColumn, drawsColumn, lossesColumn);
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-
-        // Jeśli lista jest pusta
-        if (bestPlayers == null || bestPlayers.isEmpty()) {
+        if (bestPlayers == null || bestPlayers.isEmpty())
             organizer.getChildren().add(new Label("No best players found."));
-        } else {
+        else
             tableView.setItems(FXCollections.observableArrayList(bestPlayers));
-        }
-
         organizer.getChildren().add(tableView);
     }
-
     /**
      * Rozpoczyna działanie okna statystyk.
      *
@@ -323,34 +307,25 @@ public class Stats {
     public void start(Stage primaryStage, UserInfo user) {
         this.user = user;
         this.primaryStage = primaryStage;
-
         VBox overallOrganizer = createVBox();
         HBox backButtonBox = createHBox();
         Button backButton = createBackButton();
         backButtonBox.getChildren().add(backButton);
-
         HBox topSection = createHBox();
         VBox leftSection = createVBox();
         VBox rightSection = createVBox();
-
         HBox tablesBox = new HBox(12);
         receiveBestPlayersFromServer(leftSection);
         receiveMatchHistoryFromServer(rightSection);
-
         tablesBox.getChildren().addAll(leftSection, rightSection);
-
         VBox statsVBox = createVBox();
         receiveStatsFromServer(statsVBox);
-
         topSection.getChildren().addAll(tablesBox, statsVBox);
         overallOrganizer.getChildren().addAll(topSection, backButtonBox);
-
         BorderPane manager = createManager(overallOrganizer);
         manageScene(manager);
-
         checkForDisconnect();
     }
-
     /**
      * Sprawdza, czy połączenie zostało rozłączone przez serwer i jeśli tak to wykonuje rozłączenie.
      */
@@ -358,8 +333,7 @@ public class Stats {
         Runnable disconnectChecker = () -> {
             while (!Thread.currentThread().isInterrupted()) {
                 String move = user.getUserInput().receiveMessage();
-                if (move == null) continue;
-                if (move.equals("SOCKETERROR")) {
+                if (move == null || move.equals("SOCKETERROR") || move.equals("CLOSING")) {
                     Platform.runLater(this::disconnect);
                     return;
                 }
@@ -369,7 +343,6 @@ public class Stats {
         disconnectThread.setDaemon(true);
         disconnectThread.start();
     }
-
     /**
      * Obsługuje kliknięcie przycisku "Back"; kończy połączenie i wraca do poprzedniego widoku.
      */
@@ -380,7 +353,6 @@ public class Stats {
         } catch (InterruptedException ignored) {}
         onBack.run();
     }
-
     /**
      * Zamyka połączenie użytkownika i wykonuje akcję rozłączenia.
      */
@@ -392,7 +364,6 @@ public class Stats {
         user.closeConnection();
         onDisconnect.run();
     }
-
     /**
      * Ustawia funkcję, która ma być wywołana po naciśnięciu przycisku "Back".
      *
@@ -401,7 +372,6 @@ public class Stats {
     public void setOnBack(Runnable onBack) {
         this.onBack = onBack;
     }
-
     /**
      * Ustawia funkcję, która ma być wywołana po rozłączeniu użytkownika.
      *

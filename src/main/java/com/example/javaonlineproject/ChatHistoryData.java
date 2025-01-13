@@ -8,22 +8,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Zawiera informacje o nadawcy, odbiorcy oraz treści wiadomości.
  */
 public class ChatHistoryData {
-
     /**
      * Nadawca wiadomości.
      */
     private String sender;
-
     /**
      * Odbiorca wiadomości.
      */
     private String reciver;
-
     /**
      * Treść wiadomości.
      */
     private String message;
-
     /**
      * Konstruktor klasy ChatHistoryData.
      *
@@ -39,7 +35,6 @@ public class ChatHistoryData {
         this.reciver = reciver;
         this.message = message;
     }
-
     /**
      * Pobiera nadawcę wiadomości.
      *
@@ -48,7 +43,6 @@ public class ChatHistoryData {
     public String getSender() {
         return sender;
     }
-
     /**
      * Ustawia nadawcę wiadomości.
      *
@@ -57,7 +51,6 @@ public class ChatHistoryData {
     public void setSender(String sender) {
         this.sender = sender;
     }
-
     /**
      * Pobiera odbiorcę wiadomości.
      *
@@ -66,7 +59,6 @@ public class ChatHistoryData {
     public String getReciver() {
         return reciver;
     }
-
     /**
      * Ustawia odbiorcę wiadomości.
      *
@@ -75,7 +67,6 @@ public class ChatHistoryData {
     public void setReciver(String reciver) {
         this.reciver = reciver;
     }
-
     /**
      * Pobiera treść wiadomości.
      *
@@ -84,7 +75,6 @@ public class ChatHistoryData {
     public String getMessage() {
         return message;
     }
-
     /**
      * Ustawia treść wiadomości.
      *

@@ -8,7 +8,6 @@ import javafx.stage.Stage;
  * Odpowiada za zarządzanie przepływem między ekranami aplikacji.
  */
 public class TicTacToe extends Application {
-
     /**
      * Metoda startowa aplikacji JavaFX, inicjalizuje pierwszy ekran - ekran logowania.
      *
@@ -20,7 +19,6 @@ public class TicTacToe extends Application {
         loginScreen.setOnLoginPlayer(() -> sceneMenu(primaryStage, loginScreen.getUser()));
         loginScreen.start(primaryStage);
     }
-
     /**
      * Przełącza scenę na menu główne użytkownika.
      *
@@ -33,7 +31,6 @@ public class TicTacToe extends Application {
         menu.setOnStats(() -> sceneStats(primaryStage, user));
         menu.start(primaryStage, user);
     }
-
     /**
      * Przełącza scenę na ekran statystyk użytkownika.
      *
@@ -43,9 +40,9 @@ public class TicTacToe extends Application {
     private void sceneStats(Stage primaryStage, UserInfo user) {
         Stats stats = new Stats();
         stats.setOnBack(() -> sceneMenu(primaryStage, user));
+        stats.setOnDisconnect(() -> sceneMenu(primaryStage, user));
         stats.start(primaryStage, user);
     }
-
     /**
      * Przełącza scenę na ekran listy przeciwników.
      *
@@ -58,7 +55,6 @@ public class TicTacToe extends Application {
         enemySelection.setOnPlay(() -> playMatch(primaryStage, user, enemySelection.getSymbols()));
         enemySelection.start(primaryStage, user);
     }
-
     /**
      * Przełącza scenę na ekran rozgrywki.
      *

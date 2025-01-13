@@ -29,11 +29,22 @@ import static javafx.scene.paint.Color.WHITE;
  * Klasa umożliwia użytkownikowi zarówno logowanie, jak i rejestrację.
  */
 public class LoginScreen {
+    /**
+     * Funkcja wykonywana jeśli nastąpi poprawne zalogowanie
+     */
     private Runnable playerLogin;
+    /**
+     * Wątek odpowiedzialny za połączenie się z serwerem
+     */
     private Thread preConnectionThread;
+    /**
+     * Obiekt użytkownika
+     */
     private UserInfo user = new UserInfo();
+    /**
+     * Debugowy text
+     */
     Text text;
-
     /**
      * Tworzy widok obrazu logo aplikacji.
      * @return Obiekt ImageView wyświetlający logo.
@@ -44,7 +55,6 @@ public class LoginScreen {
         logoImageView.setPreserveRatio(true);
         return logoImageView;
     }
-
     /**
      * Tworzy pole tekstowe do wprowadzania nazwy użytkownika.
      * @return Obiekt TextField do wprowadzania nazwy użytkownika.
@@ -56,7 +66,6 @@ public class LoginScreen {
         usernameField.setStyle("-fx-background-color: #222222; -fx-text-fill: white;");
         return usernameField;
     }
-
     /**
      * Tworzy pole tekstowe do wprowadzania hasła.
      * @return Obiekt PasswordField do wprowadzania hasła.
@@ -68,7 +77,6 @@ public class LoginScreen {
         passwordField.setStyle("-fx-background-color: #222222; -fx-text-fill: white;");
         return passwordField;
     }
-
     /**
      * Tworzy tekst dla komunikatów o błędach.
      */
@@ -78,7 +86,6 @@ public class LoginScreen {
         text.setFont(new Font(20));
         text.setVisible(false);
     }
-
     /**
      * Tworzy przycisk "Zaloguj się" i definiuje jego funkcjonalność.
      * @param usernameField TextField z nazwą użytkownika.
@@ -92,7 +99,6 @@ public class LoginScreen {
         signInButton.setOnAction(_ -> buttonsFunc(usernameField, passwordField, true));
         return signInButton;
     }
-
     /**
      * Tworzy przycisk "Zarejestruj się" i definiuje jego funkcjonalność.
      * @param usernameField TextField z nazwą użytkownika.
@@ -106,7 +112,6 @@ public class LoginScreen {
         signUpButton.setOnAction(_ -> buttonsFunc(usernameField, passwordField, false));
         return signUpButton;
     }
-
     /**
      * Tworzy układ VBox dla organizacji elementów.
      * @return Obiekt VBox zawierający elementy interfejsu.
@@ -118,7 +123,6 @@ public class LoginScreen {
         organizer.setAlignment(Pos.BASELINE_CENTER);
         return organizer;
     }
-
     /**
      * Tworzy główny układ BorderPane dla ekranu logowania.
      * @param organizer VBox zawierający elementy interfejsu.
@@ -129,7 +133,6 @@ public class LoginScreen {
         root.setStyle("-fx-background-color: #1A1A1A;");
         return root;
     }
-
     /**
      * Zarządza tworzeniem i wyświetlaniem sceny dla ekranu logowania.
      * @param root Główny układ BorderPane zawierający elementy interfejsu.
@@ -143,7 +146,6 @@ public class LoginScreen {
         root.requestFocus();
         scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
     }
-
     /**
      * Centruje elementy, takie jak logo i tekst błędu, w głównym układzie.
      * @param image Obiekt ImageView wyświetlający logo.
@@ -153,7 +155,6 @@ public class LoginScreen {
         image.setX((root.getWidth() - image.getLayoutBounds().getWidth()) / 2);
         text.setX((root.getWidth() - text.getLayoutBounds().getWidth()) / 2);
     }
-
     /**
      * Uruchamia ekran logowania, inicjalizując wszystkie komponenty i wyświetlając interfejs.
      * @param primaryStage Główne okno aplikacji.
@@ -172,7 +173,6 @@ public class LoginScreen {
         centerElements(logoImageView, Manager);
         logic();
     }
-
     /**
      * Inicjalizuje proces połączenia z serwerem w tle.
      * Próbuje połączyć się z serwerem sprawdzając tabelę w poszukiwaniu dostępnych adresów IP.
@@ -201,7 +201,6 @@ public class LoginScreen {
         preConnectionThread.setDaemon(true);
         preConnectionThread.start();
     }
-
     /**
      * Obsługuje funkcjonalność przycisków (Zaloguj się/Zarejestruj się).
      * Weryfikuje dane użytkownika i komunikuje się z serwerem.
@@ -261,7 +260,6 @@ public class LoginScreen {
         visiblePause.setOnFinished(_ -> text.setVisible(false));
         visiblePause.play();
     }
-
     /**
      * Ustawia callback, który zostanie wywołany po pomyślnym zalogowaniu użytkownika.
      * @param onLogin Runnable, który jest wywoływany po zalogowaniu użytkownika.
@@ -269,7 +267,6 @@ public class LoginScreen {
     public void setOnLoginPlayer(Runnable onLogin) {
         this.playerLogin = onLogin;
     }
-
     /**
      * Pobiera listę adresów IP z tabeli ARP.
      * @return Lista adresów IP.
@@ -293,7 +290,6 @@ public class LoginScreen {
         }
         return ipAddresses;
     }
-
     /**
      * Pobiera obiekt UserInfo zawierający informacje o użytkowniku.
      * @return Obiekt UserInfo.
@@ -301,7 +297,6 @@ public class LoginScreen {
     public UserInfo getUser() {
         return user;
     }
-
     /**
      * Ustawia obiekt UserInfo dla tego ekranu.
      * @param userREAD Obiekt UserInfo.

@@ -17,7 +17,6 @@ public class Sender {
      * strumienia wyjściowego gniazda.
      */
     private PrintWriter output;
-
     /**
      * Ustawia strumień wyjściowy gniazda, umożliwiając wysyłanie wiadomości.
      *
@@ -30,7 +29,6 @@ public class Sender {
             System.err.println("Błąd w setOutput: " + e.getMessage());
         }
     }
-
     /**
      * Wysyła wiadomość za pomocą strumienia wyjściowego gniazda.
      *
@@ -44,7 +42,6 @@ public class Sender {
             throw new NullPointerException("Strumień wyjściowy nie został zainicjowany. Wywołaj najpierw setOutput().");
         }
     }
-
     /**
      * Zamyka obiekt {@link PrintWriter} używany do wysyłania wiadomości.
      *

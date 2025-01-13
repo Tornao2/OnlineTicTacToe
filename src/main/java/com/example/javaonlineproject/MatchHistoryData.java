@@ -10,12 +10,22 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Umożliwia serializację i deserializację obiektów za pomocą biblioteki Jackson.</p>
  */
 public class MatchHistoryData {
-
+    /**
+     * Data meczu
+     */
     private String date;
+    /**
+     * Nazwa użytkownika pierwszego gracza
+     */
     private String player1username;
+    /**
+     * Nazwa użytkownika drugiego gracza
+     */
     private String player2username;
+    /**
+     * Wynik meczu
+     */
     private String result;
-
     /**
      * Konstruktor tworzący obiekt {@code MatchHistoryData}.
      *
@@ -35,7 +45,6 @@ public class MatchHistoryData {
         this.player2username = player2username;
         this.result = result;
     }
-
     /**
      * Pobiera datę meczu.
      *
@@ -44,7 +53,6 @@ public class MatchHistoryData {
     public String getDate() {
         return date;
     }
-
     /**
      * Ustawia datę meczu.
      *
@@ -53,7 +61,6 @@ public class MatchHistoryData {
     public void setDate(String date) {
         this.date = date;
     }
-
     /**
      * Pobiera nazwę użytkownika pierwszego gracza.
      *
@@ -62,7 +69,6 @@ public class MatchHistoryData {
     public String getPlayer1username() {
         return player1username;
     }
-
     /**
      * Ustawia nazwę użytkownika pierwszego gracza.
      *
@@ -71,7 +77,6 @@ public class MatchHistoryData {
     public void setPlayer1username(String player1username) {
         this.player1username = player1username;
     }
-
     /**
      * Pobiera nazwę użytkownika drugiego gracza.
      *
@@ -80,7 +85,6 @@ public class MatchHistoryData {
     public String getPlayer2username() {
         return player2username;
     }
-
     /**
      * Ustawia nazwę użytkownika drugiego gracza.
      *
@@ -89,7 +93,6 @@ public class MatchHistoryData {
     public void setPlayer2username(String player2username) {
         this.player2username = player2username;
     }
-
     /**
      * Pobiera wynik meczu.
      *
@@ -98,7 +101,6 @@ public class MatchHistoryData {
     public String getResult() {
         return result;
     }
-
     /**
      * Ustawia wynik meczu.
      *

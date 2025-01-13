@@ -8,27 +8,22 @@ import java.net.SocketException;
  * Klasa reprezentująca informacje o użytkowniku, w tym nazwę użytkownika oraz jego połączenie sieciowe.
  */
 public class UserInfo {
-
     /**
      * Nazwa użytkownika.
      */
     private String username;
-
     /**
      * Gniazdo sieciowe użytkownika.
      */
     private Socket userSocket;
-
     /**
      * Obiekt odpowiedzialny za wysyłanie danych użytkownika.
      */
     private final Sender userOutput = new Sender();
-
     /**
      * Obiekt odpowiedzialny za odbieranie danych użytkownika.
      */
     private final Listener userInput = new Listener();
-
     /**
      * Pobiera nazwę użytkownika.
      *
@@ -37,7 +32,6 @@ public class UserInfo {
     public String getUsername() {
         return username;
     }
-
     /**
      * Ustawia nazwę użytkownika.
      *
@@ -46,7 +40,6 @@ public class UserInfo {
     public void setUsername(String username) {
         this.username = username;
     }
-
     /**
      * Pobiera gniazdo sieciowe użytkownika.
      *
@@ -55,7 +48,6 @@ public class UserInfo {
     public Socket getUserSocket() {
         return userSocket;
     }
-
     /**
      * Ustawia gniazdo sieciowe użytkownika i konfiguruje jego czas oczekiwania.
      *
@@ -73,7 +65,6 @@ public class UserInfo {
             if (userSocket != null && !userSocket.isClosed()) closeConnection();
         }));
     }
-
     /**
      * Ustawia obiekt odpowiedzialny za wysyłanie danych użytkownika.
      *
@@ -82,7 +73,6 @@ public class UserInfo {
     public void setUserOutput(Socket socket) {
         userOutput.setOutput(socket);
     }
-
     /**
      * Ustawia obiekt odpowiedzialny za odbieranie danych użytkownika.
      *
@@ -91,7 +81,6 @@ public class UserInfo {
     public void setUserInput(Socket socket) {
         userInput.setInput(socket);
     }
-
     /**
      * Pobiera obiekt odpowiedzialny za wysyłanie danych użytkownika.
      *
@@ -100,7 +89,6 @@ public class UserInfo {
     public Sender getUserOutput() {
         return userOutput;
     }
-
     /**
      * Pobiera obiekt odpowiedzialny za odbieranie danych użytkownika.
      *
@@ -109,7 +97,6 @@ public class UserInfo {
     public Listener getUserInput() {
         return userInput;
     }
-
     /**
      * Zamknięcie połączenia użytkownika, w tym zamknięcie gniazda sieciowego, wejścia i wyjścia.
      */

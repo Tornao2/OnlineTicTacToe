@@ -9,12 +9,10 @@ import java.net.*;
  * zamknięcie strumienia.
  */
 public class Listener {
-
     /**
      * Buforowany strumień wejściowy do odczytu danych z gniazda.
      */
     private BufferedReader input;
-
     /**
      * Ustawia strumień wejściowy dla podanego gniazda.
      *
@@ -27,7 +25,6 @@ public class Listener {
             System.err.println("setInput: " + e.getMessage());
         }
     }
-
     /**
      * Zamyka strumień wejściowy, jeśli jest otwarty.
      */
@@ -38,7 +35,6 @@ public class Listener {
             System.err.println("closeInput: " + e.getMessage());
         }
     }
-
     /**
      * Odbiera wiadomość z ustawionego strumienia wejściowego.
      *
@@ -52,10 +48,10 @@ public class Listener {
         } catch (SocketException _) {
             return "SOCKETERROR";
         } catch (SocketTimeoutException _) {
-            return null;
+            return "timeout";
         } catch (IOException e) {
             System.err.println("receiveMessage: " + e.getMessage());
-            return null;
+            return "SOCKETERROR";
         }
     }
 }
