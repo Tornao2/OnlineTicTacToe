@@ -17,21 +17,67 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Logika serwera, odpowiedzialna za obsługę połączeń użytkowników, logowanie, rejestrację i zarządzanie grami.
+ */
 public class ServerLogic extends Application {
+    /**
+     * Wątek odpowiedzialny za podłączających się graczy
+     */
     private Thread connectingThread;
-    private final ArrayList <Thread> loginListeners = new ArrayList<>();
-    private final ArrayList <Thread> listenerThreads = new ArrayList<>();
+    /**
+     * Wątki odpowiedzialne za logowanie
+     */
+    private final ArrayList<Thread> loginListeners = new ArrayList<>();
+    /**
+     * Wątki odpowiedzialne za nasłuchiwanie żądań klientów
+     */
+    private final ArrayList<Thread> listenerThreads = new ArrayList<>();
+    /**
+     * List zalogowanych graczy
+     */
     private final ArrayList<UserInfo> loginUsers = new ArrayList<>();
+    /**
+     * Gniazdo serwera
+     */
     private ServerSocket serverSocket;
-    private final LinkedHashMap<String, UserInfo> userMap = new LinkedHashMap <>();
-    private final ArrayList <UserInfo> waitingToPlay = new ArrayList<>();
+    /**
+     * Hashmapa nawiązująca nazwy graczy z ich informacjami
+     */
+    private final LinkedHashMap<String, UserInfo> userMap = new LinkedHashMap<>();
+    /**
+     * Lista graczy czekających na zaproszenie do gry
+     */
+    private final ArrayList<UserInfo> waitingToPlay = new ArrayList<>();
+    /**
+     * Hashmapa nawiązująca graczy z ich przeciwnikami podczas rozgrywki
+     */
     private final HashMap<UserInfo, UserInfo> playersInProgress = new HashMap<>();
+    /**
+     * Nazwa pliku z danymi do logowania
+     */
     private static final String LOGINDATAFILEPATH = "LoginData.json";
+    /**
+     * Nazwa pliku ze statystykami graczy
+     */
     private static final String STATSFILEPATH = "StatsData.json";
+    /**
+     * Nazwa pliku z danymi dotyczącymi historii meczy graczy
+     */
     private static final String MATCHHISTORYFILEPATH = "MatchHistoryData.json";
+    /**
+     * Nazwa pliku z danymi dotyczącymi historii chatu graczy
+     */
     private static final String CHATHISTORYDATAFILEPATH = "ChatHistoryData.json";
+    /**
+     * Obiekt odpowiedzialny za odczytywanie danych
+     */
     private final ObjectMapper objectMapper = new ObjectMapper();
-
+    /**
+     * Tworzy przycisk "Exit", który zatrzymuje działanie serwera po kliknięciu.
+     *
+     * @return Przycisk "Exit"
+     */
     private Button createExitButton() {
         Button exitButton = new Button("Exit");
         exitButton.setFont(new Font(20));
@@ -39,6 +85,11 @@ public class ServerLogic extends Application {
         exitButton.setOnAction(_ -> stopAll());
         return exitButton;
     }
+    /**
+     * Tworzy główny kontener VBox dla GUI serwera.
+     *
+     * @return VBox z odpowiednimi ustawieniami
+     */
     private VBox createVBox() {
         VBox organizer = new VBox(12);
         organizer.setStyle("-fx-background-color: #1A1A1A;");
@@ -47,6 +98,12 @@ public class ServerLogic extends Application {
         organizer.setAlignment(Pos.CENTER);
         return organizer;
     }
+    /**
+     * Zarządza sceną GUI serwera, ustawia tytuł, styl oraz pokazuje okno.
+     *
+     * @param organizer    Kontener z elementami UI
+     * @param primaryStage Główne okno aplikacji
+     */
     private void manageScene(VBox organizer, Stage primaryStage) {
         Scene scene = new Scene(organizer);
         primaryStage.setScene(scene);
@@ -55,6 +112,11 @@ public class ServerLogic extends Application {
         primaryStage.show();
         organizer.requestFocus();
     }
+    /**
+     * Inicjalizuje serwer, ustawia gniazdo serwera i zaczyna nasłuchiwać na połączenia.
+     *
+     * @param primaryStage Główne okno aplikacji
+     */
     public void start(Stage primaryStage) {
         try {
             serverSocket = new ServerSocket(12345);
@@ -67,6 +129,9 @@ public class ServerLogic extends Application {
         manageScene(organizer, primaryStage);
         logic();
     }
+    /**
+     * Główna logika serwera. Obsługuje nasłuchiwanie na wiadomości od graczy i odpowiednią reakcję.
+     */
     private void logic() {
         Runnable mainListener = () -> {
             UserInfo userServed = userMap.lastEntry().getValue();
@@ -74,7 +139,7 @@ public class ServerLogic extends Application {
                 String move = userServed.getUserInput().receiveMessage();
                 if (move == null) continue;
                 String[] moveSplit = move.split(",");
-                switch (moveSplit[0]){
+                switch (moveSplit[0]) {
                     case "GETENEMY":
                         String enemyList = makeEnemyList(userServed);
                         waitingToPlay.add(userServed);
@@ -96,7 +161,7 @@ public class ServerLogic extends Application {
                         sendBestPlayerToStats(userServed.getUsername());
                         break;
                     case "SOCKETERROR":
-                        for(UserInfo user: waitingToPlay)
+                        for (UserInfo user : waitingToPlay)
                             if (user == userServed) {
                                 waitingToPlay.remove(userServed);
                                 sendListToEveryoneBesides(userServed);
@@ -180,7 +245,7 @@ public class ServerLogic extends Application {
         };
         Runnable loginListener = () -> {
             UserInfo temp = loginUsers.getLast();
-            loginUsers.remove(loginUsers.getLast());
+            loginUsers.removeLast();
             while (!Thread.currentThread().isInterrupted()) {
                 String loginAttempt;
                 try {
@@ -190,7 +255,7 @@ public class ServerLogic extends Application {
                     continue;
                 }
                 loginAttempt = temp.getUserInput().receiveMessage();
-                if (loginAttempt.equals("SOCKETERROR"))
+                if (loginAttempt == null ||loginAttempt.equals("SOCKETERROR"))
                     return;
                 String[] data = loginAttempt.split(",");
                 if (userMap.containsKey(data[1])) {
@@ -209,10 +274,12 @@ public class ServerLogic extends Application {
                     if (checkPassword(data[1], data[2])) {
                         handleLogin(data[1], temp, mainListener);
                         return;
+                    } else {
+                        temp.getUserOutput().sendMessage("WRONGPASSWORD");
                     }
-                    else temp.getUserOutput().sendMessage("WRONGPASSWORD");
-                } else
+                } else {
                     temp.getUserOutput().sendMessage("NOLOGIN");
+                }
             }
         };
         Runnable connectionListener = () -> {
@@ -238,8 +305,13 @@ public class ServerLogic extends Application {
         connectingThread.setDaemon(true);
         connectingThread.start();
     }
-
-    private void sendChatHistoryToPlayer(String player1, String player2){
+    /**
+     * Wysyła historię czatu pomiędzy dwoma graczami.
+     *
+     * @param player1 Pierwszy gracz
+     * @param player2 Drugi gracz
+     */
+    private void sendChatHistoryToPlayer(String player1, String player2) {
         List<ChatHistoryData> chatHistoryList = loadMessagesFromFile();
         List<String> filteredMessages = new ArrayList<>();
         for (ChatHistoryData chat : chatHistoryList) {
@@ -248,23 +320,34 @@ public class ServerLogic extends Application {
                 filteredMessages.add(chat.getSender() + ": " + chat.getMessage());
         }
         UserInfo user = userMap.get(player1);
-        if(user != null){
+        if (user != null) {
             String chatHistory = String.join(",", filteredMessages);
             user.getUserOutput().sendMessage("CHATHISTORY:" + chatHistory);
         }
     }
-    private void saveMessageToHistory(String senderNick, String receiverNick, String message){
+    /**
+     * Zapisuje wiadomość do historii czatu i wysyła ją do odbiorcy.
+     *
+     * @param senderNick   Nick nadawcy
+     * @param receiverNick Nick odbiorcy
+     * @param message      Wiadomość do zapisania
+     */
+    private void saveMessageToHistory(String senderNick, String receiverNick, String message) {
         UserInfo sender = userMap.get(senderNick);
         UserInfo receiver = userMap.get(receiverNick);
-        if(sender != null){
+        if (sender != null) {
             ChatHistoryData chatHistory = new ChatHistoryData(senderNick, receiverNick, message);
             saveMessageToFile(chatHistory);
             receiver.getUserOutput().sendMessage("MESSAGE," + message);
         }
     }
+    /**
+     * Zapisuje wiadomość czatu do pliku.
+     *
+     * @param chatHistory Obiekt zawierający dane wiadomości czatu
+     */
     private void saveMessageToFile(ChatHistoryData chatHistory) {
         List<ChatHistoryData> chatHistoryList = loadMessagesFromFile();
-        System.out.println("Saving message: " + chatHistory.getMessage());
         chatHistoryList.add(chatHistory);
         File file = new File(CHATHISTORYDATAFILEPATH);
         try {
@@ -273,6 +356,11 @@ public class ServerLogic extends Application {
             System.err.println("Failed to save chat history: " + e.getMessage());
         }
     }
+    /**
+     * Ładuje historię wiadomości z pliku.
+     *
+     * @return Lista wiadomości czatu
+     */
     private List<ChatHistoryData> loadMessagesFromFile() {
         File file = new File(CHATHISTORYDATAFILEPATH);
         if (!file.exists() || file.length() == 0) return new ArrayList<>();
@@ -282,6 +370,12 @@ public class ServerLogic extends Application {
             return new ArrayList<>();
         }
     }
+    /**
+     * Aktualizuje statystyki użytkownika po zakończeniu gry.
+     *
+     * @param username Nazwa użytkownika
+     * @param result   Wynik gry ("WIN", "DRAW", "LOSE")
+     */
     private void updateStatsForUser(String username, String result) {
         List<StatsData> statsList = loadStatsFromFile();
         StatsData stats = getStatsForUser(username, statsList);
@@ -304,7 +398,14 @@ public class ServerLogic extends Application {
         UserInfo opponent = playersInProgress.get(userMap.get(username));
         saveMatchHistory(username, opponent.getUsername(), result);
     }
-    private void saveMatchHistory(String playerUsername, String opponentUsername, String result){
+    /**
+     * Zapisuje historię meczu do pliku.
+     *
+     * @param playerUsername   Nazwa użytkownika grającego
+     * @param opponentUsername Nazwa przeciwnika
+     * @param result           Wynik gry
+     */
+    private void saveMatchHistory(String playerUsername, String opponentUsername, String result) {
         List<MatchHistoryData> historyList = loadMatchHistoryFromFile();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         String dateTime = sdf.format(new Date());
@@ -312,6 +413,11 @@ public class ServerLogic extends Application {
         historyList.add(matchHistory);
         saveMatchHistoryToFile(historyList);
     }
+    /**
+     * Ładuje historię meczów z pliku.
+     *
+     * @return Lista historii meczów
+     */
     private List<MatchHistoryData> loadMatchHistoryFromFile() {
         File file = new File(MATCHHISTORYFILEPATH);
         if (!file.exists() || file.length() == 0) return new ArrayList<>();
@@ -322,6 +428,11 @@ public class ServerLogic extends Application {
             return new ArrayList<>();
         }
     }
+    /**
+     * Zapisuje historię meczów do pliku.
+     *
+     * @param historyList Lista historii meczów
+     */
     private void saveMatchHistoryToFile(List<MatchHistoryData> historyList) {
         File file = new File(MATCHHISTORYFILEPATH);
         try {
@@ -330,6 +441,11 @@ public class ServerLogic extends Application {
             System.err.println("Failed to save match history: " + e.getMessage());
         }
     }
+    /**
+     * Wysyła historię meczów do gracza.
+     *
+     * @param username Nazwa użytkownika
+     */
     private void sendMatchHistoryToPlayer(String username) {
         List<MatchHistoryData> historyList = loadMatchHistoryFromFile();
         List<MatchHistoryData> playerHistory = new ArrayList<>();
@@ -340,20 +456,38 @@ public class ServerLogic extends Application {
         UserInfo user = userMap.get(username);
         user.getUserOutput().sendMessage("MATCHHISTORY: " + matchHistoryJson);
     }
+    /**
+     * Konwertuje historię meczów do formatu JSON.
+     *
+     * @param playerHistory Historia meczów gracza
+     * @return Historia meczów w formacie JSON
+     */
     private String convertMatchHistoryToJson(List<MatchHistoryData> playerHistory) {
-        try{
+        try {
             return objectMapper.writeValueAsString(playerHistory);
-        }catch(IOException e){
+        } catch (IOException e) {
             System.err.println("Error converting match history to JSON: " + e.getMessage());
             return "ERROR";
         }
     }
+    /**
+     * Pobiera statystyki dla konkretnego użytkownika.
+     *
+     * @param username  Nazwa użytkownika
+     * @param statsList Lista statystyk użytkowników
+     * @return Statystyki dla użytkownika lub null, jeśli nie znaleziono
+     */
     private StatsData getStatsForUser(String username, List<StatsData> statsList) {
         for (StatsData stats : statsList)
             if (stats.getUsername().equals(username))
                 return stats;
         return null;
     }
+    /**
+     * Zapisuje statystyki użytkowników do pliku.
+     *
+     * @param statsList Lista statystyk użytkowników
+     */
     private void saveStatsToFile(List<StatsData> statsList) {
         File file = new File(STATSFILEPATH);
         try {
@@ -362,20 +496,30 @@ public class ServerLogic extends Application {
             System.err.println("Failed to save Stats: " + e.getMessage());
         }
     }
-    private List<StatsData> loadStatsFromFile(){
+    /**
+     * Ładuje statystyki użytkowników z pliku.
+     *
+     * @return Lista statystyk użytkowników
+     */
+    private List<StatsData> loadStatsFromFile() {
         File file = new File(STATSFILEPATH);
-        if(!file.exists() || file.length() == 0) return new ArrayList<>();
-        try{
+        if (!file.exists() || file.length() == 0) return new ArrayList<>();
+        try {
             return objectMapper.readValue(file, objectMapper.getTypeFactory().constructCollectionType(List.class, StatsData.class));
         } catch (IOException e) {
             System.err.println("Failed to load statistics: " + e.getMessage());
             return new ArrayList<>();
         }
     }
-    private void sendStatsToPlayer(String username){
+    /**
+     * Wysyła statystyki gracza.
+     *
+     * @param username Nazwa użytkownika
+     */
+    private void sendStatsToPlayer(String username) {
         List<StatsData> statsList = loadStatsFromFile();
         StatsData playerStats = getStatsForUser(username, statsList);
-        if(playerStats == null) {
+        if (playerStats == null) {
             playerStats = new StatsData(username, 0, 0, 0);
             statsList.add(playerStats);
         }
@@ -383,6 +527,12 @@ public class ServerLogic extends Application {
         UserInfo user = userMap.get(username);
         user.getUserOutput().sendMessage("STATS:" + statsJson);
     }
+    /**
+     * Konwertuje statystyki gracza do formatu JSON.
+     *
+     * @param playerStats Statystyki gracza
+     * @return Statystyki gracza w formacie JSON
+     */
     private String convertStatsToJson(StatsData playerStats) {
         try {
             return objectMapper.writeValueAsString(playerStats);
@@ -391,9 +541,14 @@ public class ServerLogic extends Application {
             return "ERROR";
         }
     }
-    private void sendBestPlayerToStats(String username){
+    /**
+     * Wysyła najlepszych graczy do statystyk.
+     *
+     * @param username Nazwa użytkownika
+     */
+    private void sendBestPlayerToStats(String username) {
         List<StatsData> statsList = loadStatsFromFile();
-        statsList.sort((stats1, stats2) ->{
+        statsList.sort((stats1, stats2) -> {
             int score1 = stats1.getWins() * 3 + stats1.getDraws();
             int score2 = stats2.getWins() * 3 + stats2.getDraws();
             return Integer.compare(score2, score1);
@@ -406,6 +561,13 @@ public class ServerLogic extends Application {
         if (user != null)
             user.getUserOutput().sendMessage("BESTPLAYERS:" + topPlayersJson);
     }
+    /**
+     * Obsługuje logowanie użytkownika.
+     *
+     * @param username     Nazwa użytkownika
+     * @param temp         Tymczasowy obiekt użytkownika
+     * @param mainListener Główny nasłuchiwacz
+     */
     private void handleLogin(String username, UserInfo temp, Runnable mainListener) {
         temp.setUsername(username);
         temp.getUserOutput().sendMessage("ALLOWED");
@@ -415,7 +577,13 @@ public class ServerLogic extends Application {
         listenerThreads.add(listener);
         listener.start();
     }
-    private boolean isUsernameCorrect(String username){
+    /**
+     * Sprawdza, czy nazwa użytkownika jest poprawna.
+     *
+     * @param username Nazwa użytkownika
+     * @return True, jeśli nazwa użytkownika jest poprawna
+     */
+    private boolean isUsernameCorrect(String username) {
         List<LoginData> users = loadUsersFromFile();
         if (users != null)
             for (LoginData user : users)
@@ -423,17 +591,29 @@ public class ServerLogic extends Application {
                     return true;
         return false;
     }
-    private boolean checkPassword(String username, String password){
+    /**
+     * Sprawdza, czy hasło dla danego użytkownika jest poprawne.
+     *
+     * @param username Nazwa użytkownika
+     * @param password Hasło użytkownika
+     * @return True, jeśli hasło jest poprawne
+     */
+    private boolean checkPassword(String username, String password) {
         List<LoginData> users = loadUsersFromFile();
         if (users != null)
-            for (LoginData user: users)
+            for (LoginData user : users)
                 if (user.getLogin().equals(username) && user.getPassword().equals(password))
                     return true;
         return false;
     }
+    /**
+     * Ładuje dane logowania użytkowników z pliku.
+     *
+     * @return Lista danych logowania użytkowników
+     */
     private List<LoginData> loadUsersFromFile() {
         File file = new File(LOGINDATAFILEPATH);
-        if(!file.exists() || file.length() == 0) return new ArrayList<>();
+        if (!file.exists() || file.length() == 0) return new ArrayList<>();
         try {
             return objectMapper.readValue(file, objectMapper.getTypeFactory().constructCollectionType(List.class, LoginData.class));
         } catch (IOException e) {
@@ -441,6 +621,12 @@ public class ServerLogic extends Application {
             return null;
         }
     }
+    /**
+     * Rejestruje nowego użytkownika.
+     *
+     * @param username Nazwa użytkownika
+     * @param password Hasło użytkownika
+     */
     private void registerNewUser(String username, String password) {
         List<LoginData> users = loadUsersFromFile();
         if (users != null) {
@@ -448,33 +634,52 @@ public class ServerLogic extends Application {
             saveUsersToFile(users);
         }
     }
-    private void saveUsersToFile(List<LoginData> users){
+    /**
+     * Zapisuje dane użytkowników do pliku.
+     *
+     * @param users Lista danych logowania użytkowników
+     */
+    private void saveUsersToFile(List<LoginData> users) {
         try {
             objectMapper.writeValue(new File(LOGINDATAFILEPATH), users);
         } catch (IOException e) {
             System.err.println("saveUsersToFile" + e.getMessage());
         }
     }
-
+    /**
+     * Wysyła listę oczekujących graczy do wszystkich graczy oprócz użytkownika.
+     *
+     * @param userServed Użytkownik, do którego nie wysyłamy listy
+     */
     private void sendListToEveryoneBesides(UserInfo userServed) {
-        for (UserInfo users: waitingToPlay) {
+        for (UserInfo users : waitingToPlay) {
             String enemyList = makeEnemyList(users);
-            if (!users.getUsername().equals(userServed.getUsername()))  users.getUserOutput().sendMessage("REFRESH"+ enemyList);
+            if (!users.getUsername().equals(userServed.getUsername()))
+                users.getUserOutput().sendMessage("REFRESH" + enemyList);
         }
     }
+    /**
+     * Tworzy listę przeciwników dla użytkownika.
+     *
+     * @param userServed Użytkownik
+     * @return Lista przeciwników
+     */
     private String makeEnemyList(UserInfo userServed) {
         String temp = "";
-        for (UserInfo users: waitingToPlay)
+        for (UserInfo users : waitingToPlay)
             if (!users.getUsername().equals(userServed.getUsername()))
                 temp = temp.concat("," + users.getUsername());
         return temp;
     }
+    /**
+     * Zatrzymuje wszystkie wątki i kończy działanie serwera.
+     */
     private void stopAll() {
-        for (UserInfo s: userMap.values())
+        for (UserInfo s : userMap.values())
             s.getUserOutput().sendMessage("CLOSING");
         connectingThread.interrupt();
-        for (Thread thread: listenerThreads) thread.interrupt();
-        for (Thread thread: loginListeners) thread.interrupt();
+        for (Thread thread : listenerThreads) thread.interrupt();
+        for (Thread thread : loginListeners) thread.interrupt();
         for (UserInfo reader : userMap.values()) reader.closeConnection();
         userMap.clear();
         listenerThreads.clear();
@@ -487,6 +692,11 @@ public class ServerLogic extends Application {
             }
         System.exit(0);
     }
+    /**
+     * Zatrzymuje połączenie użytkownika i usuwa go z mapy użytkowników.
+     *
+     * @param userServed Użytkownik, którego połączenie ma zostać zakończone
+     */
     private void stopThisUser(UserInfo userServed) {
         userServed.closeConnection();
         userMap.remove(userServed.getUsername());

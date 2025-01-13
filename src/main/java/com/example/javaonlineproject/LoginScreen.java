@@ -23,18 +23,42 @@ import java.util.Objects;
 
 import static javafx.scene.paint.Color.WHITE;
 
+/**
+ * Klasa LoginScreen zapewnia interfejs użytkownika oraz logikę ekranu logowania i rejestracji.
+ * Zarządza procesem połączenia z serwerem oraz weryfikuje dane logowania użytkownika.
+ * Klasa umożliwia użytkownikowi zarówno logowanie, jak i rejestrację.
+ */
 public class LoginScreen {
+    /**
+     * Funkcja wykonywana jeśli nastąpi poprawne zalogowanie
+     */
     private Runnable playerLogin;
+    /**
+     * Wątek odpowiedzialny za połączenie się z serwerem
+     */
     private Thread preConnectionThread;
+    /**
+     * Obiekt użytkownika
+     */
     private UserInfo user = new UserInfo();
+    /**
+     * Debugowy text
+     */
     Text text;
-
+    /**
+     * Tworzy widok obrazu logo aplikacji.
+     * @return Obiekt ImageView wyświetlający logo.
+     */
     private ImageView createLogo() {
         ImageView logoImageView = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/images/TictacToe.png"))));
         logoImageView.setFitHeight(200);
         logoImageView.setPreserveRatio(true);
         return logoImageView;
     }
+    /**
+     * Tworzy pole tekstowe do wprowadzania nazwy użytkownika.
+     * @return Obiekt TextField do wprowadzania nazwy użytkownika.
+     */
     private TextField createUsernameField() {
         TextField usernameField = new TextField();
         usernameField.setPromptText("Username");
@@ -42,6 +66,10 @@ public class LoginScreen {
         usernameField.setStyle("-fx-background-color: #222222; -fx-text-fill: white;");
         return usernameField;
     }
+    /**
+     * Tworzy pole tekstowe do wprowadzania hasła.
+     * @return Obiekt PasswordField do wprowadzania hasła.
+     */
     private PasswordField createPassField() {
         PasswordField passwordField = new PasswordField();
         passwordField.setPromptText("Password");
@@ -49,12 +77,21 @@ public class LoginScreen {
         passwordField.setStyle("-fx-background-color: #222222; -fx-text-fill: white;");
         return passwordField;
     }
+    /**
+     * Tworzy tekst dla komunikatów o błędach.
+     */
     private void createErrorText() {
         text = new Text("");
         text.setFill(WHITE);
         text.setFont(new Font(20));
         text.setVisible(false);
     }
+    /**
+     * Tworzy przycisk "Zaloguj się" i definiuje jego funkcjonalność.
+     * @param usernameField TextField z nazwą użytkownika.
+     * @param passwordField PasswordField z hasłem.
+     * @return Obiekt Button dla akcji logowania.
+     */
     private Button createSignInButton(TextField usernameField, PasswordField passwordField) {
         Button signInButton = new Button("Sign in");
         signInButton.setFont(new Font(16.0));
@@ -62,6 +99,12 @@ public class LoginScreen {
         signInButton.setOnAction(_ -> buttonsFunc(usernameField, passwordField, true));
         return signInButton;
     }
+    /**
+     * Tworzy przycisk "Zarejestruj się" i definiuje jego funkcjonalność.
+     * @param usernameField TextField z nazwą użytkownika.
+     * @param passwordField PasswordField z hasłem.
+     * @return Obiekt Button dla akcji rejestracji.
+     */
     private Button createSignUpButton(TextField usernameField, PasswordField passwordField){
         Button signUpButton = new Button("Sign up");
         signUpButton.setFont(new Font(16.0));
@@ -69,6 +112,10 @@ public class LoginScreen {
         signUpButton.setOnAction(_ -> buttonsFunc(usernameField, passwordField, false));
         return signUpButton;
     }
+    /**
+     * Tworzy układ VBox dla organizacji elementów.
+     * @return Obiekt VBox zawierający elementy interfejsu.
+     */
     private VBox createVBox() {
         VBox organizer = new VBox(12);
         organizer.setMinSize(300, 210);
@@ -76,11 +123,21 @@ public class LoginScreen {
         organizer.setAlignment(Pos.BASELINE_CENTER);
         return organizer;
     }
+    /**
+     * Tworzy główny układ BorderPane dla ekranu logowania.
+     * @param organizer VBox zawierający elementy interfejsu.
+     * @return Obiekt BorderPane do organizacji ekranu.
+     */
     private BorderPane createManager(VBox organizer) {
         BorderPane root = new BorderPane(organizer);
         root.setStyle("-fx-background-color: #1A1A1A;");
         return root;
     }
+    /**
+     * Zarządza tworzeniem i wyświetlaniem sceny dla ekranu logowania.
+     * @param root Główny układ BorderPane zawierający elementy interfejsu.
+     * @param primaryStage Główne okno aplikacji.
+     */
     private void manageScene(BorderPane root, Stage primaryStage) {
         Scene scene = new Scene(root, 400, 500);
         primaryStage.setScene(scene);
@@ -89,10 +146,19 @@ public class LoginScreen {
         root.requestFocus();
         scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
     }
+    /**
+     * Centruje elementy, takie jak logo i tekst błędu, w głównym układzie.
+     * @param image Obiekt ImageView wyświetlający logo.
+     * @param root Główny układ BorderPane.
+     */
     private void centerElements(ImageView image, BorderPane root) {
         image.setX((root.getWidth() - image.getLayoutBounds().getWidth()) / 2);
         text.setX((root.getWidth() - text.getLayoutBounds().getWidth()) / 2);
     }
+    /**
+     * Uruchamia ekran logowania, inicjalizując wszystkie komponenty i wyświetlając interfejs.
+     * @param primaryStage Główne okno aplikacji.
+     */
     public void start(Stage primaryStage) {
         ImageView logoImageView = createLogo();
         TextField usernameField = createUsernameField();
@@ -107,6 +173,10 @@ public class LoginScreen {
         centerElements(logoImageView, Manager);
         logic();
     }
+    /**
+     * Inicjalizuje proces połączenia z serwerem w tle.
+     * Próbuje połączyć się z serwerem sprawdzając tabelę w poszukiwaniu dostępnych adresów IP.
+     */
     private void logic() {
         Runnable preConnection = () -> {
             Platform.runLater(() -> {
@@ -131,6 +201,13 @@ public class LoginScreen {
         preConnectionThread.setDaemon(true);
         preConnectionThread.start();
     }
+    /**
+     * Obsługuje funkcjonalność przycisków (Zaloguj się/Zarejestruj się).
+     * Weryfikuje dane użytkownika i komunikuje się z serwerem.
+     * @param usernameField TextField zawierający nazwę użytkownika.
+     * @param passwordField PasswordField zawierający hasło.
+     * @param isSignIn Wartość logiczna, która wskazuje, czy akcja dotyczy logowania czy rejestracji.
+     */
     private void buttonsFunc(TextField usernameField, PasswordField passwordField, boolean isSignIn) {
         if (user.getUserSocket() != null) {
             user.setUsername(usernameField.getText());
@@ -183,9 +260,17 @@ public class LoginScreen {
         visiblePause.setOnFinished(_ -> text.setVisible(false));
         visiblePause.play();
     }
+    /**
+     * Ustawia callback, który zostanie wywołany po pomyślnym zalogowaniu użytkownika.
+     * @param onLogin Runnable, który jest wywoływany po zalogowaniu użytkownika.
+     */
     public void setOnLoginPlayer(Runnable onLogin) {
         this.playerLogin = onLogin;
     }
+    /**
+     * Pobiera listę adresów IP z tabeli ARP.
+     * @return Lista adresów IP.
+     */
     public static List<String> getArpIps() {
         List<String> ipAddresses = new ArrayList<>();
         try {
@@ -205,10 +290,20 @@ public class LoginScreen {
         }
         return ipAddresses;
     }
+    /**
+     * Pobiera obiekt UserInfo zawierający informacje o użytkowniku.
+     * @return Obiekt UserInfo.
+     */
     public UserInfo getUser() {
         return user;
     }
+    /**
+     * Ustawia obiekt UserInfo dla tego ekranu.
+     * @param userREAD Obiekt UserInfo.
+     */
     public void setUser(UserInfo userREAD) {
         user = userREAD;
     }
 }
+
+

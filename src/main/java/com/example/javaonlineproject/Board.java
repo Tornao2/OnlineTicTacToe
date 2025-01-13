@@ -15,26 +15,87 @@ import javafx.util.Duration;
 
 import static javafx.scene.paint.Color.WHITE;
 
+/**
+ * Klasa reprezentująca logikę i interfejs gry w kółko-krzyżyk.
+ * Obsługuje rozgrywkę pomiędzy graczami, obsługę czatu oraz stan gry.
+ */
 public class Board {
+    /**
+     * Wątek odpowiedzialny za nasłuchiwanie chatu
+     */
     private Thread messageListener;
+    /**
+     * Funkcja wykonywana po rezygnacji z gry
+     */
     private Runnable onResign;
+    /**
+     * Napis informujący o statusie meczu
+     */
     private Text statusText = new Text();
+    /**
+     * Napis informujący o wyniku meczu
+     */
     private Text scoreText = new Text();
+    /**
+     * Tablica przycisków służąca jako plansza
+     */
     private final Button[][] board = new Button[3][3];
+    /**
+     * Użyte symbole (X i O)
+     */
     private String[] symbolUsed;
+    /**
+     * Czy gracz się poruszył
+     */
     private Boolean moved;
+    /**
+     * Czy gracz zrezygnował
+     */
     private Boolean quiting = false;
+    /**
+     * Czy druga strona chce rematchu
+     */
     private boolean otherSideRematch = false;
+    /**
+     * Czy mecz został skończony
+     */
     private boolean finishedMatch = false;
+    /**
+     * Wygrane w tej sesji
+     */
     private int thisSessionW = 0;
+    /**
+     * Remisy w tej sesji
+     */
     private int thisSessionD = 0;
+    /**
+     * Przegrane w tej sesji
+     */
     private int thisSessionL = 0;
+    /**
+     * Obiekt użytkownika
+     */
     private UserInfo user;
+    /**
+     * Nazwa przeciwnika
+     */
     private String enemyName;
+    /**
+     * VBox przechowujący elementy chatu
+     */
     private final VBox chatView = new VBox(10);
+    /**
+     * Pole do wpisywania wiadomości przez chat
+     */
     private final TextField chatField = new TextField();
+    /**
+     * Scrollpane dla scrollowania chatu
+     */
     private ScrollPane scrollPane;
-
+    /**
+     * Tworzy tekst z wynikiem gry.
+     * Wysyła zapytanie o nazwę przeciwnika i ustawia wynik gry.
+     */
     private void createScoreText() {
         user.getUserOutput().sendMessage("NAME");
         enemyName = user.getUserInput().receiveMessage();
@@ -42,11 +103,17 @@ public class Board {
         scoreText.setFill(WHITE);
         scoreText.setFont(new Font(26));
     }
-
+    /**
+     * Odświeża tekst z wynikiem gry.
+     * Aktualizuje wynik na podstawie wyników sesji.
+     */
     private void refreshScoreText() {
         scoreText.setText("You " + thisSessionW + "-" + thisSessionD + "-" + thisSessionL + " " + enemyName);
     }
-
+    /**
+     * Inicjalizuje tekst statusu - czyja jest kolejka.
+     * Ustawia tekst w zależności od tego, czy ruch został wykonany.
+     */
     private void initStatusText() {
         if (moved)
             statusText = new Text("Enemy's turn!");
@@ -57,7 +124,12 @@ public class Board {
         statusText.setWrappingWidth(600);
         statusText.setTextAlignment(TextAlignment.CENTER);
     }
-
+    /**
+     * Inicjalizuje planszę gry.
+     * Tworzy przyciski do gry w kółko-krzyżyk i przypisuje im odpowiednią funkcję.
+     *
+     * @return plansza gry w postaci obiektu GridPane
+     */
     private GridPane initializeBoard() {
         GridPane gridPane = new GridPane();
         gridPane.setAlignment(Pos.BASELINE_CENTER);
@@ -79,7 +151,10 @@ public class Board {
         }
         return gridPane;
     }
-
+    /**
+     * Inicjalizuje widok czatu.
+     * Pobiera historię czatu i wyświetla ją w odpowiednim kontenerze.
+     */
     private void initChatView() {
         user.getUserOutput().sendMessage("NAME");
         enemyName = user.getUserInput().receiveMessage();
@@ -120,13 +195,20 @@ public class Board {
             }
         }
     }
-
+    /**
+     * Inicjalizuje pole do wprowadzania wiadomości w czacie.
+     * Ustawia domyślny tekst wskazujący na wprowadzenie wiadomości.
+     */
     private void initSendingField() {
         chatField.setFont(new Font(16));
         chatField.getStyleClass().add("text-field");
         chatField.setPromptText("Type your message here 😎...");
     }
-
+    /**
+     * Tworzy przycisk do wysyłania wiadomości.
+     *
+     * @return przycisk "Send"
+     */
     private Button sendMessageButton() {
         Button send = new Button("Send");
         send.getStyleClass().add("send-button");
@@ -134,7 +216,13 @@ public class Board {
         send.setOnAction(_ -> addMessage(false, chatField.getText()));
         return send;
     }
-
+    /**
+     * Dodaje wiadomość do czatu.
+     * Jeśli wiadomość jest od gracza, wysyła ją do przeciwnika oraz wyświetla na czacie.
+     *
+     * @param isOpponent flaga określająca, czy wiadomość jest od przeciwnika
+     * @param message    wiadomość do dodania
+     */
     private void addMessage(boolean isOpponent, String message) {
         message = message.replace(',', '~');
         if (!message.isBlank() && !message.isEmpty()) {
@@ -157,7 +245,14 @@ public class Board {
             scrollPane.setVvalue(1.0);
         }
     }
-
+    /**
+     * Obsługuje wykonanie ruchu na planszy.
+     * Sprawdza, czy ruch jest możliwy, a następnie sprawdza, czy gracz wygrał lub zremisował.
+     *
+     * @param row   numer wiersza, w którym wykonano ruch
+     * @param column numer kolumny, w której wykonano ruch
+     * @param cell  reprezentuje pole na planszy
+     */
     private void handleMove(int row, int column, Button cell) {
         if (!moved && !finishedMatch && cell.getText().isEmpty()) {
             cell.setText(symbolUsed[0]);
@@ -180,7 +275,11 @@ public class Board {
             }
         }
     }
-
+    /**
+     * Sprawdza czy któryś z graczy wygrał.
+     *
+     * @return true, jeśli któryś z graczy wygrał
+     */
     private boolean checkWin() {
         String color = "-fx-background-color: #1e990e";
         for (int j = 0; j < 2; j++) {
@@ -224,6 +323,11 @@ public class Board {
         }
         return false;
     }
+    /**
+     * Sprawdza czy gra zakończyła się remisem.
+     *
+     * @return true, jeśli na planszy nie ma już wolnych miejsc
+     */
     private boolean checkDraw() {
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
@@ -235,6 +339,10 @@ public class Board {
                 board[i][j].setStyle(color);
         return true;
     }
+    /**
+     * Resetuje planszę do stanu początkowego.
+     * Usuwa wszystkie teksty z pól, a także resetuje status gry.
+     */
     private void resetBoard() {
         for (Button[] row : board) {
             for (Button cell : row) {
@@ -247,6 +355,10 @@ public class Board {
         otherSideRematch = false;
         setTurns();
     }
+    /**
+     * Ustawia kolejność ruchów.
+     * Określa kto ma teraz wykonać ruch (gracz czy przeciwnik).
+     */
     private void setTurns() {
         moved = !symbolUsed[0].equals("X");
         if (moved)
@@ -254,6 +366,14 @@ public class Board {
         else
             statusText.setText("Your turn!");
     }
+    /**
+     * Rozpoczyna grę na oknie głównym.
+     * Tworzy wszystkie elementy interfejsu użytkownika i obsługuje logikę gry.
+     *
+     * @param primaryStage główne okno aplikacji
+     * @param user        dane użytkownika
+     * @param usedSymbols symbole używane przez graczy
+     */
     public void start(Stage primaryStage, UserInfo user, String[] usedSymbols) {
         this.user = user;
         this.symbolUsed = usedSymbols;
@@ -280,35 +400,71 @@ public class Board {
         manageScene(primaryStage, manager);
         listeningLogic();
     }
+    /**
+     * Tworzy przycisk umożliwiający rezygnację z gry.
+     * Przycisk jest oznaczony jako "Rezygnuj" i wywołuje akcję rezygnacji po kliknięciu.
+     *
+     * @return Przyciski do rezygnacji z gry.
+     */
     private Button createResignButton() {
         Button resign = new Button("Resign");
         resign.setFont(new Font(16));
         resign.setOnAction(_ -> resign());
         return resign;
     }
+    /**
+     * Tworzy przycisk umożliwiający żądanie dogrywki po zakończonej grze.
+     * Przycisk jest oznaczony jako "Remis" i wywołuje akcję dogrywki po kliknięciu.
+     *
+     * @return Przyciski do żądania remisu.
+     */
     private Button createRematchButton() {
         Button rematch = new Button("Rematch");
         rematch.setFont(new Font(16));
         rematch.setOnAction(_ -> rematch());
         return rematch;
     }
+    /**
+     * Tworzy kontener typu VBox z wypełnieniem i wyrównaniem do środka.
+     *
+     * @return Kontener VBox.
+     */
     private VBox createVBox() {
         VBox organizer = new VBox(12);
         organizer.setAlignment(Pos.CENTER);
         organizer.setPadding(new Insets(8, 8, 10, 8));
         return organizer;
     }
+     /**
+     * Tworzy kontener typu HBox z wypełnieniem i wyrównaniem do środka.
+     *
+     * @return Kontener HBox.
+     */
     private HBox createHBox() {
         HBox organizer = new HBox(12);
         organizer.setAlignment(Pos.CENTER);
         organizer.setPadding(new Insets(8, 8, 10, 8));
         return organizer;
     }
+    /**
+     * Tworzy BorderPane z dostarczonym kontenerem HBox umieszczonym w centralnym miejscu.
+     * Kolor tła BorderPane ustawiony jest na ciemnoszary.
+     *
+     * @param organizer Kontener HBox, który ma być dodany do BorderPane.
+     * @return BorderPane zawierający dostarczony kontener HBox.
+     */
     private BorderPane createManager(HBox organizer) {
         BorderPane root = new BorderPane(organizer);
         root.setStyle("-fx-background-color: #1A1A1A;");
         return root;
     }
+    /**
+     * Zarządza sceną dla głównego okna aplikacji, ustawiając dostarczony BorderPane jako root.
+     * Zastosowuje także arkusz stylów dla sceny i pokazuje okno.
+     *
+     * @param primaryStage Główne okno aplikacji.
+     * @param manager BorderPane zawierający układ UI.
+     */
     private void manageScene(Stage primaryStage, BorderPane manager) {
         Scene scene = new Scene(manager, 1200, 900);
         scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
@@ -316,12 +472,20 @@ public class Board {
         primaryStage.setScene(scene);
         primaryStage.show();
     }
-
+    /**
+     * Obsługuje logikę nasłuchiwania wiadomości od serwera, przetwarza je i aktualizuje stan gry.
+     * Obsługuje różne polecenia, takie jak "CLOSING", "LOST", "DRAW", "ENEMYRESIGNED", "MOVE", "MESSAGE" i inne.
+     * Słuchacz działa na osobnym wątku, aby zapewnić nieblokujące aktualizacje UI.
+     */
     private void listeningLogic() {
         Runnable mainListener = () -> {
             while (!Thread.currentThread().isInterrupted()) {
                 String move = user.getUserInput().receiveMessage();
-                if (move == null || quiting) continue;
+                if (move == null) {
+                    Platform.runLater(this::disconnect);
+                    return;
+                }
+                if (quiting) continue;
                 String[] moveSplit = move.split(",");
                 switch (moveSplit[0]) {
                     case "CLOSING":
@@ -332,7 +496,7 @@ public class Board {
                         thisSessionL++;
                         Platform.runLater(Board.this::refreshScoreText);
                         finishedMatch = true;
-                        statusText.setText("You lost!");
+                        statusText.setText("LOST!");
                         break;
                     case "DRAW":
                         thisSessionD++;
@@ -353,7 +517,7 @@ public class Board {
                         Platform.runLater(Board.this::quit);
                         break;
                     case "REMATCH":
-                        statusText.setText("Enemy wants a rematch!");
+                        statusText.setText("The opponent wants a rematch!");
                         otherSideRematch = true;
                         break;
                     case "ACCEPT":
@@ -389,7 +553,10 @@ public class Board {
         messageListener.setDaemon(true);
         messageListener.start();
     }
-
+    /**
+     * Rezygnuje z gry i wysyła wiadomość rezygnacji do serwera.
+     * Jeśli gra jeszcze trwa, wysyłany jest komunikat "RESIGNED", w przeciwnym razie "QUIT".
+     */
     private void resign() {
         if (!quiting) {
             messageListener.interrupt();
@@ -407,7 +574,10 @@ public class Board {
             quiting = true;
         }
     }
-
+    /**
+     * Kończy grę poprzez wyjście i wysłanie komunikatu o zakończeniu gry do serwera.
+     * Wiadomość statusowa informuje użytkownika, że przeciwnik zrezygnował i gra została zakończona.
+     */
     private void quit() {
         messageListener.interrupt();
         try {
@@ -417,11 +587,13 @@ public class Board {
         PauseTransition visiblePause = new PauseTransition(Duration.seconds(3));
         visiblePause.setOnFinished(_ -> onResign.run());
         visiblePause.play();
-        statusText.setText("Enemy has resigned! Quitting the match");
+        statusText.setText("The opponent has resigned! I am ending the game.");
         finishedMatch = true;
         moved = true;
     }
-
+    /**
+     * Rozłącza się od serwera, kończy grę i kończy działanie aplikacji.
+     */
     private void disconnect() {
         messageListener.interrupt();
         try {
@@ -430,7 +602,10 @@ public class Board {
         user.closeConnection();
         System.exit(-2);
     }
-
+    /**
+     * Wysyła żądanie remisu do serwera lub akceptuje ofertę remisu, jeśli gra się zakończyła.
+     * Jeśli przeciwnik chce remisu, aktualizowany jest status wiadomości odpowiednio.
+     */
     private void rematch() {
         if (finishedMatch && !quiting) {
             if (!otherSideRematch) {
@@ -443,8 +618,14 @@ public class Board {
             }
         }
     }
-
+    /**
+     * Ustawia akcję, która ma być wykonana po rezygnacji użytkownika z gry.
+     *
+     * @param onResign Runnable określający akcję po rezygnacji.
+     */
     public void setOnResign(Runnable onResign) {
         this.onResign = onResign;
     }
+
 }
+
