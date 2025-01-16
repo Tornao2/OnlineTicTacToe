@@ -244,7 +244,7 @@ public class LoginScreen {
                     case "ALREADYLOGGEDIN":
                         text.setText("You are already logged in");
                         break;
-                    case "WRONGLOGIN":
+                    case "NOLOGIN":
                         text.setText("Account doesn't exist");
                         break;
                     case "WRONGPASSWORD":
