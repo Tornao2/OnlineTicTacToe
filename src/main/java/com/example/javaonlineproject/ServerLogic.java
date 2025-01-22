@@ -654,7 +654,7 @@ public class ServerLogic extends Application {
     private void sendListToEveryoneBesides(UserInfo userServed) {
         for (UserInfo users : waitingToPlay) {
             String enemyList = makeEnemyList(users);
-            if (!users.getUsername().equals(userServed.getUsername()))
+            if (userServed == null || !users.getUsername().equals(userServed.getUsername()))
                 users.getUserOutput().sendMessage("REFRESH" + enemyList);
         }
     }
